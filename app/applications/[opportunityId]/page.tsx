@@ -114,7 +114,7 @@ export default function ApplicationCoachingPage() {
     setStreamingText("");
     setError(null);
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("Apexli_token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
     const url = `${API_BASE}/applications/${opportunityId}/coaching/stream${force ? "?force=true" : ""}`;
 
     try {
@@ -374,7 +374,7 @@ export default function ApplicationCoachingPage() {
         </div>
       )}
 
-      {/* Target programs — always shown once CV check Apexlies */}
+      {/* Target programs — always shown once CV check passes */}
       {!needsCv && !needsUpgradeCoaching && (
         <div className="mt-8 case-card p-6">
           <div className="flex items-start justify-between gap-4">

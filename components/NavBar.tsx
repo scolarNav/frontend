@@ -73,7 +73,7 @@ export default function NavBar() {
 
         {/* Logo */}
         <Link href="/" className="shrink-0">
-          <Image src="/logo/logo.png" alt="Passage" width={112} height={30} />
+          <Image src="/logo/logo.png" alt="ScolarNav" width={112} height={30} />
         </Link>
 
         {/* Desktop nav */}

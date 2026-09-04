@@ -36,7 +36,7 @@ export default function PhotoUpload({ currentUrl, onChange, size = 80, dark = fa
     setPreview(localUrl);
 
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("Apexli_token") : null;
+      const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
       const formData = new FormData();
       formData.append("photo", file);
 

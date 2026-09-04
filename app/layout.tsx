@@ -25,28 +25,28 @@ const mono = IBM_Plex_Mono({
   variable: "--font-mono",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://Apexli.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarnav.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "Apexli — Scholarships & Opportunities for Global Talent",
-    template: "%s | Apexli",
+    default: "ScolarNav — Scholarships & Opportunities for Global Talent",
+    template: "%s | ScolarNav",
   },
   description:
     "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
   keywords: ["scholarships", "study abroad", "fellowships", "Nigeria", "Africa", "opportunities", "application coaching"],
   openGraph: {
     type: "website",
-    siteName: "Apexli",
-    title: "Apexli — Scholarships & Opportunities for Global Talent",
+    siteName: "ScolarNav",
+    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "Apexli — Scholarships & Opportunities for Global Talent",
+    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
   },

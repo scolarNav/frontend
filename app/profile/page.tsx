@@ -91,11 +91,11 @@ export default function ProfilePage() {
   const [savingScores, setSavingScores] = useState(false);
   const [scoresMsg, setScoresMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
-  // Apexliword
-  const [currentApexliword, setCurrentApexliword] = useState("");
-  const [newApexliword, setNewApexliword] = useState("");
-  const [savingApexliword, setSavingApexliword] = useState(false);
-  const [ApexliwordMsg, setApexliwordMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  // Password
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [savingPassword, setSavingPassword] = useState(false);
+  const [passwordMsg, setPasswordMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
@@ -207,19 +207,19 @@ export default function ProfilePage() {
     }
   }
 
-  async function handleChangeApexliword(e: React.FormEvent) {
+  async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault();
-    setSavingApexliword(true);
-    setApexliwordMsg(null);
+    setSavingPassword(true);
+    setPasswordMsg(null);
     try {
-      await api.patch("/auth/profile", { currentApexliword, newApexliword });
-      setCurrentApexliword("");
-      setNewApexliword("");
-      setApexliwordMsg({ type: "ok", text: "Apexliword changed." });
+      await api.patch("/auth/profile", { currentPassword, newPassword });
+      setCurrentPassword("");
+      setNewPassword("");
+      setPasswordMsg({ type: "ok", text: "Password changed." });
     } catch (err) {
-      setApexliwordMsg({ type: "err", text: err instanceof ApiError ? err.message : "Couldn't change Apexliword." });
+      setPasswordMsg({ type: "err", text: err instanceof ApiError ? err.message : "Couldn't change password." });
     } finally {
-      setSavingApexliword(false);
+      setSavingPassword(false);
     }
   }
 
@@ -502,19 +502,19 @@ export default function ProfilePage() {
       </div>
 
       {/* Security */}
-      <form onSubmit={handleChangeApexliword} className="mt-10 space-y-5">
-        <h2 className="font-display text-xl text-ink border-b border-rule pb-3">Change Apexliword</h2>
+      <form onSubmit={handleChangePassword} className="mt-10 space-y-5">
+        <h2 className="font-display text-xl text-ink border-b border-rule pb-3">Change Password</h2>
         <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">Current Apexliword</label>
-          <input type="Apexliword" required value={currentApexliword} onChange={(e) => setCurrentApexliword(e.target.value)} className="input" placeholder="••••••••" />
+          <label className="block text-sm font-medium text-ink mb-1.5">Current Password</label>
+          <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="input" placeholder="••••••••" />
         </div>
         <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">New Apexliword</label>
-          <input type="Apexliword" required minLength={8} value={newApexliword} onChange={(e) => setNewApexliword(e.target.value)} className="input" placeholder="At least 8 characters" />
+          <label className="block text-sm font-medium text-ink mb-1.5">New Password</label>
+          <input type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="input" placeholder="At least 8 characters" />
         </div>
-        {ApexliwordMsg && msgBox(ApexliwordMsg)}
-        <button type="submit" disabled={savingApexliword} className="btn-primary">
-          {savingApexliword ? "Updating…" : "Update Apexliword"}
+        {passwordMsg && msgBox(passwordMsg)}
+        <button type="submit" disabled={savingPassword} className="btn-primary">
+          {savingPassword ? "Updating…" : "Update Password"}
         </button>
       </form>
     </div>

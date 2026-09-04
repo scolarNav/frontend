@@ -379,7 +379,7 @@ export default function GrantsPage() {
       {grants.length > 0 && !loading && (
         <p className="text-xs text-slate/60 text-center mt-10 font-mono">
           Aggregated from OpportunityDesk, FundsForNGOs, OpportunitiesForAfricans, Youthop.
-          Apexli does not endorse or verify individual listings.
+          ScolarNav does not endorse or verify individual listings.
         </p>
       )}
     </main>

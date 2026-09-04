@@ -223,7 +223,7 @@ export default function GrantDetailPage() {
 
       {/* Footer note */}
       <p className="font-mono text-xs text-slate/50 mt-10 pt-6 border-t border-rule">
-        Listed from {grant.source} · Added {scrapedDate} · Apexli does not verify individual listings — always check the official source before applying.
+        Listed from {grant.source} · Added {scrapedDate} · ScolarNav does not verify individual listings — always check the official source before applying.
       </p>
     </main>
   );

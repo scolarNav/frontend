@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms and conditions for using Apexli — the scholarship coaching platform.",
+  description: "Terms and conditions for using ScolarNav — the scholarship coaching platform.",
 };
 
 const LAST_UPDATED = "4 September 2026";
@@ -18,14 +18,14 @@ export default function TermsPage() {
       <div className="mt-10 space-y-10 text-ink-soft leading-relaxed">
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">1. About Apexli</h2>
+          <h2 className="font-display text-xl text-ink mb-3">1. About ScolarNav</h2>
           <p>
-            Apexli ("we", "us", "our") is an AI-powered scholarship coaching platform that helps students —
+            ScolarNav ("we", "us", "our") is an AI-powered scholarship coaching platform that helps students —
             primarily from Africa — discover opportunities, strengthen their applications, and prepare for
-            interviews. Apexli is operated by Passage Technologies Ltd.
+            interviews. ScolarNav is operated by ScolarNav.
           </p>
           <p className="mt-3">
-            By creating an account or using any part of the Apexli platform, you ("you", "user") agree to
+            By creating an account or using any part of the ScolarNav platform, you ("you", "user") agree to
             these Terms of Service. If you do not agree, please do not use the platform.
           </p>
         </section>
@@ -33,7 +33,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">2. Eligibility</h2>
           <p>
-            You must be at least 16 years old to use Apexli. By using the platform, you confirm that you
+            You must be at least 16 years old to use ScolarNav. By using the platform, you confirm that you
             meet this requirement. If you are under 18, you should review these terms with a parent or
             guardian.
           </p>
@@ -58,7 +58,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">4. Free and Pro Plans</h2>
           <p>
-            Apexli offers a free tier and a Pro subscription. Free features are available indefinitely with
+            ScolarNav offers a free tier and a Pro subscription. Free features are available indefinitely with
             no credit card required. Pro features are unlocked upon payment of the applicable subscription
             fee (monthly or annual).
           </p>
@@ -89,12 +89,12 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">6. AI-Generated Content</h2>
           <p>
-            Apexli uses large language models (including Claude by Anthropic) to provide coaching, feedback,
+            ScolarNav uses large language models (including Claude by Anthropic) to provide coaching, feedback,
             roadmaps, interview practice, and opportunity matching. You acknowledge that:
           </p>
           <ul className="mt-3 space-y-2 list-disc list-inside">
             <li>AI-generated content may contain inaccuracies and should not be taken as professional advice.</li>
-            <li>Apexli does not guarantee any scholarship outcome. Final decisions rest entirely with awarding committees.</li>
+            <li>ScolarNav does not guarantee any scholarship outcome. Final decisions rest entirely with awarding committees.</li>
             <li>You should independently verify scholarship details, deadlines, and eligibility requirements before applying.</li>
             <li>AI coaching is a preparation tool — not a guarantee, endorsement, or prediction of success.</li>
           </ul>
@@ -104,7 +104,7 @@ export default function TermsPage() {
           <h2 className="font-display text-xl text-ink mb-3">7. CV and Personal Data</h2>
           <p>
             When you upload your CV, we parse and store its contents to power personalised features. You
-            retain ownership of your CV and personal data. By uploading, you grant Apexli a limited licence
+            retain ownership of your CV and personal data. By uploading, you grant ScolarNav a limited licence
             to process that data solely to deliver the services described in these Terms.
           </p>
           <p className="mt-3">
@@ -137,7 +137,7 @@ export default function TermsPage() {
           <h2 className="font-display text-xl text-ink mb-3">9. Intellectual Property</h2>
           <p>
             All platform content — including the design, text, branding, code, and AI prompts — is the
-            property of Passage Technologies Ltd or its licensors. You may not reproduce or redistribute any
+            property of ScolarNav or its licensors. You may not reproduce or redistribute any
             part of the platform without our written permission.
           </p>
           <p className="mt-3">
@@ -149,7 +149,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">10. Third-Party Services</h2>
           <p>
-            Apexli integrates with third-party services including Stripe (payment processing), Paystack
+            ScolarNav integrates with third-party services including Stripe (payment processing), Paystack
             (payment processing for African users), Google (authentication), and Anthropic (AI). Your use
             of these services is subject to their respective terms and privacy policies. We are not
             responsible for the practices of these third parties.
@@ -160,7 +160,7 @@ export default function TermsPage() {
           <h2 className="font-display text-xl text-ink mb-3">11. Disclaimers and Limitation of Liability</h2>
           <p>
             The platform is provided "as is" without warranties of any kind, express or implied. To the
-            fullest extent permitted by law, Apexli shall not be liable for any indirect, incidental,
+            fullest extent permitted by law, ScolarNav shall not be liable for any indirect, incidental,
             special, or consequential damages arising from your use of the platform — including, without
             limitation, loss of scholarship opportunities or application outcomes.
           </p>
@@ -211,7 +211,7 @@ export default function TermsPage() {
       </div>
 
       <div className="mt-14 pt-8 border-t border-rule flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <p className="text-xs font-mono text-slate">© 2026 Passage Technologies Ltd. All rights reserved.</p>
+        <p className="text-xs font-mono text-slate">© 2026 ScolarNav. All rights reserved.</p>
         <Link href="/privacy" className="text-sm text-forest font-medium hover:underline">
           Privacy Policy →
         </Link>

@@ -10,7 +10,7 @@ export class ApiError extends Error {
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("Apexli_token");
+  return localStorage.getItem("ScolarNav_token");
 }
 
 interface RequestOptions extends RequestInit {
@@ -66,9 +66,9 @@ export const api = {
 };
 
 export function setToken(token: string) {
-  if (typeof window !== "undefined") localStorage.setItem("Apexli_token", token);
+  if (typeof window !== "undefined") localStorage.setItem("ScolarNav_token", token);
 }
 
 export function clearToken() {
-  if (typeof window !== "undefined") localStorage.removeItem("Apexli_token");
+  if (typeof window !== "undefined") localStorage.removeItem("ScolarNav_token");
 }

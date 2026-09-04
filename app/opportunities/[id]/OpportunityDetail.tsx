@@ -347,7 +347,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
             </h2>
             <p className="text-sm text-slate mt-3 mb-5">
               Work with someone who has been where you want to go — a scholarship alumnus or former selection panel member.
-              All coaches are verified by the Passage team.
+              All coaches are verified by the ScolarNav team.
             </p>
 
             {bookingDone && (

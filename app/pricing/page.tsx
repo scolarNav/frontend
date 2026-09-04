@@ -110,13 +110,13 @@ export default function PricingPage() {
           Better prepared.<br />Better odds.
         </h1>
         <p className="text-ink-soft mt-4 leading-relaxed">
-          Apexli doesn't decide who gets the scholarship — committees do. What we do is help you show up as the strongest version of yourself on paper.
+          ScolarNav doesn't decide who gets the scholarship — committees do. What we do is help you show up as the strongest version of yourself on paper.
         </p>
       </div>
 
       {/* Honest positioning */}
       <div className="mt-10 case-card p-6 max-w-2xl mx-auto">
-        <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">What Apexli actually does</p>
+        <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">What ScolarNav actually does</p>
         <div className="grid sm:grid-cols-3 gap-4 text-center">
           {[
             { icon: "📋", label: "Closes gaps", desc: "Shows you exactly what strong applicants have that you don't — yet." },
@@ -281,8 +281,8 @@ export default function PricingPage() {
         <h2 className="font-display text-2xl text-ink">Common questions</h2>
         {[
           {
-            q: "Does Apexli guarantee I'll get a scholarship?",
-            a: "No — and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. Apexli helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do — and it's worth a lot.",
+            q: "Does ScolarNav guarantee I'll get a scholarship?",
+            a: "No — and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do — and it's worth a lot.",
           },
           {
             q: "What does the 7-day free trial include?",

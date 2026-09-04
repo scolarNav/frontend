@@ -263,7 +263,7 @@ export default function DashboardPage() {
                 You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won — celebrate it
               </p>
               <p className="text-white/60 text-sm mt-1 leading-relaxed">
-                Share your story on the Apexli wins wall. Other students preparing their applications will see it — and it might be the thing that keeps someone going.
+                Share your story on the ScolarNav wins wall. Other students preparing their applications will see it — and it might be the thing that keeps someone going.
               </p>
             </div>
             <a

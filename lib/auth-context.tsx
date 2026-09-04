@@ -7,8 +7,8 @@ import { User } from "./types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, Apexliword: string) => Promise<void>;
-  register: (fullName: string, email: string, Apexliword: string, country?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (fullName: string, email: string, password: string, country?: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<{ isNew?: boolean }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("Apexli_token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
     if (!token) {
       setLoading(false);
       return;
@@ -39,17 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function login(email: string, Apexliword: string) {
-    const data = await api.post<{ token: string; user: User }>("/auth/login", { email, password: Apexliword }, { auth: false });
+  async function login(email: string, password: string) {
+    const data = await api.post<{ token: string; user: User }>("/auth/login", { email, password: password }, { auth: false });
     setToken(data.token);
     setUser(data.user);
     // console.log("User logged in:", data.user);
   }
 
-  async function register(fullName: string, email: string, Apexliword: string, country?: string) {
+  async function register(fullName: string, email: string, password: string, country?: string) {
     const data = await api.post<{ token: string; user: User }>(
       "/auth/register",
-      { fullName, email, password: Apexliword, country },
+      { fullName, email, password: password, country },
       { auth: false }
     );
     setToken(data.token);

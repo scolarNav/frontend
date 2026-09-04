@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-const STORAGE_KEY = "apexli_cookie_consent";
+const STORAGE_KEY = "scholarnav_cookie_consent";
 
 type ConsentValue = "all" | "essential";
 

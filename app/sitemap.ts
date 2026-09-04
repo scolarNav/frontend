@@ -1,6 +1,6 @@
 import { MetadataRoute } from "next";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://Apexli.app";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarnav.app";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
