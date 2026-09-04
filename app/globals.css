@@ -1,0 +1,184 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+::selection {
+  background-color: #d3622c;
+  color: #ffffff;
+}
+
+body {
+  background-color: #f8f6f2;
+  color: #0f172a;
+}
+
+/* ─── Cards ───────────────────────────────────────────────── */
+
+.case-card {
+  border: 1px solid #c5d5e8;
+  background: #ffffff;
+  border-radius: 10px;
+}
+
+.case-card-interactive {
+  border: 1px solid #c5d5e8;
+  background: #ffffff;
+  border-radius: 10px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.case-card-interactive:hover {
+  background: #fafcff;
+  border-color: #a8bfd8;
+}
+
+/* ─── Badges / Tags ───────────────────────────────────────── */
+
+.badge {
+  font-family: var(--font-mono);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.65rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.stamp {
+  font-family: var(--font-mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border: 1px solid currentColor;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.65rem;
+  border-radius: 5px;
+}
+
+/* ─── Form elements ───────────────────────────────────────── */
+
+.input {
+  width: 100%;
+  border: 1px solid #c5d5e8;
+  border-radius: 8px;
+  padding: 0.65rem 0.9rem;
+  font-size: 0.875rem;
+  background: #ffffff;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.15s ease;
+}
+
+.input:focus {
+  border-color: #6d8ec5;
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: #f8f6f2;
+}
+
+/* ─── Buttons ─────────────────────────────────────────────── */
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  background: #d3622c;
+  color: #ffffff;
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.btn-primary:hover {
+  background: #c05520;
+}
+
+.btn-primary:active {
+  transform: scale(0.98);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.65rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #334155;
+  border: 1px solid #c5d5e8;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn-secondary:hover {
+  background: #f8f6f2;
+  border-color: #a8bfd8;
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ─── Bento discovery grid ───────────────────────────────── */
+
+.bento-discovery {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.875rem;
+}
+
+/* Repeating 7-item block: [4][2] | [2][2][2] | [3][3] */
+.bento-discovery > :nth-child(7n+1) { grid-column: span 4; }
+.bento-discovery > :nth-child(7n+2) { grid-column: span 2; }
+.bento-discovery > :nth-child(7n+3),
+.bento-discovery > :nth-child(7n+4),
+.bento-discovery > :nth-child(7n+5) { grid-column: span 2; }
+.bento-discovery > :nth-child(7n+6) { grid-column: span 3; }
+.bento-discovery > :nth-child(7n)   { grid-column: span 3; }
+
+@media (max-width: 1023px) {
+  .bento-discovery {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .bento-discovery > * { grid-column: span 1 !important; }
+}
+
+@media (max-width: 639px) {
+  .bento-discovery { grid-template-columns: 1fr; }
+}
+
+/* ─── Motion preference ───────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ─── Focus visible ───────────────────────────────────────── */
+
+a:focus-visible,
+button:focus-visible,
+select:focus-visible {
+  outline: 2px solid #d3622c;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
