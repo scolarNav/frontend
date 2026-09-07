@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
@@ -10,6 +10,8 @@ import { ApiError } from "@/lib/api";
 export default function LoginPage() {
   const { login, googleLogin } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -20,8 +22,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      await login(email, password);
-      router.push("/dashboard");
+      const user = await login(email, password);
+      router.push(next || (user.isCoach ? "/coaches/dashboard" : "/dashboard"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't sign you in. Please try again.");
     } finally {
@@ -34,8 +36,8 @@ export default function LoginPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const { isNew } = await googleLogin(response.credential);
-      router.push(isNew ? "/onboarding" : "/dashboard");
+      const { isNew, user } = await googleLogin(response.credential);
+      router.push(next || (user.isCoach ? "/coaches/dashboard" : (isNew ? "/onboarding" : "/dashboard")));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Google sign-in failed. Please try again.");
     } finally {
@@ -88,7 +90,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
-              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+              placeholder="••••••••"
             />
           </div>
 
@@ -99,13 +101,13 @@ export default function LoginPage() {
           )}
 
           <button type="submit" disabled={submitting} className="btn-primary w-full mt-2">
-            {submitting ? "Signing inâ€¦" : "Sign in"}
+            {submitting ? "Signing in…" : "Sign in"}
           </button>
         </form>
 
         <p className="text-sm text-slate mt-6 text-center">
           New here?{" "}
-          <Link href="/register" className="text-forest font-medium hover:underline">
+          <Link href={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="text-forest font-medium hover:underline">
             Create an account
           </Link>
         </p>

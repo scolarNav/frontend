@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
@@ -33,8 +33,12 @@ const DEGREE_LEVELS = [
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { refreshUser, user, loading: authLoading } = useAuth();
   const [step, setStep] = useState(1);
+
+  useEffect(() => {
+    if (!authLoading && user?.isCoach) router.replace("/coaches/dashboard");
+  }, [authLoading, user, router]);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

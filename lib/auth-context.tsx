@@ -7,9 +7,9 @@ import { User } from "./types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (fullName: string, email: string, password: string, country?: string) => Promise<void>;
-  googleLogin: (credential: string) => Promise<{ isNew?: boolean }>;
+  login: (email: string, password: string) => Promise<User>;
+  register: (fullName: string, email: string, password: string, country?: string) => Promise<User>;
+  googleLogin: (credential: string) => Promise<{ isNew?: boolean; user: User }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -39,14 +39,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function login(email: string, password: string) {
+  async function login(email: string, password: string): Promise<User> {
     const data = await api.post<{ token: string; user: User }>("/auth/login", { email, password: password }, { auth: false });
     setToken(data.token);
     setUser(data.user);
-    // console.log("User logged in:", data.user);
+    return data.user;
   }
 
-  async function register(fullName: string, email: string, password: string, country?: string) {
+  async function register(fullName: string, email: string, password: string, country?: string): Promise<User> {
     const data = await api.post<{ token: string; user: User }>(
       "/auth/register",
       { fullName, email, password: password, country },
@@ -54,10 +54,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     setToken(data.token);
     setUser(data.user);
-    // console.log("User registered:", data.user);
+    return data.user;
   }
 
-  async function googleLogin(credential: string) {
+  async function googleLogin(credential: string): Promise<{ isNew?: boolean; user: User }> {
     const data = await api.post<{ token: string; user: User; isNew?: boolean }>(
       "/auth/google",
       { credential },
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     );
     setToken(data.token);
     setUser(data.user);
-    return { isNew: data.isNew };
+    return { isNew: data.isNew, user: data.user };
   }
 
   function logout() {

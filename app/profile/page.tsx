@@ -63,7 +63,7 @@ function completionSteps(user: User) {
 }
 
 export default function ProfilePage() {
-  const { user, loading: authLoading, refreshUser } = useAuth();
+  const { user, loading: authLoading, refreshUser, logout } = useAuth();
   const router = useRouter();
 
   // Personal details
@@ -96,6 +96,13 @@ export default function ProfilePage() {
   const [newPassword, setNewPassword] = useState("");
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordMsg, setPasswordMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
+  // Delete account
+  const [showDeleteZone, setShowDeleteZone] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login");
@@ -220,6 +227,24 @@ export default function ProfilePage() {
       setPasswordMsg({ type: "err", text: err instanceof ApiError ? err.message : "Couldn't change password." });
     } finally {
       setSavingPassword(false);
+    }
+  }
+
+  async function handleDeleteAccount(e: React.FormEvent) {
+    e.preventDefault();
+    if (deleteConfirm !== "DELETE") {
+      setDeleteError("Type DELETE exactly to confirm.");
+      return;
+    }
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await api.delete("/auth/account", deletePassword ? { password: deletePassword } : undefined);
+      logout();
+      router.push("/");
+    } catch (err) {
+      setDeleteError(err instanceof ApiError ? err.message : "Deletion failed. Please try again.");
+      setDeleting(false);
     }
   }
 
@@ -517,6 +542,76 @@ export default function ProfilePage() {
           {savingPassword ? "Updating…" : "Update Password"}
         </button>
       </form>
+
+      {/* Danger zone */}
+      <div className="mt-14 border-t border-rule pt-8">
+        <h2 className="font-display text-xl text-alert mb-1">Danger zone</h2>
+        <p className="text-sm text-slate mb-5">
+          Deleting your account permanently removes your profile, CV, applications, and all associated data. This cannot be undone.
+        </p>
+
+        {!showDeleteZone ? (
+          <button
+            onClick={() => setShowDeleteZone(true)}
+            className="text-sm font-medium text-alert border border-alert/30 hover:border-alert hover:bg-red-50 transition-colors px-4 py-2 rounded-lg"
+          >
+            Delete my account
+          </button>
+        ) : (
+          <form onSubmit={handleDeleteAccount} className="case-card border-alert/30 p-6 space-y-5">
+            <p className="text-sm font-medium text-ink">Confirm account deletion</p>
+
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5">
+                Password <span className="text-slate font-normal">(leave blank if you signed in with Google)</span>
+              </label>
+              <input
+                type="password"
+                value={deletePassword}
+                onChange={(e) => setDeletePassword(e.target.value)}
+                className="input"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5">
+                Type <span className="font-mono text-alert">DELETE</span> to confirm
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                className="input"
+                placeholder="DELETE"
+                autoComplete="off"
+              />
+            </div>
+
+            {deleteError && (
+              <p className="text-alert text-sm">{deleteError}</p>
+            )}
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="submit"
+                disabled={deleting || deleteConfirm !== "DELETE"}
+                className="text-sm font-medium text-white bg-alert hover:bg-red-700 disabled:opacity-40 transition-colors px-5 py-2.5 rounded-lg"
+              >
+                {deleting ? "Deleting…" : "Permanently delete account"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setShowDeleteZone(false); setDeletePassword(""); setDeleteConfirm(""); setDeleteError(null); }}
+                className="text-sm text-slate hover:text-ink transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

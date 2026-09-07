@@ -1,9 +1,9 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "Terms and conditions for using ScolarNav â€” the scholarship coaching platform.",
+  description: "Terms and conditions for using ScolarNav — the scholarship coaching platform.",
 };
 
 const LAST_UPDATED = "4 September 2026";
@@ -20,8 +20,8 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">1. About ScolarNav</h2>
           <p>
-            ScolarNav ("we", "us", "our") is an AI-powered scholarship coaching platform that helps students â€”
-            primarily from Africa â€” discover opportunities, strengthen their applications, and prepare for
+            ScolarNav ("we", "us", "our") is an AI-powered scholarship coaching platform that helps students —
+            primarily from Africa — discover opportunities, strengthen their applications, and prepare for
             interviews. ScolarNav is operated by ScolarNav.
           </p>
           <p className="mt-3">
@@ -65,7 +65,7 @@ export default function TermsPage() {
           <p className="mt-3">
             Pro subscriptions include a 7-day free trial. After the trial, your chosen billing cycle begins
             automatically. You may cancel at any time before the trial ends to avoid charges. Cancellation
-            takes effect at the end of the current billing period â€” you retain Pro access until then.
+            takes effect at the end of the current billing period — you retain Pro access until then.
           </p>
           <p className="mt-3">
             Prices are listed in USD. Users in supported African countries are billed in local currency via
@@ -96,7 +96,7 @@ export default function TermsPage() {
             <li>AI-generated content may contain inaccuracies and should not be taken as professional advice.</li>
             <li>ScolarNav does not guarantee any scholarship outcome. Final decisions rest entirely with awarding committees.</li>
             <li>You should independently verify scholarship details, deadlines, and eligibility requirements before applying.</li>
-            <li>AI coaching is a preparation tool â€” not a guarantee, endorsement, or prediction of success.</li>
+            <li>AI coaching is a preparation tool — not a guarantee, endorsement, or prediction of success.</li>
           </ul>
         </section>
 
@@ -136,7 +136,7 @@ export default function TermsPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">9. Intellectual Property</h2>
           <p>
-            All platform content â€” including the design, text, branding, code, and AI prompts â€” is the
+            All platform content — including the design, text, branding, code, and AI prompts — is the
             property of ScolarNav or its licensors. You may not reproduce or redistribute any
             part of the platform without our written permission.
           </p>
@@ -161,7 +161,7 @@ export default function TermsPage() {
           <p>
             The platform is provided "as is" without warranties of any kind, express or implied. To the
             fullest extent permitted by law, ScolarNav shall not be liable for any indirect, incidental,
-            special, or consequential damages arising from your use of the platform â€” including, without
+            special, or consequential damages arising from your use of the platform — including, without
             limitation, loss of scholarship opportunities or application outcomes.
           </p>
           <p className="mt-3">
@@ -211,9 +211,9 @@ export default function TermsPage() {
       </div>
 
       <div className="mt-14 pt-8 border-t border-rule flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <p className="text-xs font-mono text-slate">Â© 2026 ScolarNav. All rights reserved.</p>
+        <p className="text-xs font-mono text-slate">© 2026 ScolarNav. All rights reserved.</p>
         <Link href="/privacy" className="text-sm text-forest font-medium hover:underline">
-          Privacy Policy â†’
+          Privacy Policy →
         </Link>
       </div>
     </div>

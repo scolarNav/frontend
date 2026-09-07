@@ -1,7 +1,7 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -18,16 +18,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const FEATURE_CARDS = [
-  { href: "/mentor", icon: "ðŸ’¬", label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
-  { href: "/roadmap", icon: "ðŸ—ºï¸", label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
-  { href: "/deadlines", icon: "ðŸ“…", label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
-  { href: "/countries", icon: "ðŸŒ", label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
-  { href: "/interview", icon: "ðŸŽ¤", label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
+  { href: "/mentor", icon: "💬", label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
+  { href: "/roadmap", icon: "🗺️", label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
+  { href: "/deadlines", icon: "📅", label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
+  { href: "/countries", icon: "🌍", label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
+  { href: "/interview", icon: "🎤", label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
 ];
 
 export default function DashboardPage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const coachingPaid = searchParams.get("coaching_paid") === "1";
 
   const [details, setDetails] = useState<Record<string, Opportunity>>({});
   const [loading, setLoading] = useState(true);
@@ -112,7 +114,7 @@ export default function DashboardPage() {
   }
 
   if (authLoading || loading) {
-    return <p className="max-w-5xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading your dashboardâ€¦</p>;
+    return <p className="max-w-5xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading your dashboard…</p>;
   }
 
   if (!user) return null;
@@ -136,7 +138,7 @@ export default function DashboardPage() {
   const awardedOpps = user.savedOpportunities.filter((s) => s.status === "awarded");
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-14">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
       {/* Trial countdown banner */}
       {isTrialing && trialDaysLeft !== null && (
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border border-rule bg-white rounded-lg">
@@ -149,17 +151,29 @@ export default function DashboardPage() {
                   : `${trialDaysLeft} days left on your free trial`}
             </p>
             <p className="text-xs text-slate mt-0.5">
-              After the trial, you'll be charged {user.subscription.gateway === "paystack" ? "via Paystack" : "$7/month or $55/year"} â€” or you can cancel anytime before it ends.
+              After the trial, you'll be charged {user.subscription.gateway === "paystack" ? "via Paystack" : "$7/month or $55/year"} — or you can cancel anytime before it ends.
             </p>
           </div>
           <a href="/pricing" className="shrink-0 text-xs font-mono text-ink-soft border border-rule px-4 py-2 hover:border-ink transition-colors whitespace-nowrap">
-            Manage subscription â†’
+            Manage subscription →
           </a>
         </div>
       )}
 
+      {coachingPaid && (
+        <div className="mb-6 p-4 rounded-xl border border-green-200 bg-green-50 flex items-start gap-3">
+          <span className="text-green-600 text-lg shrink-0">✓</span>
+          <div>
+            <p className="font-medium text-green-800">Payment confirmed — coaching session booked.</p>
+            <p className="text-sm text-green-700 mt-0.5">
+              Your coach will review your request and accept shortly. You'll receive an email once confirmed.
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="mb-10">
-        <h1 className="font-display text-4xl text-ink">
+        <h1 className="font-display text-3xl sm:text-4xl text-ink">
           Welcome back, {user.fullName.split(" ")[0]}
         </h1>
       </div>
@@ -167,9 +181,9 @@ export default function DashboardPage() {
       {/* Profile completion nudges */}
       {(() => {
         const gaps: { label: string; href: string; cta: string }[] = [];
-        if (!user.cvData) gaps.push({ label: "Upload your CV to unlock personalised matching, readiness scoring, and tailored coaching.", href: "/cv", cta: "Upload CV â†’" });
-        if (!user.profile?.targetCountries?.length) gaps.push({ label: "Add target countries so we can prioritise scholarships from where you want to study.", href: "/profile", cta: "Set countries â†’" });
-        if (!user.profile?.targetFields?.length) gaps.push({ label: "Add your fields of study so recommendations match what you actually want to pursue.", href: "/profile", cta: "Add fields â†’" });
+        if (!user.cvData) gaps.push({ label: "Upload your CV to unlock personalised matching, readiness scoring, and tailored coaching.", href: "/cv", cta: "Upload CV →" });
+        if (!user.profile?.targetCountries?.length) gaps.push({ label: "Add target countries so we can prioritise scholarships from where you want to study.", href: "/profile", cta: "Set countries →" });
+        if (!user.profile?.targetFields?.length) gaps.push({ label: "Add your fields of study so recommendations match what you actually want to pursue.", href: "/profile", cta: "Add fields →" });
         if (gaps.length === 0) return null;
         return (
           <div className="mb-8 space-y-2">
@@ -183,15 +197,15 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* Stats â€” minimal, no card border needed; numerals do the work */}
+      {/* Stats — minimal, no card border needed; numerals do the work */}
       <div className="grid grid-cols-3 divide-x divide-rule mb-12 border border-rule rounded-lg overflow-hidden">
         {[
           { label: "Active", value: activeApps },
           { label: "Submitted", value: submitted },
           { label: "Won", value: won },
         ].map(({ label, value }) => (
-          <div key={label} className="px-6 py-5 bg-white">
-            <p className="font-display text-4xl text-ink">{value}</p>
+          <div key={label} className="px-3 sm:px-6 py-4 sm:py-5 bg-white">
+            <p className="font-display text-2xl sm:text-4xl text-ink">{value}</p>
             <p className="text-xs text-slate font-mono mt-1.5 uppercase tracking-widest">{label}</p>
           </div>
         ))}
@@ -263,13 +277,13 @@ export default function DashboardPage() {
       })()}
 </div>
 
-      {/* Feature shortcuts â€” bento: [8][4] | [4][4][4] on 12-col */}
-      <div className="grid grid-cols-12 gap-3 mb-12">
+      {/* Feature shortcuts — bento: [8][4] | [4][4][4] on 12-col */}
+      <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-10 sm:mb-12">
         {FEATURE_CARDS.map(({ href, icon, label, desc, pro }, i) => (
           <Link
             key={href}
             href={href}
-            className={`case-card-interactive flex flex-col gap-3 ${i === 0 ? "col-span-12 sm:col-span-8 p-7" :
+            className={`case-card-interactive flex flex-col gap-3 ${i === 0 ? "col-span-12 sm:col-span-8 p-5 sm:p-7" :
               i === 1 ? "col-span-12 sm:col-span-4 p-5" :
                 "col-span-12 sm:col-span-4 p-5"
               }`}
@@ -298,7 +312,7 @@ export default function DashboardPage() {
               Your score tells you exactly where you stand and what to fix before applying.
             </p>
             <Link href="/cv" className="btn-primary inline-flex mt-4">
-              Upload CV â†’
+              Upload CV →
             </Link>
           </div>
         ) : readiness ? (
@@ -313,7 +327,7 @@ export default function DashboardPage() {
               disabled={readinessLoading}
               className="btn-primary"
             >
-              {readinessLoading ? "Calculatingâ€¦" : "Calculate my score"}
+              {readinessLoading ? "Calculating…" : "Calculate my score"}
             </button>
           </div>
         )}
@@ -324,19 +338,19 @@ export default function DashboardPage() {
         <div className="mb-10 case-card p-6" style={{ background: "#6d8ec5", border: "none" }}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1">
-              <p className="text-2xl mb-1">ðŸ†</p>
+              <p className="text-2xl mb-1">🏆</p>
               <p className="font-display text-xl text-white">
-                You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won â€” celebrate it
+                You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won — celebrate it
               </p>
               <p className="text-white/60 text-sm mt-1 leading-relaxed">
-                Share your story on the ScolarNav wins wall. Other students preparing their applications will see it â€” and it might be the thing that keeps someone going.
+                Share your story on the ScolarNav wins wall. Other students preparing their applications will see it — and it might be the thing that keeps someone going.
               </p>
             </div>
             <a
               href="/wins/share"
               className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-navy bg-white hover:bg-surface transition-colors"
             >
-              Share my win â†’
+              Share my win →
             </a>
           </div>
         </div>
@@ -347,7 +361,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-2xl text-ink">Case Files</h2>
           <Link href="/deadlines" className="text-sm text-forest font-mono hover:underline">
-            View deadlines â†’
+            View deadlines →
           </Link>
         </div>
 
@@ -357,7 +371,7 @@ export default function DashboardPage() {
           <div className="case-card p-8 text-center">
             <p className="text-ink-soft">You haven't saved any opportunities yet.</p>
             <Link href="/" className="inline-block mt-3 text-forest underline text-sm">
-              Browse the catalogue â†’
+              Browse the catalogue →
             </Link>
           </div>
         ) : (
@@ -368,7 +382,7 @@ export default function DashboardPage() {
                 <div key={s.opportunity} className="case-card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1">
                     <Link href={`/opportunities/${s.opportunity}`} className="font-display text-lg text-ink hover:text-forest transition-colors">
-                      {opp?.title || "Loadingâ€¦"}
+                      {opp?.title || "Loading…"}
                     </Link>
                     <p className="text-sm text-slate mt-0.5">{opp?.provider}</p>
                     {opp?.deadline && (() => {

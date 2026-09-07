@@ -129,6 +129,7 @@ export interface User {
   subscription: Subscription;
   coachingUsed: number;
   isAdmin: boolean;
+  isCoach?: boolean;
   profile?: UserProfile;
   readinessCache?: ReadinessScore;
   roadmapCache?: Roadmap;
@@ -434,7 +435,7 @@ export interface CoachingBooking {
   coachId: HumanCoach | string;
   opportunityId: { _id: string; title: string; country: string } | string;
   sessionType: "coaching" | "review";
-  status: "requested" | "accepted" | "completed" | "cancelled";
+  status: "pending_payment" | "requested" | "accepted" | "completed" | "cancelled";
   totalAmountUSD: number;
   coachPayoutUSD: number;
   platformFeeUSD: number;

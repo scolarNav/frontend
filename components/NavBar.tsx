@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -191,16 +191,18 @@ export default function NavBar() {
                   <Link href="/bookings" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
                     My Sessions
                   </Link>
-                  <Link href="/coaches/dashboard" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
-                    Coach Portal
-                  </Link>
+                  {user.isCoach && (
+                    <Link href="/coaches/dashboard" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
+                      Coach Portal
+                    </Link>
+                  )}
                   {!isPro && (
                     <Link
                       href="/pricing"
                       className="block px-4 py-2.5 text-sm font-medium transition-colors hover:bg-[#fff7f4]"
                       style={{ color: "#d3622c" }}
                     >
-                      Upgrade to Pro â†’
+                      Upgrade to Pro →
                     </Link>
                   )}
                   {isPro && (
@@ -245,7 +247,7 @@ export default function NavBar() {
           <button
             onClick={() => setMobileOpen((o) => !o)}
             aria-label="Toggle menu"
-            className="flex flex-col gap-1.5 p-1.5 rounded-md hover:bg-white/10 transition-colors"
+            className="flex flex-col gap-1.5 p-2.5 -mr-1.5 rounded-md hover:bg-white/10 transition-colors"
           >
             <span className={`block h-px w-5 bg-white transition-transform duration-200 origin-center ${mobileOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
             <span className={`block h-px w-5 bg-white transition-opacity duration-200 ${mobileOpen ? "opacity-0" : ""}`} />
@@ -303,7 +305,9 @@ export default function NavBar() {
                       <Link href="/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Dashboard</Link>
                       <Link href="/profile" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Profile</Link>
                       <Link href="/bookings" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">My Sessions</Link>
-                      <Link href="/coaches/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Coach Portal</Link>
+                      {user.isCoach && (
+                        <Link href="/coaches/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Coach Portal</Link>
+                      )}
                       {user.isAdmin && (
                         <Link href="/admin" className="block px-5 py-3 text-xs font-mono uppercase tracking-widest" style={{ color: "#f0c845" }}>
                           Admin

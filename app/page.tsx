@@ -26,7 +26,7 @@ const DEGREE_LEVELS = [
   { value: "none", label: "No degree req." },
 ];
 
-// Countries as stored by the scraper â€” these are the values that appear in the DB
+// Countries as stored by the scraper — these are the values that appear in the DB
 const SCHOLARSHIP_COUNTRIES = [
   { value: "United Kingdom", label: "United Kingdom" },
   { value: "United States", label: "United States" },
@@ -123,7 +123,7 @@ function ForYouPanel() {
       if (force) setDismissedCount(0);
     } catch (err: any) {
       // If the server returns UPGRADE_REQUIRED for a free user, show the upgrade
-      // teaser instead of a raw error â€” this can happen while the server restarts.
+      // teaser instead of a raw error — this can happen while the server restarts.
       if (err.message?.includes("UPGRADE_REQUIRED") && !isPro) {
         setMatches([]);
         setIsLimited(true);
@@ -143,7 +143,7 @@ function ForYouPanel() {
       setMatches((prev) => prev.filter((m) => m.opportunityId !== opportunityId));
       setDismissedCount((n) => n + 1);
     } catch {
-      // dismiss failed silently â€” don't disrupt the user
+      // dismiss failed silently — don't disrupt the user
     } finally {
       setDismissing(null);
     }
@@ -174,9 +174,9 @@ function ForYouPanel() {
       <div className="mt-10 case-card p-8 max-w-lg">
         <p className="font-display text-xl text-ink">Upload your CV to unlock matches</p>
         <p className="text-ink-soft mt-2 text-sm leading-relaxed">
-          We read your actual education, experience, and skills â€” then rank every opportunity against it. No generic suggestions.
+          We read your actual education, experience, and skills — then rank every opportunity against it. No generic suggestions.
         </p>
-        <Link href="/cv" className="btn-primary inline-flex mt-5 text-sm">Upload CV â†’</Link>
+        <Link href="/cv" className="btn-primary inline-flex mt-5 text-sm">Upload CV →</Link>
       </div>
     );
   }
@@ -186,7 +186,7 @@ function ForYouPanel() {
       <div className="mt-10">
         <div className="flex items-center gap-2 mb-6">
           <span className="inline-block w-2 h-2 rounded-full bg-forest animate-pulse" />
-          <p className="text-sm font-mono text-slate">Scoring opportunities against your CVâ€¦</p>
+          <p className="text-sm font-mono text-slate">Scoring opportunities against your CV…</p>
         </div>
         <div className="space-y-3">
           {[...Array(4)].map((_, i) => (
@@ -219,14 +219,14 @@ function ForYouPanel() {
         <p className="text-ink-soft mt-2 text-sm leading-relaxed">
           {dismissedCount > 0
             ? `You dismissed ${dismissedCount} suggestion${dismissedCount !== 1 ? "s" : ""}. Try refreshing to see new ones, or add target countries and a degree level to your profile for better results.`
-            : "We didn't find opportunities that clearly match your profile. Add target countries and a target degree level to your profile â€” that's the fastest way to improve results."}
+            : "We didn't find opportunities that clearly match your profile. Add target countries and a target degree level to your profile — that's the fastest way to improve results."}
         </p>
         <div className="mt-5 flex gap-3 flex-wrap">
           <button onClick={() => fetchRecommendations(true)} className="btn-primary text-sm">
             Refresh
           </button>
           <Link href="/profile" className="btn-secondary text-sm">
-            Update profile â†’
+            Update profile →
           </Link>
         </div>
       </div>
@@ -242,7 +242,7 @@ function ForYouPanel() {
         <p className="text-xs font-mono text-slate">
           {matches.length} opportunit{matches.length !== 1 ? "ies" : "y"} ranked by profile fit
           {dismissedCount > 0 && (
-            <span className="ml-2 text-slate/60">Â· {dismissedCount} dismissed</span>
+            <span className="ml-2 text-slate/60">· {dismissedCount} dismissed</span>
           )}
         </p>
         <button
@@ -250,7 +250,7 @@ function ForYouPanel() {
           disabled={loading}
           className="font-mono text-xs text-forest hover:underline disabled:opacity-40"
         >
-          {loading ? "Refreshingâ€¦" : "â†º Refresh results"}
+          {loading ? "Refreshing…" : "↺ Refresh results"}
         </button>
       </div>
 
@@ -267,12 +267,12 @@ function ForYouPanel() {
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <Link href={`/opportunities/${match.opportunityId}`} className="min-w-0 flex-1 block">
                   <p className="font-mono text-xs uppercase tracking-widest mb-1" style={{ color: tier.color }}>
-                    {tier.label}{match.fitScore != null ? ` Â· ${match.fitScore}/100` : ""}
+                    {tier.label}{match.fitScore != null ? ` · ${match.fitScore}/100` : ""}
                   </p>
                   <p className="font-display text-lg text-ink group-hover:text-forest transition-colors leading-snug break-words">
                     {opp.title}
                   </p>
-                  <p className="text-sm text-slate mt-0.5">{opp.provider} Â· {opp.country}</p>
+                  <p className="text-sm text-slate mt-0.5">{opp.provider} · {opp.country}</p>
                 </Link>
                 <button
                   onClick={() => handleDismiss(match.opportunityId)}
@@ -280,7 +280,7 @@ function ForYouPanel() {
                   title="Not for me"
                   className="shrink-0 font-mono text-[0.65rem] text-slate/40 hover:text-slate border border-transparent hover:border-rule px-2 py-1 rounded transition-all disabled:opacity-30"
                 >
-                  {isDismissing ? "â€¦" : "Not for me"}
+                  {isDismissing ? "…" : "Not for me"}
                 </button>
               </div>
 
@@ -311,10 +311,10 @@ function ForYouPanel() {
         <div className="mt-6 rounded-xl border border-rule p-5" style={{ background: "#f8f4ef" }}>
           <p className="font-display text-base text-ink">Showing 3 heuristic matches</p>
           <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-            Pro uses your full CV to score every opportunity 0â€“100, ranks them by fit tier, and explains exactly why each one matches â€” or doesn't.
+            Pro uses your full CV to score every opportunity 0–100, ranks them by fit tier, and explains exactly why each one matches — or doesn't.
           </p>
           <Link href="/pricing" className="btn-primary inline-flex mt-4 text-sm">
-            Unlock full matching â†’
+            Unlock full matching →
           </Link>
         </div>
       )}
@@ -324,7 +324,7 @@ function ForYouPanel() {
           Scores based on your CV{user.cvData?.parsedAt ? ` (uploaded ${new Date(user.cvData.parsedAt).toLocaleDateString()})` : ""}{user.profile?.targetCountries?.length ? ` and target countries (${user.profile.targetCountries.slice(0, 2).join(", ")})` : ""}.
           Committees make the final call.{" "}
           <Link href="/cv" className="text-forest underline">Update CV</Link>
-          {" Â· "}
+          {" · "}
           <Link href="/profile" className="text-forest underline">Update profile</Link>
           {" "}to sharpen results.
         </p>
@@ -359,7 +359,7 @@ export default function HomePage() {
       const params = new URLSearchParams();
       if (q) params.set("q", q);
       if (type) params.set("type", type);
-      // incubators/accelerators live on /grants â€” exclude when no specific type is selected
+      // incubators/accelerators live on /grants — exclude when no specific type is selected
       else params.set("excludeType", "incubator");
       if (degreeLevel) params.set("degreeLevel", degreeLevel);
       if (country) params.set("country", country);
@@ -394,8 +394,8 @@ export default function HomePage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-16">
-      {/* Hero â€” shown only to visitors, hidden once logged in */}
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
+      {/* Hero — shown only to visitors, hidden once logged in */}
       {!authLoading && !user && (
         <div className="flex flex-col lg:flex-row lg:items-center gap-14 lg:gap-16">
           <div className="max-w-xl flex-shrink-0">
@@ -404,13 +404,13 @@ export default function HomePage() {
               <span style={{ color: "#d3622c" }}>Without the guesswork.</span>
             </h1>
             <p className="text-ink-soft mt-5 text-lg leading-relaxed">
-              Scholarships and programs matched to your profile. Coaching that closes the gaps before you apply. The committee decides â€” we help you show up prepared.
+              Scholarships and programs matched to your profile. Coaching that closes the gaps before you apply. The committee decides — we help you show up prepared.
             </p>
-            <div className="mt-7 flex gap-3">
+            <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/register" className="btn-primary">Get started free</Link>
               <Link href="/cv" className="btn-secondary">Upload your CV</Link>
             </div>
-            <p className="mt-5 text-xs text-slate font-mono">Free to start Â· No credit card required</p>
+            <p className="mt-5 text-xs text-slate font-mono">Free to start · No credit card required</p>
           </div>
 
           {/* Hero visual */}
@@ -445,7 +445,7 @@ export default function HomePage() {
             )}
           </div>
           <Link href="/dashboard" className="text-sm text-slate hover:text-forest transition-colors font-mono">
-            My applications â†’
+            My applications →
           </Link>
         </div>
       )}
@@ -453,12 +453,12 @@ export default function HomePage() {
       {/* Segment control tab switcher */}
       <div className={!authLoading && user ? "mt-8" : "mt-14"}>
         <div
-          className="inline-flex rounded-lg p-1 gap-1"
+          className="flex w-full sm:w-auto rounded-lg p-1 gap-1"
           style={{ background: "#dce8f5" }}
         >
           <button
             onClick={() => setActiveTab("catalogue")}
-            className="px-5 py-2 text-sm font-medium rounded-md transition-all"
+            className="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-md transition-all"
             style={
               activeTab === "catalogue"
                 ? { background: "#fff", color: "#d3622c" }
@@ -469,7 +469,7 @@ export default function HomePage() {
           </button>
           <button
             onClick={() => setActiveTab("for-you")}
-            className="px-5 py-2 text-sm font-medium rounded-md transition-all"
+            className="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-md transition-all"
             style={
               activeTab === "for-you"
                 ? { background: "#fff", color: "#d3622c" }
@@ -485,10 +485,10 @@ export default function HomePage() {
         <ForYouPanel />
       ) : (
         <>
-          {/* Grants callout â€” minimal */}
+          {/* Grants callout — minimal */}
           <p className="mt-5 text-xs text-slate font-mono">
             Looking for startup grants?{" "}
-            <Link href="/grants" className="text-forest underline">Browse the grants catalogue â†’</Link>
+            <Link href="/grants" className="text-forest underline">Browse the grants catalogue →</Link>
           </p>
 
           {/* Filter bar */}
@@ -496,7 +496,7 @@ export default function HomePage() {
             <input
               value={q}
               onChange={handleFilterChange(setQ)}
-              placeholder="Search by title, provider, or keywordâ€¦"
+              placeholder="Search by title, provider, or keyword…"
               className="input flex-1"
             />
             <select
@@ -550,7 +550,7 @@ export default function HomePage() {
                 className="inline-flex items-center justify-center w-4 h-4 rounded border transition-colors shrink-0"
                 style={openOnly ? { background: "#d3622c", borderColor: "#d3622c" } : { borderColor: "#cbd5e1" }}
               >
-                {openOnly && <span className="text-white text-[9px] font-bold leading-none">âœ“</span>}
+                {openOnly && <span className="text-white text-[9px] font-bold leading-none">✓</span>}
               </span>
               Open for applications only
             </button>
@@ -587,7 +587,7 @@ export default function HomePage() {
             {pagination && !loading && (
               <p className="text-xs text-slate font-mono mb-5">
                 {pagination.total} result{pagination.total !== 1 ? "s" : ""}
-                {pagination.pages > 1 && ` â€” page ${pagination.page} of ${pagination.pages}`}
+                {pagination.pages > 1 && ` — page ${pagination.page} of ${pagination.pages}`}
               </p>
             )}
 
@@ -609,19 +609,19 @@ export default function HomePage() {
                   disabled={page === 1 || loading}
                   className="btn-secondary text-sm px-4 py-2 disabled:opacity-30"
                 >
-                  â† Prev
+                  ← Prev
                 </button>
 
                 {Array.from({ length: pagination.pages }, (_, i) => i + 1)
                   .filter((p) => p === 1 || p === pagination.pages || Math.abs(p - page) <= 2)
-                  .reduce<(number | "â€¦")[]>((acc, p, idx, arr) => {
-                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("â€¦");
+                  .reduce<(number | "…")[]>((acc, p, idx, arr) => {
+                    if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("…");
                     acc.push(p);
                     return acc;
                   }, [])
                   .map((p, i) =>
-                    p === "â€¦" ? (
-                      <span key={`ellipsis-${i}`} className="text-slate font-mono text-sm px-1">â€¦</span>
+                    p === "…" ? (
+                      <span key={`ellipsis-${i}`} className="text-slate font-mono text-sm px-1">…</span>
                     ) : (
                       <button
                         key={p}
@@ -642,7 +642,7 @@ export default function HomePage() {
                   disabled={page === pagination.pages || loading}
                   className="btn-secondary text-sm px-4 py-2 disabled:opacity-30"
                 >
-                  Next â†’
+                  Next →
                 </button>
               </div>
             )}

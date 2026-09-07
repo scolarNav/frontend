@@ -62,7 +62,8 @@ export const api = {
     }),
   patch: <T,>(path: string, body?: any, options?: RequestOptions) =>
     request<T>(path, { ...options, method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
-  delete: <T,>(path: string, options?: RequestOptions) => request<T>(path, { ...options, method: "DELETE" }),
+  delete: <T,>(path: string, body?: any, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: "DELETE", body: body ? JSON.stringify(body) : undefined }),
 };
 
 export function setToken(token: string) {

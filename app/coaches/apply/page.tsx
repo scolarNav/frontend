@@ -33,16 +33,17 @@ export default function CoachApplyPage() {
   const [done, setDone] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !user) router.push("/login");
+    if (!authLoading && !user) router.push("/login?next=/coaches/apply");
   }, [authLoading, user, router]);
 
   useEffect(() => {
     if (!user) return;
-    fetch(`${API_BASE}/opportunities?limit=50&type=scholarship&q=${encodeURIComponent(oppSearch)}`)
+    // Load all active scholarships alphabetically so coaches can select upcoming/closed ones too
+    fetch(`${API_BASE}/opportunities?sort=alpha&limit=500`)
       .then((r) => r.json())
       .then((d) => setOpportunities(d.opportunities ?? []))
       .catch(() => {});
-  }, [user, oppSearch]);
+  }, [user]);
 
   function toggleOpp(id: string) {
     setSelectedIds((prev) =>
@@ -97,8 +98,12 @@ export default function CoachApplyPage() {
     );
   }
 
+  const q = oppSearch.toLowerCase();
   const filtered = opportunities.filter((o) =>
-    !oppSearch || o.title.toLowerCase().includes(oppSearch.toLowerCase())
+    !q ||
+    o.title.toLowerCase().includes(q) ||
+    (o.provider ?? "").toLowerCase().includes(q) ||
+    (o.country ?? "").toLowerCase().includes(q)
   );
 
   return (

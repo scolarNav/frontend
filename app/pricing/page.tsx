@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -17,19 +17,19 @@ const FREE_FEATURES = [
   "Save opportunities and track status",
   "CV upload and parsing",
   "Dashboard and deadline tracker",
-  "Readiness Score â€” one calculation",
-  "Mentor â€” 5 questions to try it",
+  "Readiness Score — one calculation",
+  "Mentor — 5 questions to try it",
 ];
 
 const PRO_FEATURES = [
   "Everything in Free",
-  "Mentor â€” unlimited conversations",
-  "My Roadmap â€” week-by-week application plan",
-  "Mock Interview â€” practice with feedback",
-  "For You â€” opportunities matched to your CV",
-  "Readiness Score â€” unlimited refreshes",
+  "Mentor — unlimited conversations",
+  "My Roadmap — week-by-week application plan",
+  "Mock Interview — practice with feedback",
+  "For You — opportunities matched to your CV",
+  "Readiness Score — unlimited refreshes",
   "Application coaching per opportunity",
-  "7-day free trial â€” no card required",
+  "7-day free trial — no card required",
 ];
 
 export default function PricingPage() {
@@ -110,7 +110,7 @@ export default function PricingPage() {
           Better prepared.<br />Better odds.
         </h1>
         <p className="text-ink-soft mt-4 leading-relaxed">
-          ScolarNav doesn't decide who gets the scholarship â€” committees do. What we do is help you show up as the strongest version of yourself on paper.
+          ScolarNav doesn't decide who gets the scholarship — committees do. What we do is help you show up as the strongest version of yourself on paper.
         </p>
       </div>
 
@@ -119,9 +119,9 @@ export default function PricingPage() {
         <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">What ScolarNav actually does</p>
         <div className="grid sm:grid-cols-3 gap-4 text-center">
           {[
-            { icon: "ðŸ“‹", label: "Closes gaps", desc: "Shows you exactly what strong applicants have that you don't â€” yet." },
-            { icon: "ðŸŽ¯", label: "Saves time", desc: "Surfaces opportunities you're actually competitive for, not just broadly eligible." },
-            { icon: "ðŸ’ª", label: "Builds strength", desc: "Helps you prepare, practise, and write at your best before you submit." },
+            { icon: "📋", label: "Closes gaps", desc: "Shows you exactly what strong applicants have that you don't — yet." },
+            { icon: "🎯", label: "Saves time", desc: "Surfaces opportunities you're actually competitive for, not just broadly eligible." },
+            { icon: "💪", label: "Builds strength", desc: "Helps you prepare, practise, and write at your best before you submit." },
           ].map(({ icon, label, desc }) => (
             <div key={label}>
               <p className="text-2xl mb-2">{icon}</p>
@@ -169,7 +169,7 @@ export default function PricingPage() {
 
       {countryName && (
         <p className="text-center text-xs font-mono text-slate mt-3">
-          Payment via {usePaystack ? "Paystack" : "Stripe"} Â· {countryName}
+          Payment via {usePaystack ? "Paystack" : "Stripe"} · {countryName}
         </p>
       )}
 
@@ -187,7 +187,7 @@ export default function PricingPage() {
           <ul className="mt-6 space-y-2.5 flex-1">
             {FREE_FEATURES.map((f) => (
               <li key={f} className="flex gap-2.5 text-sm text-ink-soft">
-                <span className="text-forest mt-0.5 shrink-0">âœ“</span>{f}
+                <span className="text-forest mt-0.5 shrink-0">✓</span>{f}
               </li>
             ))}
           </ul>
@@ -217,7 +217,7 @@ export default function PricingPage() {
               <>
                 <span className="font-display text-4xl text-ink">$7</span>
                 <span className="text-ink-soft text-sm"> / month</span>
-                <p className="text-xs text-slate font-mono mt-1">or $55/year â€” save 35%</p>
+                <p className="text-xs text-slate font-mono mt-1">or $55/year — save 35%</p>
               </>
             ) : (
               <>
@@ -225,7 +225,7 @@ export default function PricingPage() {
                 <span className="text-ink-soft text-sm"> / year</span>
                 <p className="text-xs text-slate font-mono mt-1">
                   <span className="line-through text-slate/60 mr-1">$84</span>
-                  $4.58/month Â· billed annually
+                  $4.58/month · billed annually
                 </p>
               </>
             )}
@@ -234,7 +234,7 @@ export default function PricingPage() {
           <ul className="mt-6 space-y-2.5 flex-1">
             {PRO_FEATURES.map((f) => (
               <li key={f} className="flex gap-2.5 text-sm text-ink-soft">
-                <span className="text-forest mt-0.5 shrink-0">âœ“</span>{f}
+                <span className="text-forest mt-0.5 shrink-0">✓</span>{f}
               </li>
             ))}
           </ul>
@@ -247,7 +247,7 @@ export default function PricingPage() {
                   disabled={loading !== null}
                   className="btn-secondary w-full disabled:opacity-60"
                 >
-                  {loading === "portal" ? "Processingâ€¦" : "Cancel subscription"}
+                  {loading === "portal" ? "Processing…" : "Cancel subscription"}
                 </button>
               ) : (
                 <button
@@ -255,7 +255,7 @@ export default function PricingPage() {
                   disabled={loading !== null}
                   className="btn-secondary w-full disabled:opacity-60"
                 >
-                  {loading === "portal" ? "Redirectingâ€¦" : "Manage subscription"}
+                  {loading === "portal" ? "Redirecting…" : "Manage subscription"}
                 </button>
               )
             ) : (
@@ -265,10 +265,10 @@ export default function PricingPage() {
                   disabled={loading !== null}
                   className="btn-primary w-full disabled:opacity-60"
                 >
-                  {loading ? "Redirectingâ€¦" : billing === "monthly" ? "Start free trial â€” $7/mo after" : "Start free trial â€” $55/yr after"}
+                  {loading ? "Redirecting…" : billing === "monthly" ? "Start free trial — $7/mo after" : "Start free trial — $55/yr after"}
                 </button>
                 <p className="text-xs text-slate font-mono text-center">
-                  7 days free Â· No card required to trial Â· Cancel anytime
+                  7 days free · No card required to trial · Cancel anytime
                 </p>
               </>
             )}
@@ -282,11 +282,11 @@ export default function PricingPage() {
         {[
           {
             q: "Does ScolarNav guarantee I'll get a scholarship?",
-            a: "No â€” and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do â€” and it's worth a lot.",
+            a: "No — and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do — and it's worth a lot.",
           },
           {
             q: "What does the 7-day free trial include?",
-            a: "Full Pro access â€” Mentor, Roadmap, Mock Interview, For You matching, and unlimited Readiness Score refreshes. No card needed to start the trial.",
+            a: "Full Pro access — Mentor, Roadmap, Mock Interview, For You matching, and unlimited Readiness Score refreshes. No card needed to start the trial.",
           },
           {
             q: "Can I pay in my local currency?",
@@ -294,17 +294,17 @@ export default function PricingPage() {
           },
           {
             q: "What's the difference between Free and Pro, practically?",
-            a: "Free lets you explore the catalogue, save opportunities, upload your CV, and get a taste of the mentor. Pro is where the preparation happens â€” your personalised plan, interview practice, coaching per opportunity, and unlimited mentor access.",
+            a: "Free lets you explore the catalogue, save opportunities, upload your CV, and get a taste of the mentor. Pro is where the preparation happens — your personalised plan, interview practice, coaching per opportunity, and unlimited mentor access.",
           },
           {
             q: "What if I can't afford Pro?",
-            a: "Start with Free â€” it's genuinely useful on its own. Upgrade when you're ready to apply seriously, or when you've identified specific opportunities you want to prepare properly for.",
+            a: "Start with Free — it's genuinely useful on its own. Upgrade when you're ready to apply seriously, or when you've identified specific opportunities you want to prepare properly for.",
           },
         ].map(({ q, a }) => (
           <details key={q} className="case-card p-5 group">
             <summary className="text-sm font-medium text-ink cursor-pointer list-none flex items-center justify-between gap-3">
               {q}
-              <span className="text-slate text-xs shrink-0 group-open:rotate-180 transition-transform">â–¼</span>
+              <span className="text-slate text-xs shrink-0 group-open:rotate-180 transition-transform">▼</span>
             </summary>
             <p className="text-sm text-ink-soft mt-3 leading-relaxed">{a}</p>
           </details>
@@ -312,7 +312,7 @@ export default function PricingPage() {
       </div>
 
       <p className="text-center text-xs text-slate font-mono mt-12">
-        Secure payments Â· Cancel anytime Â· No hidden fees
+        Secure payments · Cancel anytime · No hidden fees
       </p>
     </div>
   );

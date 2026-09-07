@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -14,7 +14,7 @@ const AWARD_LABELS: Record<string, string> = {
   immigration_pathway: "Visa / Pathway",
 };
 
-const CONFETTI_CHARS = ["âœ¦", "â—†", "â˜…", "âœ¸", "â—‰", "âœ¿", "â‹", "â¬Ÿ"];
+const CONFETTI_CHARS = ["✦", "◆", "★", "✸", "◉", "✿", "⋯", "⬟"];
 
 function ConfettiDot({ style, char }: { style: React.CSSProperties; char: string }) {
   return (
@@ -82,21 +82,21 @@ export default function WinsPage() {
             ScolarNav students<br />who made it
           </h1>
           <p className="text-white/60 mt-5 text-base leading-relaxed max-w-lg mx-auto">
-            Real people, real wins. Every one of them prepared for this â€” now they're in.
+            Real people, real wins. Every one of them prepared for this — now they're in.
           </p>
           {user ? (
             <Link
               href="/wins/share"
               className="inline-flex mt-8 px-6 py-3 bg-brass text-white text-sm font-medium hover:opacity-90 transition-opacity"
             >
-              Share your win â†’
+              Share your win →
             </Link>
           ) : (
             <Link
               href="/register"
               className="inline-flex mt-8 px-6 py-3 bg-white text-navy text-sm font-medium hover:bg-surface transition-colors"
             >
-              Join ScolarNav â€” it's free
+              Join ScolarNav — it's free
             </Link>
           )}
         </div>
@@ -105,15 +105,15 @@ export default function WinsPage() {
       <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
         {loading && (
           <div className="flex justify-center py-20">
-            <p className="font-mono text-xs text-white/40 uppercase tracking-widest">Loadingâ€¦</p>
+            <p className="font-mono text-xs text-white/40 uppercase tracking-widest">Loading…</p>
           </div>
         )}
         {error && <p className="text-alert text-sm text-center py-10">{error}</p>}
 
         {!loading && celebrations.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">ðŸ†</p>
-            <p className="text-white/60 text-base">No wins shared yet â€” be the first.</p>
+            <p className="text-4xl mb-4">🏆</p>
+            <p className="text-white/60 text-base">No wins shared yet — be the first.</p>
             {user && (
               <Link href="/wins/share" className="inline-flex mt-6 px-5 py-2.5 bg-brass text-white text-sm hover:opacity-90 transition-opacity">
                 Share your win
@@ -169,7 +169,7 @@ function CelebrationCard({ c, featured = false }: { c: Celebration; featured?: b
         aria-hidden
         className="absolute top-3 right-4 text-3xl select-none pointer-events-none opacity-20"
       >
-        ðŸ†
+        🏆
       </span>
 
       {/* Award type badge */}

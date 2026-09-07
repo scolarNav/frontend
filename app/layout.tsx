@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -30,7 +30,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarnav.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "ScolarNav â€” Scholarships & Opportunities for Global Talent",
+    default: "ScolarNav — Scholarships & Opportunities for Global Talent",
     template: "%s | ScolarNav",
   },
   description:
@@ -39,14 +39,14 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: "ScolarNav",
-    title: "ScolarNav â€” Scholarships & Opportunities for Global Talent",
+    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "ScolarNav â€” Scholarships & Opportunities for Global Talent",
+    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
   },

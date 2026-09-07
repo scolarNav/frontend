@@ -1,4 +1,4 @@
-﻿import type { Metadata } from "next";
+import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
@@ -50,13 +50,13 @@ export default function PrivacyPage() {
           <p>
             When you register, we collect your full name, email address, country, and a hashed password
             (we never store your password in plain text). If you sign up via Google, we receive your name,
-            email, and profile picture from Google â€” no password is stored.
+            email, and profile picture from Google — no password is stored.
           </p>
 
           <h3 className="font-medium text-ink mt-4 mb-2">2.2 CV and profile data</h3>
           <p>
-            If you upload a CV, we parse and store its contents â€” including education history, work
-            experience, skills, languages, and certifications â€” to power our personalised matching and
+            If you upload a CV, we parse and store its contents — including education history, work
+            experience, skills, languages, and certifications — to power our personalised matching and
             coaching features. You can delete your CV at any time from your profile.
           </p>
 
@@ -70,7 +70,7 @@ export default function PrivacyPage() {
           <h3 className="font-medium text-ink mt-4 mb-2">2.4 Payment data</h3>
           <p>
             Payments are processed by Stripe (international) or Paystack (African users). We do not store
-            your card details â€” those are held securely by the payment processor. We do store a record of
+            your card details — those are held securely by the payment processor. We do store a record of
             your subscription status, plan, and payment history.
           </p>
 
@@ -89,7 +89,7 @@ export default function PrivacyPage() {
             <li>To provide AI-powered coaching, interview practice, roadmaps, and readiness scores.</li>
             <li>To process payments and manage your subscription.</li>
             <li>To send transactional emails (account verification, password reset, subscription receipts).</li>
-            <li>To send product updates and relevant opportunities â€” you can opt out at any time.</li>
+            <li>To send product updates and relevant opportunities — you can opt out at any time.</li>
             <li>To detect and prevent fraud, abuse, and security incidents.</li>
             <li>To comply with legal obligations.</li>
           </ul>
@@ -104,7 +104,7 @@ export default function PrivacyPage() {
           <ul className="mt-3 space-y-2 list-disc list-inside">
             <li><strong className="text-ink">Contract:</strong> Processing necessary to deliver the services you signed up for.</li>
             <li><strong className="text-ink">Legitimate interests:</strong> Security, fraud prevention, and improving the platform.</li>
-            <li><strong className="text-ink">Consent:</strong> Marketing emails â€” you can withdraw consent at any time.</li>
+            <li><strong className="text-ink">Consent:</strong> Marketing emails — you can withdraw consent at any time.</li>
             <li><strong className="text-ink">Legal obligation:</strong> Where we are required to retain data by law.</li>
           </ul>
           <p className="mt-3 text-xs font-mono text-slate">
@@ -174,7 +174,7 @@ export default function PrivacyPage() {
                   rel="noopener noreferrer"
                   className="text-xs text-forest hover:underline shrink-0 self-center"
                 >
-                  Privacy policy â†’
+                  Privacy policy →
                 </a>
               </div>
             ))}
@@ -188,7 +188,7 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-ink mb-3">7. Data Retention</h2>
           <p>
             We retain your account data for as long as your account is active. If you delete your account,
-            we permanently delete your profile, CV, coaching history, and personal data within 30 days â€”
+            we permanently delete your profile, CV, coaching history, and personal data within 30 days —
             except where we are legally required to retain certain records (e.g. payment records for tax
             compliance, typically 7 years).
           </p>
@@ -220,7 +220,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">9. Security</h2>
           <p>
-            We take security seriously. Passwords are hashed using bcrypt before storage â€” we never see your
+            We take security seriously. Passwords are hashed using bcrypt before storage — we never see your
             plain-text password. Data in transit is encrypted via TLS. Access to production systems is
             restricted to authorised team members only.
           </p>
@@ -275,7 +275,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">12. International Transfers</h2>
           <p>
-            Your data may be processed outside Nigeria or your home country â€” for example, on servers
+            Your data may be processed outside Nigeria or your home country — for example, on servers
             operated by MongoDB Atlas, Anthropic, or Stripe. Where this occurs, we ensure that appropriate
             safeguards are in place (such as standard contractual clauses or the recipient's certification
             under an equivalent framework).
@@ -318,9 +318,9 @@ export default function PrivacyPage() {
       </div>
 
       <div className="mt-14 pt-8 border-t border-rule flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <p className="text-xs font-mono text-slate">Â© 2026 ScolarNav. All rights reserved.</p>
+        <p className="text-xs font-mono text-slate">© 2026 ScolarNav. All rights reserved.</p>
         <Link href="/terms" className="text-sm text-forest font-medium hover:underline">
-          Terms of Service â†’
+          Terms of Service →
         </Link>
       </div>
     </div>

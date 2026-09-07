@@ -122,22 +122,27 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
   }
 
   async function handleBook() {
-    if (!user) { router.push("/login"); return; }
+    if (!user) { router.push(`/login?next=/opportunities/${opportunity._id}`); return; }
     if (!bookingCoach) return;
     setBookingLoading(true);
+    setError(null);
     try {
-      await api.post("/coaches/bookings", {
+      const { paymentUrl } = await api.post<{ booking: any; paymentUrl: string | null }>("/coaches/bookings", {
         coachId: bookingCoach._id,
         opportunityId: opportunity._id,
         sessionType: bookingType,
         userMessage: bookingMsg || undefined,
       });
-      setBookingDone(bookingCoach.name);
-      setBookingCoach(null);
-      setBookingMsg("");
+      if (paymentUrl) {
+        window.location.href = paymentUrl;
+      } else {
+        // dev fallback — no Stripe configured
+        setBookingDone(bookingCoach.name);
+        setBookingCoach(null);
+        setBookingMsg("");
+      }
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Booking failed. Try again.");
-    } finally {
       setBookingLoading(false);
     }
   }
@@ -147,7 +152,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
   const requiredDocs = opportunity.applicationProcess?.requiredDocuments ?? [];
 
   return (
-    <div className="max-w-5xl mx-auto px-6 py-14">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
       {scamFlags.length > 0 && (
         <div className="mb-8 border border-alert bg-alert/5 p-4" style={{ borderRadius: "6px" }}>
           <p className="font-mono text-xs tracking-widest uppercase text-alert mb-2">⚠ Verify before applying</p>
@@ -175,7 +180,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         )}
       </div>
 
-      <h1 className="font-display text-4xl text-ink mt-4 leading-tight">{opportunity.title}</h1>
+      <h1 className="font-display text-3xl sm:text-4xl text-ink mt-4 leading-tight">{opportunity.title}</h1>
       <div className="flex items-center gap-4 mt-1 flex-wrap">
         <p className="text-ink-soft">{opportunity.provider}</p>
         {(opportunity.winCount ?? 0) > 0 && (
@@ -185,23 +190,23 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         )}
       </div>
 
-      <div className="flex flex-wrap gap-3 mt-6">
+      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-6">
         <button
           onClick={handleSave}
           disabled={saved || saving}
-          className="border border-forest text-forest px-5 py-2.5 text-sm hover:bg-forest hover:text-paper transition-colors disabled:opacity-60"
+          className="border border-forest text-forest px-5 py-3 sm:py-2.5 text-sm hover:bg-forest hover:text-paper transition-colors disabled:opacity-60 w-full sm:w-auto text-center"
         >
           {saved ? "Saved to your case files" : saving ? "Saving…" : "Save to case files"}
         </button>
         <Link
           href={`/applications/${opportunity._id}`}
-          className="bg-forest text-paper px-5 py-2.5 text-sm hover:bg-forest-light transition-colors"
+          className="bg-forest text-paper px-5 py-3 sm:py-2.5 text-sm hover:bg-forest-light transition-colors w-full sm:w-auto text-center"
         >
           Get personalized coaching →
         </Link>
         {opportunity.requiresInterview === false ? (
           <span
-            className="border border-rule text-slate px-5 py-2.5 text-sm cursor-not-allowed opacity-50"
+            className="border border-rule text-slate px-5 py-3 sm:py-2.5 text-sm cursor-not-allowed opacity-50 w-full sm:w-auto text-center"
             title="This scholarship does not include an interview stage"
           >
             No interview required
@@ -209,7 +214,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         ) : (
           <Link
             href={`/interview?opportunity=${opportunity._id}`}
-            className="border border-rule text-ink-soft px-5 py-2.5 text-sm hover:border-forest hover:text-forest transition-colors"
+            className="border border-rule text-ink-soft px-5 py-3 sm:py-2.5 text-sm hover:border-forest hover:text-forest transition-colors w-full sm:w-auto text-center"
           >
             Practice interview
           </Link>
@@ -218,7 +223,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
           href={opportunity.officialUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm text-ink-soft underline self-center"
+          className="text-sm text-ink-soft underline self-center text-center"
         >
           Official page
         </a>
@@ -226,17 +231,17 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
 
       <div className="mt-10 space-y-8">
         <section>
-          <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Objectives</h2>
+          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Objectives</h2>
           <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.objectives}</p>
         </section>
 
         <section>
-          <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Eligibility, plainly</h2>
+          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Eligibility, plainly</h2>
           <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.eligibilitySummary}</p>
         </section>
 
         <section>
-          <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Requirements</h2>
+          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Requirements</h2>
           <div className="mt-3 grid sm:grid-cols-2 gap-3">
             {opportunity.requirements.map((r, i) => (
               <div key={i} className="case-card p-4">
@@ -255,7 +260,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         {/* Document checklist — only shown when the user has saved this scholarship and it has required docs */}
         {saved && requiredDocs.length > 0 && (
           <section>
-            <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Document checklist</h2>
+            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Document checklist</h2>
             <p className="text-slate text-sm mt-3 mb-4">
               Track which documents you've gathered. Your progress is saved automatically.
             </p>
@@ -313,7 +318,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         )}
 
         <section>
-          <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">
+          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">
             What a strong applicant looks like
           </h2>
           {hasBreakdown ? (
@@ -342,7 +347,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         {/* Human Coaches */}
         {coaches.length > 0 && (
           <section>
-            <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">
+            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">
               Human coaches for this scholarship
             </h2>
             <p className="text-sm text-slate mt-3 mb-5">
@@ -362,15 +367,19 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                 return (
                   <div key={coach._id} className="case-card p-5">
                     <div className="flex items-start gap-3">
-                      {coach.photoUrl ? (
-                        <img src={coach.photoUrl} alt={coach.name} className="w-12 h-12 rounded-full object-cover shrink-0" />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-rule flex items-center justify-center shrink-0 font-display text-lg text-slate">
-                          {coach.name[0]}
-                        </div>
-                      )}
+                      <Link href={`/coaches/${coach._id}`} className="shrink-0">
+                        {coach.photoUrl ? (
+                          <img src={coach.photoUrl} alt={coach.name} className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-full bg-rule flex items-center justify-center font-display text-lg text-slate hover:bg-rule/70 transition-colors">
+                            {coach.name[0]}
+                          </div>
+                        )}
+                      </Link>
                       <div className="flex-1 min-w-0">
-                        <p className="font-medium text-ink">{coach.name}</p>
+                        <Link href={`/coaches/${coach._id}`} className="font-medium text-ink hover:text-forest transition-colors">
+                          {coach.name}
+                        </Link>
                         <p className="text-xs font-mono text-slate mt-0.5">
                           {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
                           {coach.credentialYear ? ` · ${coach.credentialYear}` : ""}
@@ -386,31 +395,34 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                     <p className="text-sm text-ink-soft mt-3 leading-relaxed line-clamp-3">{coach.bio}</p>
                     <div className="flex items-center justify-between mt-4">
                       <p className="text-sm font-medium text-ink">${userFee.toFixed(0)}<span className="text-xs text-slate font-normal"> / session</span></p>
-                      <button
-                        onClick={() => { setBookingCoach(coach); setBookingDone(null); }}
-                        className="text-sm px-4 py-2 border border-forest text-forest hover:bg-forest hover:text-white transition-colors rounded-lg"
-                      >
-                        Book session
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/coaches/${coach._id}`}
+                          className="text-sm px-3 py-2 text-slate hover:text-ink transition-colors"
+                        >
+                          View profile
+                        </Link>
+                        <button
+                          onClick={() => { setBookingCoach(coach); setBookingDone(null); }}
+                          className="text-sm px-4 py-2 border border-forest text-forest hover:bg-forest hover:text-white transition-colors rounded-lg"
+                        >
+                          Book
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            <p className="mt-4 text-xs text-slate font-mono">
-              Want to coach for this scholarship?{" "}
-              <Link href="/coaches/apply" className="text-forest underline">Apply as a coach →</Link>
-            </p>
           </section>
         )}
 
         {coaches.length === 0 && (
           <section>
-            <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Human coaches</h2>
+            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Human coaches</h2>
             <p className="text-sm text-slate mt-3">
-              No human coaches are available for this scholarship yet.{" "}
-              <Link href="/coaches/apply" className="text-forest underline">Apply to be a coach →</Link>
+              No human coaches are available for this scholarship yet. Check back soon.
             </p>
           </section>
         )}
@@ -424,13 +436,13 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
           style={{ background: "rgba(0,0,0,0.45)" }}
           onClick={(e) => { if (e.target === e.currentTarget) setBookingCoach(null); }}
         >
-          <div className="bg-white rounded-2xl p-7 max-w-md w-full shadow-xl">
+          <div className="bg-white rounded-2xl p-5 sm:p-7 max-w-md w-full shadow-xl">
             <h3 className="font-display text-2xl text-ink mb-1">Book a session</h3>
             <p className="text-sm text-slate mb-5">with <span className="font-medium text-ink">{bookingCoach.name}</span></p>
 
             <div className="mb-5">
               <label className="block text-sm font-medium text-ink mb-2">Session type</label>
-              <div className="flex gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 {[
                   { value: "coaching", label: "Strategy coaching", sub: "Application strategy, essay direction, interview prep" },
                   { value: "review", label: "Document review", sub: "Feedback on your draft essays or application documents" },

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
@@ -11,6 +11,8 @@ import { COUNTRIES } from "@/lib/countries";
 export default function RegisterPage() {
   const { register, googleLogin } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const next = searchParams.get("next");
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,7 @@ export default function RegisterPage() {
     setSubmitting(true);
     try {
       await register(fullName, email, password, country);
-      router.push("/onboarding");
+      router.push(next || "/onboarding");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't create your account. Please try again.");
     } finally {
@@ -41,8 +43,8 @@ export default function RegisterPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const { isNew } = await googleLogin(response.credential);
-      router.push(isNew ? "/onboarding" : "/dashboard");
+      const { isNew, user } = await googleLogin(response.credential);
+      router.push(next || (user.isCoach ? "/coaches/dashboard" : (isNew ? "/onboarding" : "/dashboard")));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Google sign-up failed. Please try again.");
     } finally {
@@ -142,7 +144,7 @@ export default function RegisterPage() {
 
         <p className="text-sm text-slate mt-6 text-center">
           Already have an account?{" "}
-          <Link href="/login" className="text-forest font-medium hover:underline">
+          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="text-forest font-medium hover:underline">
             Sign in
           </Link>
         </p>
