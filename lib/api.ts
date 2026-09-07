@@ -1,4 +1,4 @@
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
+﻿const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export class ApiError extends Error {
   status: number;
@@ -10,7 +10,7 @@ export class ApiError extends Error {
 
 function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("ScolarNav_token");
+  return localStorage.getItem("ScholarNav_token");
 }
 
 interface RequestOptions extends RequestInit {
@@ -66,9 +66,9 @@ export const api = {
 };
 
 export function setToken(token: string) {
-  if (typeof window !== "undefined") localStorage.setItem("ScolarNav_token", token);
+  if (typeof window !== "undefined") localStorage.setItem("ScholarNav_token", token);
 }
 
 export function clearToken() {
-  if (typeof window !== "undefined") localStorage.removeItem("ScolarNav_token");
+  if (typeof window !== "undefined") localStorage.removeItem("ScholarNav_token");
 }

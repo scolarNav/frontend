@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
@@ -154,7 +154,7 @@ function GrantCard({ grant }: { grant: Grant }) {
             href={`/grants/${grant._id}`}
             className="font-mono text-xs text-ink-soft hover:text-ink transition-colors"
           >
-            Details →
+            Details â†’
           </Link>
           <a
             href={grant.url}
@@ -254,7 +254,7 @@ export default function GrantsPage() {
         <h1 className="font-display text-3xl sm:text-4xl text-ink mb-3">Startup Grants</h1>
         <p className="text-ink-soft text-base max-w-2xl leading-relaxed">
           Grants and funding opportunities for startups working in technology, inclusion, innovation,
-          talent development, and African markets — refreshed automatically every 8 hours.
+          talent development, and African markets â€” refreshed automatically every 8 hours.
         </p>
         {timeSince && (
           <p className="text-xs text-slate mt-2 font-mono">Last refreshed {timeSince}</p>
@@ -297,7 +297,7 @@ export default function GrantsPage() {
             onClick={() => setActiveTag(null)}
             className="stamp text-xs text-slate border-rule hover:bg-surface transition-colors"
           >
-            Clear ×
+            Clear Ã—
           </button>
         )}
       </div>
@@ -361,7 +361,7 @@ export default function GrantsPage() {
             onClick={() => setPage((p) => p - 1)}
             className="stamp text-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            ← Previous
+            â† Previous
           </button>
           <span className="font-mono text-xs text-slate">
             Page {page} of {pages}
@@ -371,7 +371,7 @@ export default function GrantsPage() {
             onClick={() => setPage((p) => p + 1)}
             className="stamp text-sm disabled:opacity-40 disabled:cursor-not-allowed"
           >
-            Next →
+            Next â†’
           </button>
         </div>
       )}
@@ -379,7 +379,7 @@ export default function GrantsPage() {
       {grants.length > 0 && !loading && (
         <p className="text-xs text-slate/60 text-center mt-10 font-mono">
           Aggregated from OpportunityDesk, FundsForNGOs, OpportunitiesForAfricans, Youthop.
-          ScolarNav does not endorse or verify individual listings.
+          ScholarNav does not endorse or verify individual listings.
         </p>
       )}
     </main>

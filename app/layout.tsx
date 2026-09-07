@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
@@ -30,23 +30,23 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarnav.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "ScolarNav — Scholarships & Opportunities for Global Talent",
-    template: "%s | ScolarNav",
+    default: "ScholarNav â€” Scholarships & Opportunities for Global Talent",
+    template: "%s | ScholarNav",
   },
   description:
     "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
   keywords: ["scholarships", "study abroad", "fellowships", "Nigeria", "Africa", "opportunities", "application coaching"],
   openGraph: {
     type: "website",
-    siteName: "ScolarNav",
-    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
+    siteName: "ScholarNav",
+    title: "ScholarNav â€” Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
+    title: "ScholarNav â€” Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
   },

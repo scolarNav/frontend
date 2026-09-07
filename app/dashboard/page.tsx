@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -18,11 +18,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const FEATURE_CARDS = [
-  { href: "/mentor", icon: "💬", label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
-  { href: "/roadmap", icon: "🗺️", label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
-  { href: "/deadlines", icon: "📅", label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
-  { href: "/countries", icon: "🌍", label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
-  { href: "/interview", icon: "🎤", label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
+  { href: "/mentor", icon: "ðŸ’¬", label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
+  { href: "/roadmap", icon: "ðŸ—ºï¸", label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
+  { href: "/deadlines", icon: "ðŸ“…", label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
+  { href: "/countries", icon: "ðŸŒ", label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
+  { href: "/interview", icon: "ðŸŽ¤", label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
 ];
 
 export default function DashboardPage() {
@@ -112,7 +112,7 @@ export default function DashboardPage() {
   }
 
   if (authLoading || loading) {
-    return <p className="max-w-5xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading your dashboard…</p>;
+    return <p className="max-w-5xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading your dashboardâ€¦</p>;
   }
 
   if (!user) return null;
@@ -149,11 +149,11 @@ export default function DashboardPage() {
                   : `${trialDaysLeft} days left on your free trial`}
             </p>
             <p className="text-xs text-slate mt-0.5">
-              After the trial, you'll be charged {user.subscription.gateway === "paystack" ? "via Paystack" : "$7/month or $55/year"} — or you can cancel anytime before it ends.
+              After the trial, you'll be charged {user.subscription.gateway === "paystack" ? "via Paystack" : "$7/month or $55/year"} â€” or you can cancel anytime before it ends.
             </p>
           </div>
           <a href="/pricing" className="shrink-0 text-xs font-mono text-ink-soft border border-rule px-4 py-2 hover:border-ink transition-colors whitespace-nowrap">
-            Manage subscription →
+            Manage subscription â†’
           </a>
         </div>
       )}
@@ -167,9 +167,9 @@ export default function DashboardPage() {
       {/* Profile completion nudges */}
       {(() => {
         const gaps: { label: string; href: string; cta: string }[] = [];
-        if (!user.cvData) gaps.push({ label: "Upload your CV to unlock personalised matching, readiness scoring, and tailored coaching.", href: "/cv", cta: "Upload CV →" });
-        if (!user.profile?.targetCountries?.length) gaps.push({ label: "Add target countries so we can prioritise scholarships from where you want to study.", href: "/profile", cta: "Set countries →" });
-        if (!user.profile?.targetFields?.length) gaps.push({ label: "Add your fields of study so recommendations match what you actually want to pursue.", href: "/profile", cta: "Add fields →" });
+        if (!user.cvData) gaps.push({ label: "Upload your CV to unlock personalised matching, readiness scoring, and tailored coaching.", href: "/cv", cta: "Upload CV â†’" });
+        if (!user.profile?.targetCountries?.length) gaps.push({ label: "Add target countries so we can prioritise scholarships from where you want to study.", href: "/profile", cta: "Set countries â†’" });
+        if (!user.profile?.targetFields?.length) gaps.push({ label: "Add your fields of study so recommendations match what you actually want to pursue.", href: "/profile", cta: "Add fields â†’" });
         if (gaps.length === 0) return null;
         return (
           <div className="mb-8 space-y-2">
@@ -183,7 +183,7 @@ export default function DashboardPage() {
         );
       })()}
 
-      {/* Stats — minimal, no card border needed; numerals do the work */}
+      {/* Stats â€” minimal, no card border needed; numerals do the work */}
       <div className="grid grid-cols-3 divide-x divide-rule mb-12 border border-rule rounded-lg overflow-hidden">
         {[
           { label: "Active", value: activeApps },
@@ -197,7 +197,7 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {/* Feature shortcuts — bento: [8][4] | [4][4][4] on 12-col */}
+      {/* Feature shortcuts â€” bento: [8][4] | [4][4][4] on 12-col */}
       <div className="grid grid-cols-12 gap-3 mb-12">
         {FEATURE_CARDS.map(({ href, icon, label, desc, pro }, i) => (
           <Link
@@ -232,7 +232,7 @@ export default function DashboardPage() {
               Your score tells you exactly where you stand and what to fix before applying.
             </p>
             <Link href="/cv" className="btn-primary inline-flex mt-4">
-              Upload CV →
+              Upload CV â†’
             </Link>
           </div>
         ) : readiness ? (
@@ -247,7 +247,7 @@ export default function DashboardPage() {
               disabled={readinessLoading}
               className="btn-primary"
             >
-              {readinessLoading ? "Calculating…" : "Calculate my score"}
+              {readinessLoading ? "Calculatingâ€¦" : "Calculate my score"}
             </button>
           </div>
         )}
@@ -258,19 +258,19 @@ export default function DashboardPage() {
         <div className="mb-10 case-card p-6" style={{ background: "#6d8ec5", border: "none" }}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1">
-              <p className="text-2xl mb-1">🏆</p>
+              <p className="text-2xl mb-1">ðŸ†</p>
               <p className="font-display text-xl text-white">
-                You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won — celebrate it
+                You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won â€” celebrate it
               </p>
               <p className="text-white/60 text-sm mt-1 leading-relaxed">
-                Share your story on the ScolarNav wins wall. Other students preparing their applications will see it — and it might be the thing that keeps someone going.
+                Share your story on the ScholarNav wins wall. Other students preparing their applications will see it â€” and it might be the thing that keeps someone going.
               </p>
             </div>
             <a
               href="/wins/share"
               className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-navy bg-white hover:bg-surface transition-colors"
             >
-              Share my win →
+              Share my win â†’
             </a>
           </div>
         </div>
@@ -281,7 +281,7 @@ export default function DashboardPage() {
         <div className="flex items-center justify-between mb-4">
           <h2 className="font-display text-2xl text-ink">Case Files</h2>
           <Link href="/deadlines" className="text-sm text-forest font-mono hover:underline">
-            View deadlines →
+            View deadlines â†’
           </Link>
         </div>
 
@@ -291,7 +291,7 @@ export default function DashboardPage() {
           <div className="case-card p-8 text-center">
             <p className="text-ink-soft">You haven't saved any opportunities yet.</p>
             <Link href="/" className="inline-block mt-3 text-forest underline text-sm">
-              Browse the catalogue →
+              Browse the catalogue â†’
             </Link>
           </div>
         ) : (
@@ -302,7 +302,7 @@ export default function DashboardPage() {
                 <div key={s.opportunity} className="case-card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="flex-1">
                     <Link href={`/opportunities/${s.opportunity}`} className="font-display text-lg text-ink hover:text-forest transition-colors">
-                      {opp?.title || "Loading…"}
+                      {opp?.title || "Loadingâ€¦"}
                     </Link>
                     <p className="text-sm text-slate mt-0.5">{opp?.provider}</p>
                     {opp?.deadline && (() => {

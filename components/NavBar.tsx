@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
@@ -73,7 +73,7 @@ export default function NavBar() {
 
         {/* Logo */}
         <Link href="/" className="shrink-0">
-          <Image src="/logo/logo.png" alt="ScolarNav" width={112} height={30} />
+          <Image src="/logo/logo.png" alt="ScholarNav" width={112} height={30} />
         </Link>
 
         {/* Desktop nav */}
@@ -197,7 +197,7 @@ export default function NavBar() {
                       className="block px-4 py-2.5 text-sm font-medium transition-colors hover:bg-[#fff7f4]"
                       style={{ color: "#d3622c" }}
                     >
-                      Upgrade to Pro →
+                      Upgrade to Pro â†’
                     </Link>
                   )}
                   {isPro && (

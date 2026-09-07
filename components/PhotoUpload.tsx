@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 
@@ -7,7 +7,7 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 interface Props {
   currentUrl?: string;
   onChange: (url: string) => void;
-  /** Display size in px — defaults to 80 */
+  /** Display size in px â€” defaults to 80 */
   size?: number;
   /** Dark-background variant (for the wins form) */
   dark?: boolean;
@@ -36,7 +36,7 @@ export default function PhotoUpload({ currentUrl, onChange, size = 80, dark = fa
     setPreview(localUrl);
 
     try {
-      const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
+      const token = typeof window !== "undefined" ? localStorage.getItem("ScholarNav_token") : null;
       const formData = new FormData();
       formData.append("photo", file);
 
@@ -86,7 +86,7 @@ export default function PhotoUpload({ currentUrl, onChange, size = 80, dark = fa
           </div>
         )}
         <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-          <span className="text-white text-xs font-mono">{uploading ? "…" : "Upload"}</span>
+          <span className="text-white text-xs font-mono">{uploading ? "â€¦" : "Upload"}</span>
         </div>
       </button>
 
@@ -99,7 +99,7 @@ export default function PhotoUpload({ currentUrl, onChange, size = 80, dark = fa
       />
 
       <p className={`text-xs font-mono ${textClass}`}>
-        {uploading ? "Uploading…" : "JPEG, PNG or WebP · max 512 KB"}
+        {uploading ? "Uploadingâ€¦" : "JPEG, PNG or WebP Â· max 512 KB"}
       </p>
 
       {error && <p className="text-xs text-alert">{error}</p>}

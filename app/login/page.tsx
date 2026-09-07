@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <h1 className="font-display text-3xl text-ink">Welcome back</h1>
-        <p className="text-ink-soft mt-1.5 text-sm">Sign in to your ScolarNav account.</p>
+        <p className="text-ink-soft mt-1.5 text-sm">Sign in to your ScholarNav account.</p>
 
         <div className="mt-8">
           <div className="flex justify-center">
@@ -88,7 +88,7 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
-              placeholder="••••••••"
+              placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
             />
           </div>
 
@@ -99,7 +99,7 @@ export default function LoginPage() {
           )}
 
           <button type="submit" disabled={submitting} className="btn-primary w-full mt-2">
-            {submitting ? "Signing in…" : "Sign in"}
+            {submitting ? "Signing inâ€¦" : "Sign in"}
           </button>
         </form>
 

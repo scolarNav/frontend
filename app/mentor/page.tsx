@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -64,7 +64,7 @@ export default function MentorPage() {
     setMessages((prev) => [...prev, assistantMsg]);
 
     try {
-      const token = localStorage.getItem("ScolarNav_token");
+      const token = localStorage.getItem("ScholarNav_token");
       const res = await fetch(`${API_BASE}/mentor/chat`, {
         method: "POST",
         headers: {
@@ -141,7 +141,7 @@ export default function MentorPage() {
         <div>
           <h1 className="font-display text-4xl text-ink">Mentor</h1>
           <p className="text-ink-soft mt-2">
-            Specific answers to your scholarship questions — based on your actual profile.
+            Specific answers to your scholarship questions â€” based on your actual profile.
             {!user.cvData && (
               <> <Link href="/cv" className="text-brass hover:underline">Upload your CV</Link> for answers tailored to you.</>
             )}
@@ -153,7 +153,7 @@ export default function MentorPage() {
               {Math.max(0, FREE_MSG_LIMIT - freeCount)} / {FREE_MSG_LIMIT} free today
             </p>
             <Link href="/pricing" className="text-xs text-forest hover:underline font-mono">
-              Go Pro →
+              Go Pro â†’
             </Link>
           </div>
         )}
@@ -213,7 +213,7 @@ export default function MentorPage() {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Ask a question… (Enter to send, Shift+Enter for new line)"
+            placeholder="Ask a questionâ€¦ (Enter to send, Shift+Enter for new line)"
             rows={3}
             disabled={streaming}
             className="w-full px-4 py-3 text-sm bg-transparent resize-none outline-none text-ink placeholder:text-slate disabled:opacity-60"
@@ -227,7 +227,7 @@ export default function MentorPage() {
               disabled={streaming || !input.trim()}
               className="btn-primary text-sm px-4 py-2 disabled:opacity-40"
             >
-              {streaming ? "Thinking…" : "Send"}
+              {streaming ? "Thinkingâ€¦" : "Send"}
             </button>
           </div>
         </div>

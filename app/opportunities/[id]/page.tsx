@@ -30,13 +30,13 @@ export async function generateMetadata(
     title: opp.title,
     description,
     openGraph: {
-      title: `${opp.title} | ScolarNav`,
+      title: `${opp.title} | ScholarNav`,
       description,
       type: "article",
     },
     twitter: {
       card: "summary",
-      title: `${opp.title} | ScolarNav`,
+      title: `${opp.title} | ScholarNav`,
       description,
     },
   };

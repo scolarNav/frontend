@@ -114,7 +114,7 @@ export default function ApplicationCoachingPage() {
     setStreamingText("");
     setError(null);
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ScholarNav_token") : null;
     const url = `${API_BASE}/applications/${opportunityId}/coaching/stream${force ? "?force=true" : ""}`;
 
     try {

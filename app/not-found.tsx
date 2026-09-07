@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 export default function NotFound() {
   return (
@@ -6,7 +6,7 @@ export default function NotFound() {
       <div className="max-w-lg w-full text-center">
 
         <div className="inline-block mb-8">
-          <span className="stamp text-forest border-forest">Error 404 — Page Not Found</span>
+          <span className="stamp text-forest border-forest">Error 404 â€” Page Not Found</span>
         </div>
 
         <h1 className="font-display italic text-[8rem] sm:text-[10rem] leading-none font-semibold text-navy">
@@ -16,7 +16,7 @@ export default function NotFound() {
         <div className="w-10 h-px bg-rule mx-auto my-6" />
 
         <p className="text-ink-soft text-base mb-2">
-          This page doesn't exist — or it never did.
+          This page doesn't exist â€” or it never did.
         </p>
         <p className="text-slate text-sm max-w-xs mx-auto mb-10">
           The case file you're looking for has been moved, deleted, or closed.
@@ -33,7 +33,7 @@ export default function NotFound() {
         </div>
 
         <p className="font-mono text-xs text-slate mt-12 tracking-widest uppercase">
-          ScolarNav · Your journey continues elsewhere
+          ScholarNav Â· Your journey continues elsewhere
         </p>
 
       </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { api, setToken, clearToken } from "./api";
@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ScholarNav_token") : null;
     if (!token) {
       setLoading(false);
       return;
