@@ -79,7 +79,7 @@ export default function WinsPage() {
         <div className="relative max-w-2xl mx-auto text-center">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">The wins wall</p>
           <h1 className="font-display text-4xl sm:text-6xl text-white leading-tight">
-            ScholarNav students<br />who made it
+            ScolarNav students<br />who made it
           </h1>
           <p className="text-white/60 mt-5 text-base leading-relaxed max-w-lg mx-auto">
             Real people, real wins. Every one of them prepared for this â€” now they're in.
@@ -96,7 +96,7 @@ export default function WinsPage() {
               href="/register"
               className="inline-flex mt-8 px-6 py-3 bg-white text-navy text-sm font-medium hover:bg-surface transition-colors"
             >
-              Join ScholarNav â€” it's free
+              Join ScolarNav â€” it's free
             </Link>
           )}
         </div>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -124,7 +124,7 @@ interface AdminBooking {
   createdAt: string;
 }
 
-type Tab = "stats" | "database" | "opportunities" | "users" | "celebrations" | "coaches";
+type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches";
 
 function trialDaysLeft(periodEnd?: string): number | null {
   if (!periodEnd) return null;
@@ -308,6 +308,13 @@ export default function AdminPage() {
   const [coachesLoading, setCoachesLoading] = useState(false);
   const [bookings, setBookings] = useState<AdminBooking[]>([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
+  const [analytics, setAnalytics] = useState<{
+    signupsByWeek: { _id: string; count: number }[];
+    revenueByWeek: { _id: string; totalUSD: number; count: number }[];
+    bookingsByWeek: { _id: string; count: number; completed: number }[];
+    planBreakdown: { _id: string; count: number }[];
+  } | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [coachSubTab, setCoachSubTab] = useState<"applications" | "bookings">("applications");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -402,6 +409,16 @@ export default function AdminPage() {
       else loadBookings();
     }
   }, [tab, coachSubTab, coachStatusFilter, user]);
+
+  useEffect(() => {
+    if (tab === "analytics" && user?.isAdmin && !analytics) {
+      setAnalyticsLoading(true);
+      api.get<typeof analytics>("/admin/analytics")
+        .then((data) => setAnalytics(data))
+        .catch(() => setError("Failed to load analytics."))
+        .finally(() => setAnalyticsLoading(false));
+    }
+  }, [tab, user]);
 
   async function handleCoachUpdate(id: string, update: Partial<Pick<AdminCoach, "status" | "rejectionNote" | "platformFeePercent" | "sessionFeeUSD">>) {
     try {
@@ -664,6 +681,7 @@ export default function AdminPage() {
     { key: "opportunities", label: "Opportunities" },
     { key: "users", label: "Users", badge: users.length },
     { key: "celebrations", label: "Celebrations", badge: stats?.pendingCelebrations || undefined },
+    { key: "analytics", label: "Analytics" },
     { key: "coaches", label: "Coaches" },
   ];
 
@@ -753,6 +771,105 @@ export default function AdminPage() {
               )}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── Analytics ── */}
+      {tab === "analytics" && (
+        <div className="mt-8 space-y-8">
+          {analyticsLoading && <p className="text-slate font-mono text-sm">Loading analytics...</p>}
+          {analytics && (() => {
+            const maxSignups = Math.max(...analytics.signupsByWeek.map((w) => w.count), 1);
+            const maxRevenue = Math.max(...analytics.revenueByWeek.map((w) => w.totalUSD), 1);
+            const proCount = analytics.planBreakdown.find((p) => p._id === "pro")?.count ?? 0;
+            const freeCount = analytics.planBreakdown.find((p) => p._id === "free")?.count ?? 0;
+            const totalPlans = proCount + freeCount || 1;
+            const conversionRate = ((proCount / totalPlans) * 100).toFixed(1);
+
+            return (
+              <>
+                {/* KPI row */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  {[
+                    { label: "Free users", value: freeCount },
+                    { label: "Pro users", value: proCount },
+                    { label: "Conversion rate", value: `${conversionRate}%` },
+                    { label: "Total bookings (12w)", value: analytics.bookingsByWeek.reduce((s, w) => s + w.count, 0) },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="case-card p-5">
+                      <p className="text-xs font-mono text-slate uppercase tracking-wide">{label}</p>
+                      <p className="font-display text-3xl text-ink mt-1">{value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Sign-ups chart */}
+                <div className="case-card p-6">
+                  <p className="font-display text-lg text-ink mb-4">Weekly sign-ups (last 12 weeks)</p>
+                  {analytics.signupsByWeek.length === 0 ? (
+                    <p className="text-slate text-sm font-mono">No data yet.</p>
+                  ) : (
+                    <div className="flex items-end gap-1.5 h-28">
+                      {analytics.signupsByWeek.map((w) => (
+                        <div key={w._id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                          <div
+                            className="w-full rounded-sm"
+                            style={{ height: `${Math.max(4, (w.count / maxSignups) * 96)}px`, background: "#6d8ec5" }}
+                            title={`${w._id}: ${w.count} sign-ups`}
+                          />
+                          <span className="text-xs font-mono text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Revenue chart */}
+                <div className="case-card p-6">
+                  <p className="font-display text-lg text-ink mb-1">Weekly Stripe revenue (USD, last 12w)</p>
+                  <p className="text-xs text-slate font-mono mb-4">Total: ${analytics.revenueByWeek.reduce((s, w) => s + w.totalUSD, 0).toFixed(2)}</p>
+                  {analytics.revenueByWeek.length === 0 ? (
+                    <p className="text-slate text-sm font-mono">No Stripe payments recorded yet.</p>
+                  ) : (
+                    <div className="flex items-end gap-1.5 h-28">
+                      {analytics.revenueByWeek.map((w) => (
+                        <div key={w._id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
+                          <div
+                            className="w-full rounded-sm"
+                            style={{ height: `${Math.max(4, (w.totalUSD / maxRevenue) * 96)}px`, background: "#d3622c" }}
+                            title={`${w._id}: $${w.totalUSD.toFixed(2)}`}
+                          />
+                          <span className="text-xs font-mono text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Booking volume */}
+                {analytics.bookingsByWeek.length > 0 && (
+                  <div className="case-card p-6">
+                    <p className="font-display text-lg text-ink mb-4">Weekly coaching bookings</p>
+                    <div className="space-y-2">
+                      {analytics.bookingsByWeek.map((w) => (
+                        <div key={w._id} className="flex items-center gap-3">
+                          <span className="text-xs font-mono text-slate w-20 shrink-0">{w._id}</span>
+                          <div className="flex-1 bg-surface rounded-full h-2 overflow-hidden">
+                            <div
+                              className="h-full rounded-full"
+                              style={{ width: `${(w.count / Math.max(...analytics.bookingsByWeek.map((b) => b.count), 1)) * 100}%`, background: "#3d7a5a" }}
+                            />
+                          </div>
+                          <span className="text-xs font-mono text-ink-soft w-8 text-right">{w.count}</span>
+                          <span className="text-xs font-mono text-slate">{w.completed} done</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            );
+          })()}
         </div>
       )}
 

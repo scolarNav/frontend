@@ -33,7 +33,7 @@ export default function NotFound() {
         </div>
 
         <p className="font-mono text-xs text-slate mt-12 tracking-widest uppercase">
-          ScholarNav Â· Your journey continues elsewhere
+          ScolarNav Â· Your journey continues elsewhere
         </p>
 
       </div>

@@ -195,7 +195,73 @@ export default function DashboardPage() {
             <p className="text-xs text-slate font-mono mt-1.5 uppercase tracking-widest">{label}</p>
           </div>
         ))}
-      </div>
+
+
+      {/* Analytics pipeline */}
+      {user.savedOpportunities.length > 0 && (() => {
+        const statusCounts: Record<string, number> = {};
+        for (const s of user.savedOpportunities) {
+          statusCounts[s.status] = (statusCounts[s.status] ?? 0) + 1;
+        }
+        const total = user.savedOpportunities.length;
+        const pipeline = [
+          { key: "interested", label: "Saved", color: "#94a3b8" },
+          { key: "in_progress", label: "In progress", color: "#6d8ec5" },
+          { key: "submitted", label: "Submitted", color: "#d3622c" },
+          { key: "awarded", label: "Won", color: "#3d7a5a" },
+        ].filter(({ key }) => statusCounts[key]);
+        const urgentDeadlines = user.savedOpportunities
+          .map((s) => {
+            const opp = details[s.opportunity];
+            if (!opp?.deadline) return null;
+            const days = Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000);
+            if (days < 0 || days > 60) return null;
+            return { s, opp, days };
+          })
+          .filter(Boolean)
+          .sort((a: any, b: any) => a.days - b.days)
+          .slice(0, 3) as { s: SavedOpportunity; opp: Opportunity; days: number }[];
+        return (
+          <div className="mb-10 grid sm:grid-cols-2 gap-4">
+            <div className="case-card p-5">
+              <p className="text-xs font-mono text-slate uppercase tracking-widest mb-3">Application pipeline</p>
+              <div className="flex rounded-full overflow-hidden h-2.5 mb-4">
+                {pipeline.map(({ key, color }) => (
+                  <div key={key} style={{ width: `${((statusCounts[key] ?? 0) / total) * 100}%`, background: color }} title={`${key}: ${statusCounts[key]}`} />
+                ))}
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+                {pipeline.map(({ key, label, color }) => (
+                  <div key={key} className="flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
+                    <span className="text-xs text-ink-soft">{label}</span>
+                    <span className="text-xs font-mono text-slate ml-0.5">{statusCounts[key]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="case-card p-5">
+              <p className="text-xs font-mono text-slate uppercase tracking-widest mb-3">Upcoming deadlines</p>
+              {urgentDeadlines.length === 0 ? (
+                <p className="text-xs text-slate">No deadlines in the next 60 days.</p>
+              ) : (
+                <div className="space-y-2.5">
+                  {urgentDeadlines.map(({ s, opp, days }) => (
+                    <div key={s.opportunity} className="flex items-center justify-between gap-3">
+                      <p className="text-sm text-ink truncate">{opp.title}</p>
+                      <span className="text-xs font-mono shrink-0 px-2 py-0.5 rounded" style={{ background: days <= 7 ? "#fef2f2" : days <= 14 ? "#fff7ed" : "#f8fafc", color: days <= 7 ? "#dc2626" : days <= 14 ? "#d3622c" : "#64748b" }}>
+                        {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days}d`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <Link href="/deadlines" className="text-xs text-forest font-mono mt-3 block hover:underline">View all deadlines &rarr;</Link>
+            </div>
+          </div>
+        );
+      })()}
+</div>
 
       {/* Feature shortcuts â€” bento: [8][4] | [4][4][4] on 12-col */}
       <div className="grid grid-cols-12 gap-3 mb-12">
@@ -263,7 +329,7 @@ export default function DashboardPage() {
                 You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won â€” celebrate it
               </p>
               <p className="text-white/60 text-sm mt-1 leading-relaxed">
-                Share your story on the ScholarNav wins wall. Other students preparing their applications will see it â€” and it might be the thing that keeps someone going.
+                Share your story on the ScolarNav wins wall. Other students preparing their applications will see it â€” and it might be the thing that keeps someone going.
               </p>
             </div>
             <a

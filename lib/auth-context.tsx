@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   useEffect(() => {
-    const token = typeof window !== "undefined" ? localStorage.getItem("ScholarNav_token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("ScolarNav_token") : null;
     if (!token) {
       setLoading(false);
       return;

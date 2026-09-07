@@ -419,12 +419,12 @@ export default function HomePage() {
             <div className="absolute top-8 right-8 w-28 h-28 rounded-xl" style={{ background: "#d3622c" }} />
             <div className="absolute bottom-0 left-0 w-36 h-36 rounded-tr-3xl opacity-40" style={{ background: "#1a2d45" }} />
             <div className="relative flex flex-col justify-end p-10 w-full">
-              <p className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: "#f0c845" }}>ScholarNav</p>
+              <p className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: "#f0c845" }}>ScolarNav</p>
               <p className="font-display text-4xl text-white leading-tight">
                 Your scholarship<br />story starts here.
               </p>
               <p className="mt-3 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-                Thousands of African scholars found their path through ScholarNav.
+                Thousands of students worldwide found their path through ScolarNav.
               </p>
             </div>
           </div>
@@ -555,6 +555,16 @@ export default function HomePage() {
               Open for applications only
             </button>
           </div>
+
+          {/* TBA info banner */}
+          {!openOnly && (
+            <div className="mt-3 flex items-start gap-2.5 px-3 py-2.5 bg-amber-50 border border-amber-100 rounded text-xs text-amber-800">
+              <span className="shrink-0 mt-0.5 text-amber-600">&#9432;</span>
+              <span>
+                <strong>About &ldquo;Dates TBA&rdquo; scholarships:</strong> These are annual programmes on a predictable cycle &mdash; Chevening, Erasmus, DAAD, Gates Cambridge, and others. Dates for the next cycle haven&rsquo;t been announced yet. Save them now to be notified when they open.
+              </span>
+            </div>
+          )}
 
           <div className="mt-6">
             {loading && (

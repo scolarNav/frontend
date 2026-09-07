@@ -30,23 +30,23 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarnav.app";
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "ScholarNav â€” Scholarships & Opportunities for Global Talent",
-    template: "%s | ScholarNav",
+    default: "ScolarNav â€” Scholarships & Opportunities for Global Talent",
+    template: "%s | ScolarNav",
   },
   description:
     "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
-  keywords: ["scholarships", "study abroad", "fellowships", "Nigeria", "Africa", "opportunities", "application coaching"],
+  keywords: ["scholarships", "study abroad", "fellowships", "Chevening", "DAAD", "Erasmus", "Gates Cambridge", "opportunities", "application coaching", "scholarship deadline", "international students"],
   openGraph: {
     type: "website",
-    siteName: "ScholarNav",
-    title: "ScholarNav â€” Scholarships & Opportunities for Global Talent",
+    siteName: "ScolarNav",
+    title: "ScolarNav â€” Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "ScholarNav â€” Scholarships & Opportunities for Global Talent",
+    title: "ScolarNav â€” Scholarships & Opportunities for Global Talent",
     description:
       "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
   },

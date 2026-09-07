@@ -110,13 +110,13 @@ export default function PricingPage() {
           Better prepared.<br />Better odds.
         </h1>
         <p className="text-ink-soft mt-4 leading-relaxed">
-          ScholarNav doesn't decide who gets the scholarship â€” committees do. What we do is help you show up as the strongest version of yourself on paper.
+          ScolarNav doesn't decide who gets the scholarship â€” committees do. What we do is help you show up as the strongest version of yourself on paper.
         </p>
       </div>
 
       {/* Honest positioning */}
       <div className="mt-10 case-card p-6 max-w-2xl mx-auto">
-        <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">What ScholarNav actually does</p>
+        <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">What ScolarNav actually does</p>
         <div className="grid sm:grid-cols-3 gap-4 text-center">
           {[
             { icon: "ðŸ“‹", label: "Closes gaps", desc: "Shows you exactly what strong applicants have that you don't â€” yet." },
@@ -281,8 +281,8 @@ export default function PricingPage() {
         <h2 className="font-display text-2xl text-ink">Common questions</h2>
         {[
           {
-            q: "Does ScholarNav guarantee I'll get a scholarship?",
-            a: "No â€” and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScholarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do â€” and it's worth a lot.",
+            q: "Does ScolarNav guarantee I'll get a scholarship?",
+            a: "No â€” and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do â€” and it's worth a lot.",
           },
           {
             q: "What does the 7-day free trial include?",
@@ -290,7 +290,7 @@ export default function PricingPage() {
           },
           {
             q: "Can I pay in my local currency?",
-            a: "Yes. Students in African countries pay via Paystack in their local currency (Naira, Cedis, Shillings, etc.). All other users pay via Stripe in USD.",
+            a: "Yes. We support local currency payments via Paystack (Naira, Cedis, Shillings, and more) as well as global card payments via Stripe in USD. Choose whichever works best for you at checkout.",
           },
           {
             q: "What's the difference between Free and Pro, practically?",

@@ -73,7 +73,7 @@ export default function NavBar() {
 
         {/* Logo */}
         <Link href="/" className="shrink-0">
-          <Image src="/logo/logo.png" alt="ScholarNav" width={112} height={30} />
+          <Image src="/logo/logo.png" alt="ScolarNav" width={112} height={30} />
         </Link>
 
         {/* Desktop nav */}
@@ -191,6 +191,9 @@ export default function NavBar() {
                   <Link href="/bookings" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
                     My Sessions
                   </Link>
+                  <Link href="/coaches/dashboard" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
+                    Coach Portal
+                  </Link>
                   {!isPro && (
                     <Link
                       href="/pricing"
@@ -300,6 +303,7 @@ export default function NavBar() {
                       <Link href="/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Dashboard</Link>
                       <Link href="/profile" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Profile</Link>
                       <Link href="/bookings" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">My Sessions</Link>
+                      <Link href="/coaches/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Coach Portal</Link>
                       {user.isAdmin && (
                         <Link href="/admin" className="block px-5 py-3 text-xs font-mono uppercase tracking-widest" style={{ color: "#f0c845" }}>
                           Admin

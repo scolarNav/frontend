@@ -64,7 +64,7 @@ export default function MentorPage() {
     setMessages((prev) => [...prev, assistantMsg]);
 
     try {
-      const token = localStorage.getItem("ScholarNav_token");
+      const token = localStorage.getItem("ScolarNav_token");
       const res = await fetch(`${API_BASE}/mentor/chat`, {
         method: "POST",
         headers: {

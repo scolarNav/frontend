@@ -47,7 +47,7 @@ export default function LoginPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-6 py-16">
       <div className="w-full max-w-sm">
         <h1 className="font-display text-3xl text-ink">Welcome back</h1>
-        <p className="text-ink-soft mt-1.5 text-sm">Sign in to your ScholarNav account.</p>
+        <p className="text-ink-soft mt-1.5 text-sm">Sign in to your ScolarNav account.</p>
 
         <div className="mt-8">
           <div className="flex justify-center">

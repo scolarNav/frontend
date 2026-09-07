@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "How ScholarNav collects, uses, and protects your personal data.",
+  description: "How ScolarNav collects, uses, and protects your personal data.",
 };
 
 const LAST_UPDATED = "4 September 2026";
@@ -17,7 +17,7 @@ export default function PrivacyPage() {
 
       <div className="mt-6 case-card p-5">
         <p className="text-sm text-ink-soft leading-relaxed">
-          <strong className="text-ink">Short version:</strong> We collect only what we need to run ScholarNav.
+          <strong className="text-ink">Short version:</strong> We collect only what we need to run ScolarNav.
           We do not sell your data. You can delete everything at any time. The rest of this policy explains
           the details.
         </p>
@@ -28,16 +28,16 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">1. Who We Are</h2>
           <p>
-            ScholarNav is operated by ScholarNav ("we", "us", "our"), a company focused on
+            ScolarNav is operated by ScolarNav ("we", "us", "our"), a company focused on
             helping African students access global scholarship and education opportunities. This policy
-            explains how we collect, use, store, and protect your personal data when you use the ScholarNav
+            explains how we collect, use, store, and protect your personal data when you use the ScolarNav
             platform.
           </p>
           <p className="mt-3">
-            For data protection purposes, ScholarNav is the data controller. You can reach
+            For data protection purposes, ScolarNav is the data controller. You can reach
             us at{" "}
-            <a href="mailto:mail@ScholarNav.com" className="text-forest hover:underline">
-              mail@ScholarNav.com
+            <a href="mailto:mail@ScolarNav.com" className="text-forest hover:underline">
+              mail@ScolarNav.com
             </a>
             .
           </p>
@@ -116,7 +116,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">5. AI Processing</h2>
           <p>
-            ScholarNav uses Claude (by Anthropic) to power its coaching, mentor, interview, and roadmap
+            ScolarNav uses Claude (by Anthropic) to power its coaching, mentor, interview, and roadmap
             features. When you use these features, relevant parts of your profile and CV are sent to
             Anthropic's API to generate a response. Anthropic processes this data under their own privacy
             policy and does not use API inputs to train their models.
@@ -210,8 +210,8 @@ export default function PrivacyPage() {
           </ul>
           <p className="mt-4">
             To exercise any of these rights, email us at{" "}
-            <a href="mailto:mail@ScholarNav.com" className="text-forest hover:underline">
-              mail@ScholarNav.com
+            <a href="mailto:mail@ScolarNav.com" className="text-forest hover:underline">
+              mail@ScolarNav.com
             </a>
             . We will respond within 30 days. Account deletion is also available directly in your profile settings.
           </p>
@@ -227,8 +227,8 @@ export default function PrivacyPage() {
           <p className="mt-3">
             No system is perfectly secure. If you discover a vulnerability, please disclose it responsibly
             to{" "}
-            <a href="mailto:mail@ScholarNav.com" className="text-forest hover:underline">
-              mail@ScholarNav.com
+            <a href="mailto:mail@ScolarNav.com" className="text-forest hover:underline">
+              mail@ScolarNav.com
             </a>
             .
           </p>
@@ -237,7 +237,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">10. Cookies & Local Storage</h2>
           <p>
-            When you first visit ScholarNav, we display a cookie consent banner. You can choose to accept all
+            When you first visit ScolarNav, we display a cookie consent banner. You can choose to accept all
             cookies or essential cookies only. Your preference is stored in your browser so we don't ask again.
           </p>
           <div className="mt-4 space-y-3">
@@ -266,7 +266,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="font-display text-xl text-ink mb-3">11. Children's Privacy</h2>
           <p>
-            ScholarNav is not intended for children under 16. We do not knowingly collect personal data from
+            ScolarNav is not intended for children under 16. We do not knowingly collect personal data from
             anyone under 16. If you believe a child has provided us with personal data, please contact us
             and we will delete it promptly.
           </p>
@@ -295,8 +295,8 @@ export default function PrivacyPage() {
           <h2 className="font-display text-xl text-ink mb-3">14. Contact & Complaints</h2>
           <p>
             For privacy-related questions or to exercise your rights, contact us at{" "}
-            <a href="mailto:mail@ScholarNav.com" className="text-forest hover:underline">
-              mail@ScholarNav.com
+            <a href="mailto:mail@ScolarNav.com" className="text-forest hover:underline">
+              mail@ScolarNav.com
             </a>
             .
           </p>
@@ -318,7 +318,7 @@ export default function PrivacyPage() {
       </div>
 
       <div className="mt-14 pt-8 border-t border-rule flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <p className="text-xs font-mono text-slate">Â© 2026 ScholarNav. All rights reserved.</p>
+        <p className="text-xs font-mono text-slate">Â© 2026 ScolarNav. All rights reserved.</p>
         <Link href="/terms" className="text-sm text-forest font-medium hover:underline">
           Terms of Service â†’
         </Link>
