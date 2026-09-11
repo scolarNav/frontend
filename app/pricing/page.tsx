@@ -8,8 +8,6 @@ import { usesPaystack, COUNTRIES } from "@/lib/countries";
 
 const STRIPE_MONTHLY = process.env.NEXT_PUBLIC_STRIPE_PRICE_MONTHLY!;
 const STRIPE_ANNUAL = process.env.NEXT_PUBLIC_STRIPE_PRICE_ANNUAL!;
-const PAYSTACK_MONTHLY = process.env.NEXT_PUBLIC_PAYSTACK_PLAN_MONTHLY!;
-const PAYSTACK_ANNUAL = process.env.NEXT_PUBLIC_PAYSTACK_PLAN_ANNUAL!;
 
 const FREE_FEATURES = [
   "Browse the full scholarship catalogue",
@@ -29,7 +27,6 @@ const PRO_FEATURES = [
   "For You — opportunities matched to your CV",
   "Readiness Score — unlimited refreshes",
   "Application coaching per opportunity",
-  "7-day free trial — no card required",
 ];
 
 export default function PricingPage() {
@@ -45,6 +42,13 @@ export default function PricingPage() {
   const usePaystack = usesPaystack(countryCode);
   const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name;
 
+  const cancelAtPeriodEnd = user?.subscription?.cancelAtPeriodEnd;
+  const periodEnd = user?.subscription?.currentPeriodEnd
+    ? new Date(user.subscription.currentPeriodEnd).toLocaleDateString("en-GB", {
+        day: "numeric", month: "long", year: "numeric",
+      })
+    : null;
+
   async function handleStripeCheckout(type: "monthly" | "annual") {
     if (!user) { router.push("/register"); return; }
     const priceId = type === "monthly" ? STRIPE_MONTHLY : STRIPE_ANNUAL;
@@ -59,13 +63,12 @@ export default function PricingPage() {
     }
   }
 
-  async function handlePaystackCheckout(type: "monthly" | "annual") {
+  async function handlePaystackCheckout() {
     if (!user) { router.push("/register"); return; }
-    const planCode = type === "monthly" ? PAYSTACK_MONTHLY : PAYSTACK_ANNUAL;
-    setLoading(type);
+    setLoading("monthly");
     setError(null);
     try {
-      const { url } = await api.post<{ url: string }>("/billing/paystack/checkout", { planCode });
+      const { url } = await api.post<{ url: string }>("/billing/paystack/checkout");
       window.location.href = url;
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't start checkout. Please try again.");
@@ -97,7 +100,7 @@ export default function PricingPage() {
   }
 
   function handleCheckout(type: "monthly" | "annual") {
-    if (usePaystack) handlePaystackCheckout(type);
+    if (usePaystack) handlePaystackCheckout();
     else handleStripeCheckout(type);
   }
 
@@ -135,37 +138,39 @@ export default function PricingPage() {
         </p>
       </div>
 
-      {/* Billing toggle */}
-      <div className="mt-12 flex justify-center">
-        <div
-          className="inline-flex rounded-lg p-1 gap-1"
-          style={{ background: "#dce8f5" }}
-        >
-          <button
-            onClick={() => setBilling("monthly")}
-            className="px-5 py-2 text-sm font-medium rounded-md transition-all"
-            style={
-              billing === "monthly"
-                ? { background: "#fff", color: "#d3622c" }
-                : { background: "transparent", color: "#64748B" }
-            }
+      {/* Billing toggle — only shown for non-Paystack users */}
+      {!usePaystack && (
+        <div className="mt-12 flex justify-center">
+          <div
+            className="inline-flex rounded-lg p-1 gap-1"
+            style={{ background: "#dce8f5" }}
           >
-            Monthly
-          </button>
-          <button
-            onClick={() => setBilling("annual")}
-            className="px-5 py-2 text-sm font-medium rounded-md transition-all"
-            style={
-              billing === "annual"
-                ? { background: "#fff", color: "#d3622c" }
-                : { background: "transparent", color: "#64748B" }
-            }
-          >
-            Annual
-            <span className="ml-1.5 text-xs font-mono text-brass">save 35%</span>
-          </button>
+            <button
+              onClick={() => setBilling("monthly")}
+              className="px-5 py-2 text-sm font-medium rounded-md transition-all"
+              style={
+                billing === "monthly"
+                  ? { background: "#fff", color: "#d3622c" }
+                  : { background: "transparent", color: "#64748B" }
+              }
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBilling("annual")}
+              className="px-5 py-2 text-sm font-medium rounded-md transition-all"
+              style={
+                billing === "annual"
+                  ? { background: "#fff", color: "#d3622c" }
+                  : { background: "transparent", color: "#64748B" }
+              }
+            >
+              Annual
+              <span className="ml-1.5 text-xs font-mono text-brass">save 35%</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       {countryName && (
         <p className="text-center text-xs font-mono text-slate mt-3">
@@ -176,12 +181,12 @@ export default function PricingPage() {
       {error && <p className="text-alert text-sm text-center mt-4">{error}</p>}
 
       {/* Plans */}
-      <div className="mt-8 grid sm:grid-cols-2 gap-6">
+      <div className={`mt-8 grid ${usePaystack ? "sm:grid-cols-2" : "sm:grid-cols-2"} gap-6`}>
 
         {/* Free */}
         <div className="case-card p-8 flex flex-col">
           <p className="font-mono text-xs tracking-widest uppercase text-slate">Free</p>
-          <p className="font-display text-4xl text-ink mt-2">$0</p>
+          <p className="font-display text-4xl text-ink mt-2">{usePaystack ? "₦0" : "$0"}</p>
           <p className="text-ink-soft text-sm mt-1">Forever. No card needed.</p>
 
           <ul className="mt-6 space-y-2.5 flex-1">
@@ -209,11 +214,21 @@ export default function PricingPage() {
         <div className="case-card p-8 flex flex-col" style={{ borderColor: "#d3622c", borderWidth: "1.5px" }}>
           <div className="flex items-center justify-between">
             <p className="font-mono text-xs tracking-widest uppercase text-forest">Pro</p>
-            <span className="badge border border-rule text-slate">7-day free trial</span>
+            {!usePaystack && <span className="badge border border-rule text-slate">7-day free trial</span>}
           </div>
 
           <div className="mt-3">
-            {billing === "monthly" ? (
+            {usePaystack ? (
+              <>
+                <div className="flex items-baseline gap-1.5">
+                  <span className="font-display text-4xl text-ink">₦10,000</span>
+                  <span className="text-ink-soft text-sm">first month</span>
+                </div>
+                <p className="text-xs text-slate font-mono mt-1.5">
+                  then ₦5,000/month · renews automatically from your saved card
+                </p>
+              </>
+            ) : billing === "monthly" ? (
               <>
                 <span className="font-display text-4xl text-ink">$7</span>
                 <span className="text-ink-soft text-sm"> / month</span>
@@ -241,23 +256,41 @@ export default function PricingPage() {
 
           <div className="mt-8 flex flex-col gap-3">
             {isPro ? (
-              isPaystackUser ? (
-                <button
-                  onClick={handlePaystackCancel}
-                  disabled={loading !== null}
-                  className="btn-secondary w-full disabled:opacity-60"
-                >
-                  {loading === "portal" ? "Processing…" : "Cancel subscription"}
-                </button>
-              ) : (
-                <button
-                  onClick={handleStripePortal}
-                  disabled={loading !== null}
-                  className="btn-secondary w-full disabled:opacity-60"
-                >
-                  {loading === "portal" ? "Redirecting…" : "Manage subscription"}
-                </button>
-              )
+              <>
+                {/* Active subscription management */}
+                <div className="text-center mb-2">
+                  {cancelAtPeriodEnd ? (
+                    <p className="text-xs font-mono text-slate">
+                      Cancels {periodEnd ? `on ${periodEnd}` : "at end of billing period"} — Pro access remains until then
+                    </p>
+                  ) : periodEnd ? (
+                    <p className="text-xs font-mono text-slate">
+                      Renews automatically on {periodEnd}
+                    </p>
+                  ) : null}
+                </div>
+                {isPaystackUser ? (
+                  <button
+                    onClick={handlePaystackCancel}
+                    disabled={loading !== null || !!cancelAtPeriodEnd}
+                    className="btn-secondary w-full disabled:opacity-60"
+                  >
+                    {loading === "portal"
+                      ? "Processing…"
+                      : cancelAtPeriodEnd
+                        ? "Cancellation scheduled"
+                        : "Cancel subscription"}
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleStripePortal}
+                    disabled={loading !== null}
+                    className="btn-secondary w-full disabled:opacity-60"
+                  >
+                    {loading === "portal" ? "Redirecting…" : "Manage subscription"}
+                  </button>
+                )}
+              </>
             ) : (
               <>
                 <button
@@ -265,10 +298,18 @@ export default function PricingPage() {
                   disabled={loading !== null}
                   className="btn-primary w-full disabled:opacity-60"
                 >
-                  {loading ? "Redirecting…" : billing === "monthly" ? "Start free trial — $7/mo after" : "Start free trial — $55/yr after"}
+                  {loading
+                    ? "Redirecting…"
+                    : usePaystack
+                      ? "Subscribe — ₦10,000 first month"
+                      : billing === "monthly"
+                        ? "Start free trial — $7/mo after"
+                        : "Start free trial — $55/yr after"}
                 </button>
                 <p className="text-xs text-slate font-mono text-center">
-                  7 days free · No card required to trial · Cancel anytime
+                  {usePaystack
+                    ? "Auto-renews at ₦5,000/month · Cancel anytime"
+                    : "7 days free · No card required to trial · Cancel anytime"}
                 </p>
               </>
             )}
@@ -285,12 +326,16 @@ export default function PricingPage() {
             a: "No — and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do — and it's worth a lot.",
           },
           {
-            q: "What does the 7-day free trial include?",
-            a: "Full Pro access — Mentor, Roadmap, Mock Interview, For You matching, and unlimited Readiness Score refreshes. No card needed to start the trial.",
+            q: "How does billing work in Nigeria?",
+            a: "Your first month is ₦10,000. From month 2 onwards, you're charged ₦5,000/month automatically from the card you paid with — no need to do anything. You can cancel at any time and keep Pro access until your current billing period ends.",
+          },
+          {
+            q: "What happens when my subscription renews?",
+            a: "Renewals are fully automatic. Paystack charges the card you used for your first payment on the same date each month. If the charge fails, you'll receive an email from Paystack, and your access will remain active during a short retry window.",
           },
           {
             q: "Can I pay in my local currency?",
-            a: "Yes. We support local currency payments via Paystack (Naira, Cedis, Shillings, and more) as well as global card payments via Stripe in USD. Choose whichever works best for you at checkout.",
+            a: "Yes. We support local currency payments via Paystack (Naira, Cedis, Shillings, and more) as well as global card payments via Stripe in USD. Your payment gateway is selected automatically based on your country.",
           },
           {
             q: "What's the difference between Free and Pro, practically?",

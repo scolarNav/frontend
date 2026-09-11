@@ -49,6 +49,7 @@ export interface Subscription {
   gateway?: "stripe" | "paystack";
   currentPeriodEnd?: string;
   trialStartedAt?: string;
+  cancelAtPeriodEnd?: boolean;
 }
 
 export interface Celebration {
@@ -133,6 +134,18 @@ export interface User {
   profile?: UserProfile;
   readinessCache?: ReadinessScore;
   roadmapCache?: Roadmap;
+  referralCode?: string;
+}
+
+export interface ReferralStats {
+  referralCode: string;
+  referralLink: string;
+  stats: {
+    total: number;
+    rewarded: number;
+    pending: number;
+    freeMonthsEarned: number;
+  };
 }
 
 export type OpportunityType = "scholarship" | "study_program" | "immigration_pathway" | "incubator" | "fellowship";

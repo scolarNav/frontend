@@ -7,6 +7,7 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Opportunity, SavedOpportunity, ReadinessScore } from "@/lib/types";
 import ReadinessScoreCard from "@/components/ReadinessScoreCard";
+import ReferralCard from "@/components/ReferralCard";
 
 const STATUS_LABELS: Record<string, string> = {
   interested: "Interested",
@@ -300,6 +301,11 @@ export default function DashboardPage() {
             </div>
           </Link>
         ))}
+      </div>
+
+      {/* Referral */}
+      <div className="mb-10">
+        <ReferralCard />
       </div>
 
       {/* Readiness Score */}

@@ -25,6 +25,18 @@ interface AdminStats {
   totalRevenueUSD: number;
   paystackRevenue: { currency: string; total: number; count: number }[];
   totalPaystackPayments: number;
+  totalReferrals: number;
+  rewardedReferrals: number;
+}
+
+interface AdminReferral {
+  _id: string;
+  referrerId: { _id: string; fullName: string; email: string } | null;
+  refereeId: { _id: string; fullName: string; email: string } | null;
+  refereeEmail: string;
+  status: "pending" | "rewarded";
+  rewardedAt?: string;
+  createdAt: string;
 }
 
 interface DbHealth {
@@ -124,7 +136,7 @@ interface AdminBooking {
   createdAt: string;
 }
 
-type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches";
+type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals";
 
 function trialDaysLeft(periodEnd?: string): number | null {
   if (!periodEnd) return null;
@@ -316,6 +328,11 @@ export default function AdminPage() {
   } | null>(null);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [coachSubTab, setCoachSubTab] = useState<"applications" | "bookings">("applications");
+  const [referrals, setReferrals] = useState<AdminReferral[]>([]);
+  const [referralsTotal, setReferralsTotal] = useState(0);
+  const [referralsPage, setReferralsPage] = useState(1);
+  const [referralsPages, setReferralsPages] = useState(1);
+  const [referralsLoading, setReferralsLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -403,12 +420,33 @@ export default function AdminPage() {
     }
   }
 
+  async function loadReferrals(page = 1) {
+    setReferralsLoading(true);
+    try {
+      const data = await api.get<{ referrals: AdminReferral[]; total: number; page: number; pages: number }>(
+        `/referral/list?page=${page}`
+      );
+      setReferrals(data.referrals);
+      setReferralsTotal(data.total);
+      setReferralsPage(data.page);
+      setReferralsPages(data.pages);
+    } catch {
+      setError("Failed to load referrals.");
+    } finally {
+      setReferralsLoading(false);
+    }
+  }
+
   useEffect(() => {
     if (tab === "coaches" && user?.isAdmin) {
       if (coachSubTab === "applications") loadCoaches(coachStatusFilter);
       else loadBookings();
     }
   }, [tab, coachSubTab, coachStatusFilter, user]);
+
+  useEffect(() => {
+    if (tab === "referrals" && user?.isAdmin) loadReferrals(referralsPage);
+  }, [tab, referralsPage, user]);
 
   useEffect(() => {
     if (tab === "analytics" && user?.isAdmin && !analytics) {
@@ -684,6 +722,7 @@ export default function AdminPage() {
     { key: "celebrations", label: "Celebrations", badge: stats?.pendingCelebrations || undefined },
     { key: "analytics", label: "Analytics" },
     { key: "coaches", label: "Coaches" },
+    { key: "referrals", label: "Referrals", badge: stats?.totalReferrals || undefined },
   ];
 
   return (
@@ -770,6 +809,11 @@ export default function AdminPage() {
               {stats.pendingCelebrations > 0 && (
                 <p className="text-xs text-brass font-mono mt-1">{stats.pendingCelebrations} pending review</p>
               )}
+            </div>
+            <div className="case-card p-5" style={{ borderLeft: "3px solid #d3622c" }}>
+              <p className="text-xs font-mono text-slate uppercase tracking-wide">Total referrals</p>
+              <p className="font-display text-3xl text-ink mt-1">{stats.totalReferrals}</p>
+              <p className="text-xs text-slate font-mono mt-1">{stats.rewardedReferrals} rewarded · {stats.totalReferrals - stats.rewardedReferrals} pending</p>
             </div>
           </div>
         </div>
@@ -1431,6 +1475,100 @@ export default function AdminPage() {
                   </div>
                 </div>
               ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Referrals ── */}
+      {tab === "referrals" && (
+        <div className="mt-6 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-mono text-slate uppercase tracking-widest">
+              {referralsTotal} total referral{referralsTotal !== 1 ? "s" : ""}
+            </p>
+            <button
+              onClick={() => loadReferrals(referralsPage)}
+              className="text-xs font-mono text-slate hover:text-ink underline"
+            >
+              ↻ Refresh
+            </button>
+          </div>
+
+          {referralsLoading && (
+            <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="case-card p-4 animate-pulse h-14" />)}</div>
+          )}
+
+          {!referralsLoading && referrals.length === 0 && (
+            <p className="text-slate font-mono text-sm py-4">No referrals yet.</p>
+          )}
+
+          {!referralsLoading && referrals.length > 0 && (
+            <div className="space-y-2">
+              {referrals.map((r) => (
+                <div key={r._id} className="case-card p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                    {/* Referrer */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="text-xs font-mono text-slate uppercase tracking-widest">Referrer</p>
+                        <p className="text-sm font-medium text-ink">
+                          {r.referrerId?.fullName ?? "—"}
+                        </p>
+                        <span className="text-xs text-slate font-mono truncate">{r.referrerId?.email}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap mt-1">
+                        <p className="text-xs font-mono text-slate uppercase tracking-widest">Referee</p>
+                        <p className="text-sm text-ink-soft">
+                          {r.refereeId?.fullName ?? r.refereeEmail}
+                        </p>
+                        <span className="text-xs text-slate font-mono">{r.refereeId?.email ?? r.refereeEmail}</span>
+                      </div>
+                    </div>
+
+                    {/* Status + dates */}
+                    <div className="flex flex-col items-end gap-1 shrink-0 text-right">
+                      <span
+                        className={`text-xs font-mono px-2 py-0.5 ${
+                          r.status === "rewarded"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-amber-100 text-amber-800"
+                        }`}
+                      >
+                        {r.status === "rewarded" ? "REWARDED" : "PENDING"}
+                      </span>
+                      <p className="text-xs text-slate font-mono">
+                        Referred {new Date(r.createdAt).toLocaleDateString()}
+                      </p>
+                      {r.rewardedAt && (
+                        <p className="text-xs text-green-700 font-mono">
+                          Subscribed {new Date(r.rewardedAt).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {referralsPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button
+                onClick={() => setReferralsPage((p) => Math.max(1, p - 1))}
+                disabled={referralsPage === 1 || referralsLoading}
+                className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors"
+              >
+                ← Prev
+              </button>
+              <span className="font-mono text-sm text-slate">{referralsPage} / {referralsPages}</span>
+              <button
+                onClick={() => setReferralsPage((p) => Math.min(referralsPages, p + 1))}
+                disabled={referralsPage === referralsPages || referralsLoading}
+                className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors"
+              >
+                Next →
+              </button>
             </div>
           )}
         </div>
