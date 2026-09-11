@@ -606,13 +606,14 @@ export default function AdminPage() {
         }));
 
       if (editingOpp) {
-        const patch = Object.fromEntries(Object.entries({ ...base, ...(essayPromptsClean.length ? { essayPrompts: essayPromptsClean } : {}) }).filter(([, v]) => v !== "" && v !== undefined));
-        await api.patch(`/admin/opportunities/${editingOpp._id}`, patch);
+        const patch = Object.fromEntries(Object.entries({ ...base, ...(essayPromptsClean.length ? { essayPrompts: essayPromptsClean } : {}) }).filter(([, v]) => v !== undefined));
+        const { opportunity: updated } = await api.patch<{ opportunity: Opportunity }>(`/admin/opportunities/${editingOpp._id}`, patch);
+        setOpportunities((prev) => prev.map((o) => o._id === editingOpp._id ? updated : o));
       } else {
         await api.post("/admin/opportunities", { ...base, requirements: [], essayPrompts: essayPromptsClean });
+        await loadOpportunities(oppSearch, oppPage, oppStatusFilter, oppCountryFilter, oppTypeFilter);
       }
       setShowOppForm(false);
-      await loadOpportunities(oppSearch, oppPage, oppStatusFilter, oppCountryFilter, oppTypeFilter);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to save opportunity.");
     } finally {
