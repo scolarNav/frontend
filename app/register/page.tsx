@@ -19,18 +19,19 @@ function RegisterContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [country, setCountry] = useState("");
+  const [manualRef, setManualRef] = useState(refCode);
+  const [showRefInput, setShowRefInput] = useState(!!refCode);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [referrerName, setReferrerName] = useState<string | null>(null);
 
-  // Validate referral code silently on load
   useEffect(() => {
-    if (!refCode) return;
+    if (!manualRef) { setReferrerName(null); return; }
     api
-      .get<{ valid: boolean; referrerName: string }>(`/referral/validate/${refCode}`, { auth: false })
+      .get<{ valid: boolean; referrerName: string }>(`/referral/validate/${manualRef}`, { auth: false })
       .then((d) => setReferrerName(d.referrerName))
-      .catch(() => {});
-  }, [refCode]);
+      .catch(() => setReferrerName(null));
+  }, [manualRef]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -41,7 +42,7 @@ function RegisterContent() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(fullName, email, password, country, refCode || undefined);
+      await register(fullName, email, password, country, manualRef || undefined);
       router.push(next || "/onboarding");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't create your account. Please try again.");
@@ -55,7 +56,7 @@ function RegisterContent() {
     setError(null);
     setSubmitting(true);
     try {
-      const { isNew, user } = await googleLogin(response.credential, refCode || undefined);
+      const { isNew, user } = await googleLogin(response.credential, manualRef || undefined);
       router.push(next || (user.isCoach ? "/coaches/dashboard" : (isNew ? "/onboarding" : "/dashboard")));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Google sign-up failed. Please try again.");
@@ -152,6 +153,31 @@ function RegisterContent() {
             </select>
             <p className="text-xs text-slate mt-1.5">Used to tailor payment options and local context.</p>
           </div>
+
+          {/* Referral code */}
+          {!showRefInput ? (
+            <button
+              type="button"
+              onClick={() => setShowRefInput(true)}
+              className="text-xs text-slate hover:text-ink underline text-left"
+            >
+              Have a referral code?
+            </button>
+          ) : (
+            <div>
+              <label className="block text-sm font-medium text-ink mb-1.5">Referral code <span className="text-slate font-normal">(optional)</span></label>
+              <input
+                value={manualRef}
+                onChange={(e) => setManualRef(e.target.value.toUpperCase().trim())}
+                className="input font-mono tracking-widest"
+                placeholder="e.g. ABC12345"
+                maxLength={12}
+              />
+              {referrerName && (
+                <p className="text-xs text-forest mt-1.5">Referred by {referrerName} — you both get a free month when you subscribe.</p>
+              )}
+            </div>
+          )}
 
           {error && (
             <p className="text-alert text-sm">

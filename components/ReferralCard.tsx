@@ -6,13 +6,15 @@ import { ReferralStats } from "@/lib/types";
 
 export default function ReferralCard() {
   const [data, setData] = useState<ReferralStats | null>(null);
+  const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState<"code" | "link" | null>(null);
 
   useEffect(() => {
     api
       .get<ReferralStats>("/referral/me")
       .then(setData)
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   function copy(value: string, type: "code" | "link") {
@@ -20,6 +22,19 @@ export default function ReferralCard() {
       setCopied(type);
       setTimeout(() => setCopied(null), 2000);
     });
+  }
+
+  if (loading) {
+    return (
+      <div className="case-card p-6 animate-pulse">
+        <div className="h-3 w-24 bg-rule rounded mb-3" />
+        <div className="h-4 w-56 bg-rule rounded mb-5" />
+        <div className="space-y-2.5">
+          <div className="h-10 bg-rule rounded-lg" />
+          <div className="h-10 bg-rule rounded-lg" />
+        </div>
+      </div>
+    );
   }
 
   if (!data) return null;
@@ -43,7 +58,6 @@ export default function ReferralCard() {
         )}
       </div>
 
-      {/* Code + link copy */}
       <div className="space-y-2.5">
         <div className="flex items-center gap-2 border border-rule rounded-lg px-3 py-2.5 bg-surface">
           <span className="font-mono text-sm text-ink tracking-widest flex-1">{referralCode}</span>
@@ -65,7 +79,6 @@ export default function ReferralCard() {
         </div>
       </div>
 
-      {/* Stats row */}
       {stats.total > 0 && (
         <div className="mt-4 flex gap-5 pt-4 border-t border-rule">
           <div>
