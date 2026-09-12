@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { ApiError, api } from "@/lib/api";
 import { COUNTRIES } from "@/lib/countries";
 
-export default function RegisterPage() {
+function RegisterContent() {
   const { register, googleLogin } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -172,5 +172,13 @@ export default function RegisterPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense>
+      <RegisterContent />
+    </Suspense>
   );
 }

@@ -1,13 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 
-export default function LoginPage() {
+function LoginContent() {
   const { login, googleLogin } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -113,5 +113,13 @@ export default function LoginPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginContent />
+    </Suspense>
   );
 }

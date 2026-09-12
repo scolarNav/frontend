@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
@@ -26,7 +26,7 @@ const FEATURE_CARDS = [
   { href: "/interview", icon: "🎤", label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
 ];
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { user, loading: authLoading, refreshUser } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -432,5 +432,13 @@ export default function DashboardPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense>
+      <DashboardContent />
+    </Suspense>
   );
 }
