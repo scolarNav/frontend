@@ -12,6 +12,7 @@ const TOOLS = [
   { href: "/interview", label: "Mock Interview", pro: true },
   { href: "/deadlines", label: "Deadlines", pro: false },
   { href: "/cv", label: "My CV", pro: false },
+  { href: "/submit-scholarship", label: "Submit a Scholarship", pro: false },
 ];
 
 export default function NavBar() {

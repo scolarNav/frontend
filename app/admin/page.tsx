@@ -27,6 +27,28 @@ interface AdminStats {
   totalPaystackPayments: number;
   totalReferrals: number;
   rewardedReferrals: number;
+  pendingSubmissions: number;
+}
+
+interface AdminSubmission {
+  _id: string;
+  userId: { _id: string; fullName: string; email: string } | null;
+  title: string;
+  provider: string;
+  type: string;
+  country: string;
+  fieldsOfStudy: string[];
+  degreeLevel: string;
+  deadline?: string;
+  applicationOpens?: string;
+  fundingCoverage?: string;
+  objectives?: string;
+  eligibilitySummary?: string;
+  officialUrl: string;
+  notes?: string;
+  status: "pending" | "approved" | "rejected";
+  rejectionReason?: string;
+  createdAt: string;
 }
 
 interface AdminReferral {
@@ -136,7 +158,7 @@ interface AdminBooking {
   createdAt: string;
 }
 
-type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals";
+type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals" | "submissions";
 
 function trialDaysLeft(periodEnd?: string): number | null {
   if (!periodEnd) return null;
@@ -333,6 +355,12 @@ export default function AdminPage() {
   const [referralsPage, setReferralsPage] = useState(1);
   const [referralsPages, setReferralsPages] = useState(1);
   const [referralsLoading, setReferralsLoading] = useState(false);
+  const [submissions, setSubmissions] = useState<AdminSubmission[]>([]);
+  const [submissionsTotal, setSubmissionsTotal] = useState(0);
+  const [submissionsPage, setSubmissionsPage] = useState(1);
+  const [submissionsPages, setSubmissionsPages] = useState(1);
+  const [submissionsLoading, setSubmissionsLoading] = useState(false);
+  const [submissionsFilter, setSubmissionsFilter] = useState<"pending" | "approved" | "rejected">("pending");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -447,6 +475,41 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === "referrals" && user?.isAdmin) loadReferrals(referralsPage);
   }, [tab, referralsPage, user]);
+
+  async function loadSubmissions(status: string, page = 1) {
+    setSubmissionsLoading(true);
+    try {
+      const data = await api.get<{ submissions: AdminSubmission[]; total: number; page: number; pages: number }>(
+        `/admin/submissions?status=${status}&page=${page}`
+      );
+      setSubmissions(data.submissions);
+      setSubmissionsTotal(data.total);
+      setSubmissionsPage(data.page);
+      setSubmissionsPages(data.pages);
+    } catch {
+      setError("Failed to load submissions.");
+    } finally {
+      setSubmissionsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (tab === "submissions" && user?.isAdmin) loadSubmissions(submissionsFilter, submissionsPage);
+  }, [tab, submissionsFilter, submissionsPage, user]);
+
+  async function handleReviewSubmission(id: string, action: "approve" | "reject", rejectionReason?: string) {
+    try {
+      await api.patch(`/admin/submissions/${id}`, { action, rejectionReason });
+      setSubmissions((prev) => prev.filter((s) => s._id !== id));
+      setSubmissionsTotal((prev) => prev - 1);
+      if (stats) {
+        setStats((prev) => prev ? { ...prev, pendingSubmissions: Math.max(0, prev.pendingSubmissions - 1) } : prev);
+      }
+      notify(action === "approve" ? "Submission approved and added to opportunities." : "Submission rejected.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to review submission.");
+    }
+  }
 
   useEffect(() => {
     if (tab === "analytics" && user?.isAdmin && !analytics) {
@@ -723,6 +786,7 @@ export default function AdminPage() {
     { key: "analytics", label: "Analytics" },
     { key: "coaches", label: "Coaches" },
     { key: "referrals", label: "Referrals", badge: stats?.totalReferrals || undefined },
+    { key: "submissions", label: "Submissions", badge: stats?.pendingSubmissions || undefined },
   ];
 
   return (
@@ -1604,6 +1668,184 @@ export default function AdminPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* ── Submissions ── */}
+      {tab === "submissions" && (
+        <div className="mt-6 space-y-5">
+          <div className="flex gap-2">
+            {(["pending", "approved", "rejected"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => { setSubmissionsFilter(s); setSubmissionsPage(1); }}
+                className={`text-xs font-mono px-3 py-1.5 border transition-colors capitalize ${submissionsFilter === s ? "border-ink text-ink" : "border-rule text-slate hover:text-ink"}`}
+              >
+                {s}
+              </button>
+            ))}
+            <span className="ml-auto text-xs font-mono text-slate self-center">{submissionsTotal} total</span>
+          </div>
+
+          {submissionsLoading && (
+            <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="case-card p-5 animate-pulse h-24" />)}</div>
+          )}
+
+          {!submissionsLoading && submissions.length === 0 && (
+            <p className="text-slate font-mono text-sm py-4">No {submissionsFilter} submissions.</p>
+          )}
+
+          {!submissionsLoading && submissions.map((s) => (
+            <SubmissionCard
+              key={s._id}
+              submission={s}
+              onApprove={() => handleReviewSubmission(s._id, "approve")}
+              onReject={(reason) => handleReviewSubmission(s._id, "reject", reason)}
+            />
+          ))}
+
+          {submissionsPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))} disabled={submissionsPage === 1 || submissionsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">← Prev</button>
+              <span className="font-mono text-sm text-slate">{submissionsPage} / {submissionsPages}</span>
+              <button onClick={() => setSubmissionsPage((p) => Math.min(submissionsPages, p + 1))} disabled={submissionsPage === submissionsPages || submissionsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">Next →</button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SubmissionCard({
+  submission,
+  onApprove,
+  onReject,
+}: {
+  submission: AdminSubmission;
+  onApprove: () => void;
+  onReject: (reason?: string) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [rejectionNote, setRejectionNote] = useState("");
+  const [acting, setActing] = useState(false);
+
+  async function approve() {
+    setActing(true);
+    await onApprove();
+    setActing(false);
+  }
+
+  async function reject() {
+    setActing(true);
+    await onReject(rejectionNote || undefined);
+    setActing(false);
+  }
+
+  return (
+    <div className="case-card overflow-hidden">
+      <div className="p-5 flex items-start gap-4 cursor-pointer" onClick={() => setExpanded((x) => !x)}>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-medium text-ink text-sm">{submission.title}</p>
+            <span className={`text-xs font-mono px-2 py-0.5 ${submission.status === "approved" ? "bg-green-100 text-green-800" : submission.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+              {submission.status.toUpperCase()}
+            </span>
+            <span className="text-xs text-slate font-mono">{submission.type.replace(/_/g, " ")}</span>
+          </div>
+          <p className="text-xs text-slate font-mono mt-0.5">
+            {submission.provider} · {submission.country} · {submission.degreeLevel}
+          </p>
+          {submission.userId && (
+            <p className="text-xs text-slate font-mono mt-0.5">
+              By {submission.userId.fullName} ({submission.userId.email}) · {new Date(submission.createdAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+        <span className="text-slate text-xs font-mono mt-1 shrink-0">{expanded ? "▲" : "▼"}</span>
+      </div>
+
+      {expanded && (
+        <div className="border-t border-rule px-5 py-4 bg-surface/30 space-y-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div>
+              <p className="text-xs font-mono text-slate uppercase mb-1">Official URL</p>
+              <a href={submission.officialUrl} target="_blank" rel="noreferrer" className="text-forest underline text-xs break-all">{submission.officialUrl}</a>
+            </div>
+            {submission.fundingCoverage && (
+              <div>
+                <p className="text-xs font-mono text-slate uppercase mb-1">Funding</p>
+                <p className="text-xs text-ink-soft">{submission.fundingCoverage}</p>
+              </div>
+            )}
+            {submission.deadline && (
+              <div>
+                <p className="text-xs font-mono text-slate uppercase mb-1">Deadline</p>
+                <p className="text-xs text-ink">{new Date(submission.deadline).toLocaleDateString()}</p>
+              </div>
+            )}
+            {submission.applicationOpens && (
+              <div>
+                <p className="text-xs font-mono text-slate uppercase mb-1">Opens</p>
+                <p className="text-xs text-ink">{new Date(submission.applicationOpens).toLocaleDateString()}</p>
+              </div>
+            )}
+            <div>
+              <p className="text-xs font-mono text-slate uppercase mb-1">Fields of study</p>
+              <p className="text-xs text-ink-soft">{submission.fieldsOfStudy.join(", ")}</p>
+            </div>
+          </div>
+          {submission.objectives && (
+            <div>
+              <p className="text-xs font-mono text-slate uppercase mb-1">Objectives</p>
+              <p className="text-sm text-ink-soft leading-relaxed">{submission.objectives}</p>
+            </div>
+          )}
+          {submission.eligibilitySummary && (
+            <div>
+              <p className="text-xs font-mono text-slate uppercase mb-1">Eligibility</p>
+              <p className="text-sm text-ink-soft leading-relaxed">{submission.eligibilitySummary}</p>
+            </div>
+          )}
+          {submission.notes && (
+            <div>
+              <p className="text-xs font-mono text-slate uppercase mb-1">Submitter notes</p>
+              <p className="text-sm text-ink-soft italic">"{submission.notes}"</p>
+            </div>
+          )}
+          {submission.rejectionReason && (
+            <div>
+              <p className="text-xs font-mono text-slate uppercase mb-1">Rejection reason</p>
+              <p className="text-sm text-alert">{submission.rejectionReason}</p>
+            </div>
+          )}
+
+          {submission.status === "pending" && (
+            <div className="flex flex-wrap gap-3 pt-2 border-t border-rule">
+              <button
+                onClick={approve}
+                disabled={acting}
+                className="text-xs border border-forest text-forest px-3 py-1.5 hover:bg-forest hover:text-white transition-colors disabled:opacity-50"
+              >
+                Approve & publish
+              </button>
+              <div className="flex gap-2 items-center">
+                <input
+                  value={rejectionNote}
+                  onChange={(e) => setRejectionNote(e.target.value)}
+                  placeholder="Rejection reason (optional)"
+                  className="input text-xs w-52"
+                />
+                <button
+                  onClick={reject}
+                  disabled={acting}
+                  className="text-xs border border-alert text-alert px-3 py-1.5 hover:bg-alert hover:text-white transition-colors disabled:opacity-50"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
