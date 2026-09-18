@@ -10,7 +10,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scolarnav.com";
 async function fetchOpportunity(id: string): Promise<Opportunity | null> {
   try {
     const res = await fetch(`${API_URL}/opportunities/${id}`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 3600, tags: [`opportunity-${id}`] },
     });
     if (!res.ok) return null;
     const data = await res.json();
