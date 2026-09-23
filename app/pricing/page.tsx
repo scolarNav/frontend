@@ -30,16 +30,18 @@ const PRO_FEATURES = [
 ];
 
 export default function PricingPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const [billing, setBilling] = useState<"monthly" | "annual">("annual");
   const [loading, setLoading] = useState<"monthly" | "annual" | "portal" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isPro = user?.subscription?.plan === "pro" && user?.subscription?.status === "active";
-  const isPaystackUser = user?.subscription?.gateway === "paystack";
   const countryCode = user?.country || "";
   const usePaystack = usesPaystack(countryCode);
+  // Treat user as Paystack if their gateway is paystack OR their country routes to Paystack.
+  // This handles users who paid before gateway was stored, or haven't paid yet.
+  const isPaystackUser = user?.subscription?.gateway === "paystack" || usePaystack;
   const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name;
 
   const cancelAtPeriodEnd = user?.subscription?.cancelAtPeriodEnd;
@@ -102,6 +104,16 @@ export default function PricingPage() {
   function handleCheckout(type: "monthly" | "annual") {
     if (usePaystack) handlePaystackCheckout();
     else handleStripeCheckout(type);
+  }
+
+  // Don't render gateway-dependent UI until auth has resolved — prevents Stripe
+  // pricing flashing briefly for African users while the user object loads.
+  if (authLoading) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20 flex items-center justify-center min-h-[40vh]">
+        <p className="text-slate font-mono text-sm">Loading…</p>
+      </div>
+    );
   }
 
   return (
