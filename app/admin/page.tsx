@@ -61,6 +61,18 @@ interface AdminReferral {
   createdAt: string;
 }
 
+interface AdminReport {
+  _id: string;
+  opportunityId: { _id: string; title: string; provider: string; officialUrl?: string; country?: string; deadline?: string; degreeLevel?: string } | null;
+  userId: { _id: string; fullName: string; email: string; country?: string } | null;
+  type: string;
+  details?: string;
+  status: "pending" | "reviewed" | "dismissed";
+  adminNote?: string;
+  resolvedAt?: string;
+  createdAt: string;
+}
+
 interface DbHealth {
   open: number;
   openingSoon: number;
@@ -158,7 +170,7 @@ interface AdminBooking {
   createdAt: string;
 }
 
-type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals" | "submissions";
+type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals" | "submissions" | "reports";
 
 function trialDaysLeft(periodEnd?: string): number | null {
   if (!periodEnd) return null;
@@ -361,6 +373,12 @@ export default function AdminPage() {
   const [submissionsPages, setSubmissionsPages] = useState(1);
   const [submissionsLoading, setSubmissionsLoading] = useState(false);
   const [submissionsFilter, setSubmissionsFilter] = useState<"pending" | "approved" | "rejected">("pending");
+  const [reports, setReports] = useState<AdminReport[]>([]);
+  const [reportsTotal, setReportsTotal] = useState(0);
+  const [reportsPage, setReportsPage] = useState(1);
+  const [reportsPages, setReportsPages] = useState(1);
+  const [reportsLoading, setReportsLoading] = useState(false);
+  const [reportsFilter, setReportsFilter] = useState<"pending" | "reviewed" | "dismissed">("pending");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
@@ -496,6 +514,38 @@ export default function AdminPage() {
   useEffect(() => {
     if (tab === "submissions" && user?.isAdmin) loadSubmissions(submissionsFilter, submissionsPage);
   }, [tab, submissionsFilter, submissionsPage, user]);
+
+  async function loadReports(status: string, page = 1) {
+    setReportsLoading(true);
+    try {
+      const data = await api.get<{ reports: AdminReport[]; total: number; page: number; pages: number }>(
+        `/admin/reports?status=${status}&page=${page}`
+      );
+      setReports(data.reports);
+      setReportsTotal(data.total);
+      setReportsPage(data.page);
+      setReportsPages(data.pages);
+    } catch {
+      setError("Failed to load reports.");
+    } finally {
+      setReportsLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (tab === "reports" && user?.isAdmin) loadReports(reportsFilter, reportsPage);
+  }, [tab, reportsFilter, reportsPage, user]);
+
+  async function handleReviewReport(id: string, action: "reviewed" | "dismissed", adminNote?: string) {
+    try {
+      await api.patch(`/admin/reports/${id}`, { action, adminNote });
+      setReports((prev) => prev.filter((r) => r._id !== id));
+      setReportsTotal((prev) => prev - 1);
+      notify(action === "reviewed" ? "Report marked as reviewed." : "Report dismissed.");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to update report.");
+    }
+  }
 
   async function handleReviewSubmission(id: string, action: "approve" | "reject", rejectionReason?: string) {
     try {
@@ -787,6 +837,7 @@ export default function AdminPage() {
     { key: "coaches", label: "Coaches" },
     { key: "referrals", label: "Referrals", badge: stats?.totalReferrals || undefined },
     { key: "submissions", label: "Submissions", badge: stats?.pendingSubmissions || undefined },
+    { key: "reports", label: "Reports" },
   ];
 
   return (
@@ -1713,6 +1764,49 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+      {/* ── Reports ── */}
+      {tab === "reports" && (
+        <div className="mt-6 space-y-5">
+          <div className="flex gap-2">
+            {(["pending", "reviewed", "dismissed"] as const).map((s) => (
+              <button
+                key={s}
+                onClick={() => { setReportsFilter(s); setReportsPage(1); }}
+                className={`text-xs font-mono px-3 py-1.5 border transition-colors capitalize ${reportsFilter === s ? "border-ink text-ink" : "border-rule text-slate hover:text-ink"}`}
+              >
+                {s}
+              </button>
+            ))}
+            <span className="ml-auto text-xs font-mono text-slate self-center">{reportsTotal} total</span>
+          </div>
+
+          {reportsLoading && (
+            <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="case-card p-5 animate-pulse h-20" />)}</div>
+          )}
+
+          {!reportsLoading && reports.length === 0 && (
+            <p className="text-slate font-mono text-sm py-4">No {reportsFilter} reports.</p>
+          )}
+
+          {!reportsLoading && reports.map((r) => (
+            <ReportCard
+              key={r._id}
+              report={r}
+              onReview={(note) => handleReviewReport(r._id, "reviewed", note)}
+              onDismiss={(note) => handleReviewReport(r._id, "dismissed", note)}
+            />
+          ))}
+
+          {reportsPages > 1 && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              <button onClick={() => setReportsPage((p) => Math.max(1, p - 1))} disabled={reportsPage === 1 || reportsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">← Prev</button>
+              <span className="font-mono text-sm text-slate">{reportsPage} / {reportsPages}</span>
+              <button onClick={() => setReportsPage((p) => Math.min(reportsPages, p + 1))} disabled={reportsPage === reportsPages || reportsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">Next →</button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -1846,6 +1940,121 @@ function SubmissionCard({
               </div>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ReportCard({
+  report,
+  onReview,
+  onDismiss,
+}: {
+  report: AdminReport;
+  onReview: (note?: string) => void;
+  onDismiss: (note?: string) => void;
+}) {
+  const [adminNote, setAdminNote] = useState("");
+  const [acting, setActing] = useState(false);
+
+  const TYPE_LABEL: Record<string, string> = {
+    wrong_deadline: "Wrong deadline",
+    wrong_country: "Wrong country",
+    wrong_degree: "Wrong degree level",
+    broken_link: "Broken link",
+    inactive: "No longer active",
+    wrong_info: "Other wrong info",
+    other: "Other",
+  };
+
+  async function review() {
+    setActing(true);
+    await onReview(adminNote || undefined);
+    setActing(false);
+  }
+
+  async function dismiss() {
+    setActing(true);
+    await onDismiss(adminNote || undefined);
+    setActing(false);
+  }
+
+  return (
+    <div className="case-card p-5 space-y-3">
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-medium text-ink text-sm">
+              {report.opportunityId?.title ?? <span className="text-slate italic">[deleted]</span>}
+            </p>
+            <span className="text-xs font-mono px-2 py-0.5 bg-amber-100 text-amber-800">
+              {TYPE_LABEL[report.type] ?? report.type}
+            </span>
+          </div>
+          {report.opportunityId && (
+            <p className="text-xs text-slate font-mono mt-0.5">
+              {report.opportunityId.provider}
+              {report.opportunityId.country ? ` · ${report.opportunityId.country}` : ""}
+              {report.opportunityId.deadline ? ` · deadline ${new Date(report.opportunityId.deadline).toLocaleDateString()}` : ""}
+            </p>
+          )}
+          {report.userId && (
+            <p className="text-xs text-slate font-mono mt-0.5">
+              Reported by {report.userId.fullName} ({report.userId.email})
+              {report.userId.country ? ` · ${report.userId.country}` : ""}
+              {" · "}{new Date(report.createdAt).toLocaleDateString()}
+            </p>
+          )}
+        </div>
+        {report.opportunityId?.officialUrl && (
+          <a
+            href={report.opportunityId.officialUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-forest underline font-mono shrink-0"
+          >
+            Official page →
+          </a>
+        )}
+      </div>
+
+      {report.details && (
+        <div className="bg-surface/50 border border-rule px-3 py-2">
+          <p className="text-xs font-mono text-slate uppercase mb-1">User note</p>
+          <p className="text-sm text-ink-soft italic">"{report.details}"</p>
+        </div>
+      )}
+
+      {report.adminNote && (
+        <div>
+          <p className="text-xs font-mono text-slate uppercase mb-1">Admin note</p>
+          <p className="text-sm text-ink-soft">{report.adminNote}</p>
+        </div>
+      )}
+
+      {report.status === "pending" && (
+        <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-rule">
+          <input
+            value={adminNote}
+            onChange={(e) => setAdminNote(e.target.value)}
+            placeholder="Admin note (optional)"
+            className="input text-xs w-52"
+          />
+          <button
+            onClick={review}
+            disabled={acting}
+            className="text-xs border border-forest text-forest px-3 py-1.5 hover:bg-forest hover:text-white transition-colors disabled:opacity-50"
+          >
+            Mark reviewed
+          </button>
+          <button
+            onClick={dismiss}
+            disabled={acting}
+            className="text-xs border border-rule text-slate px-3 py-1.5 hover:border-ink hover:text-ink transition-colors disabled:opacity-50"
+          >
+            Dismiss
+          </button>
         </div>
       )}
     </div>

@@ -57,6 +57,12 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingDone, setBookingDone] = useState<string | null>(null);
 
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reportType, setReportType] = useState("");
+  const [reportDetails, setReportDetails] = useState("");
+  const [reportLoading, setReportLoading] = useState(false);
+  const [reportDone, setReportDone] = useState(false);
+
   useEffect(() => {
     const savedEntry = user?.savedOpportunities.find((s) => s.opportunity === initial._id);
     if (savedEntry) {
@@ -144,6 +150,23 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Booking failed. Try again.");
       setBookingLoading(false);
+    }
+  }
+
+  async function handleReport() {
+    if (!user) { router.push(`/login?next=/opportunities/${opportunity._id}`); return; }
+    if (!reportType) return;
+    setReportLoading(true);
+    try {
+      await api.post(`/opportunities/${opportunity._id}/report`, { type: reportType, details: reportDetails || undefined });
+      setReportDone(true);
+      setReportOpen(false);
+      setReportType("");
+      setReportDetails("");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to submit report.");
+    } finally {
+      setReportLoading(false);
     }
   }
 
@@ -427,6 +450,23 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
           </section>
         )}
 
+      <div className="mt-10 pt-6 border-t border-rule flex items-center justify-between">
+        <p className="text-xs text-slate font-mono">See something wrong with this listing?</p>
+        <button
+          onClick={() => {
+            if (!user) { router.push(`/login?next=/opportunities/${opportunity._id}`); return; }
+            setReportOpen(true);
+            setReportDone(false);
+          }}
+          className="text-xs text-slate font-mono hover:text-ink transition-colors underline"
+        >
+          Report wrong data
+        </button>
+      </div>
+
+      {reportDone && (
+        <p className="text-forest text-sm mt-4 font-mono">Thanks for reporting — we'll review this shortly.</p>
+      )}
       {error && <p className="text-alert text-sm mt-6">{error}</p>}
 
       {/* Booking modal */}
@@ -498,6 +538,73 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
             <p className="text-xs text-slate text-center mt-3">
               Payment is collected once the coach confirms. You won't be charged now.
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Report modal */}
+      {reportOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: "rgba(0,0,0,0.45)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) setReportOpen(false); }}
+        >
+          <div className="bg-white rounded-2xl p-5 sm:p-7 max-w-md w-full shadow-xl">
+            <h3 className="font-display text-2xl text-ink mb-1">Report wrong data</h3>
+            <p className="text-sm text-slate mb-5">Help us keep this listing accurate.</p>
+
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-ink mb-2">What's wrong?</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { value: "wrong_deadline", label: "Wrong deadline" },
+                  { value: "wrong_country", label: "Wrong country" },
+                  { value: "wrong_degree", label: "Wrong degree level" },
+                  { value: "broken_link", label: "Broken link" },
+                  { value: "inactive", label: "No longer active" },
+                  { value: "wrong_info", label: "Other wrong info" },
+                  { value: "other", label: "Other" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setReportType(opt.value)}
+                    className={`text-left p-3 rounded-xl border text-xs transition-colors ${
+                      reportType === opt.value ? "border-forest bg-forest/5 text-forest font-medium" : "border-rule text-ink-soft hover:border-forest"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-sm font-medium text-ink mb-1.5">
+                Details <span className="text-slate font-normal">(optional)</span>
+              </label>
+              <textarea
+                rows={3}
+                value={reportDetails}
+                onChange={(e) => setReportDetails(e.target.value)}
+                className="input resize-none"
+                placeholder="What's the correct information?"
+                maxLength={500}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button onClick={() => setReportOpen(false)} className="flex-1 btn-secondary">
+                Cancel
+              </button>
+              <button
+                onClick={handleReport}
+                disabled={!reportType || reportLoading}
+                className="flex-1 btn-primary"
+              >
+                {reportLoading ? "Sending…" : "Submit report"}
+              </button>
+            </div>
           </div>
         </div>
       )}
