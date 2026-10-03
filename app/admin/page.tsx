@@ -4,6 +4,11 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import {
+  BarChart3, TrendingUp, Database, BookOpen, Users, Trophy,
+  UserCheck, Share2, Inbox, Flag, Menu, X, LogOut,
+  ChevronRight, Bell, Search,
+} from "lucide-react";
 
 interface PaymentRecord {
   gateway: "stripe" | "paystack";
@@ -383,6 +388,7 @@ export default function AdminPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionMsg, setActionMsg] = useState<string | null>(null);
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Opportunity form
   const [showOppForm, setShowOppForm] = useState(false);
@@ -820,61 +826,175 @@ export default function AdminPage() {
   }
 
   if (authLoading || loading) {
-    return <p className="max-w-5xl mx-auto px-4 py-20 text-slate font-mono text-sm">Loading admin panel…</p>;
+    return (
+      <div className="flex h-screen items-center justify-center" style={{ background: "#F5F7FB" }}>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#D3622C", borderTopColor: "transparent" }} />
+          <p className="text-sm font-mono" style={{ color: "#64748b" }}>Loading admin panel…</p>
+        </div>
+      </div>
+    );
   }
 
   if (!user?.isAdmin) return null;
 
   const displayedUsers = userSearchResults ?? users;
 
-  const TABS: { key: Tab; label: string; badge?: number }[] = [
-    { key: "stats", label: "Overview" },
-    { key: "database", label: "Database" },
-    { key: "opportunities", label: "Opportunities" },
-    { key: "users", label: "Users", badge: users.length },
-    { key: "celebrations", label: "Celebrations", badge: stats?.pendingCelebrations || undefined },
-    { key: "analytics", label: "Analytics" },
-    { key: "coaches", label: "Coaches" },
-    { key: "referrals", label: "Referrals", badge: stats?.totalReferrals || undefined },
-    { key: "submissions", label: "Submissions", badge: stats?.pendingSubmissions || undefined },
-    { key: "reports", label: "Reports" },
+  const TABS: { key: Tab; label: string; badge?: number; icon: React.ReactNode }[] = [
+    { key: "stats",         label: "Overview",       icon: <BarChart3 size={16} /> },
+    { key: "analytics",     label: "Analytics",      icon: <TrendingUp size={16} /> },
+    { key: "database",      label: "Database",       icon: <Database size={16} /> },
+    { key: "opportunities", label: "Opportunities",  icon: <BookOpen size={16} /> },
+    { key: "users",         label: "Users",          icon: <Users size={16} />, badge: users.length },
+    { key: "celebrations",  label: "Celebrations",   icon: <Trophy size={16} />, badge: stats?.pendingCelebrations || undefined },
+    { key: "coaches",       label: "Coaches",        icon: <UserCheck size={16} /> },
+    { key: "referrals",     label: "Referrals",      icon: <Share2 size={16} />, badge: stats?.totalReferrals || undefined },
+    { key: "submissions",   label: "Submissions",    icon: <Inbox size={16} />, badge: stats?.pendingSubmissions || undefined },
+    { key: "reports",       label: "Reports",        icon: <Flag size={16} /> },
   ];
 
+  const activeTab = TABS.find((t) => t.key === tab);
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
-      <p className="font-mono text-xs tracking-widest uppercase text-brass">Admin</p>
-      <h1 className="font-display text-2xl sm:text-4xl text-ink mt-2">Control Panel</h1>
+    <div className="flex h-screen overflow-hidden" style={{ background: "#F5F7FB" }}>
 
-      {error && (
-        <div className="mt-4 flex items-start justify-between gap-3 border border-alert bg-alert/5 px-4 py-3">
-          <p className="text-alert text-sm">{error}</p>
-          <button onClick={() => setError(null)} className="text-alert text-xs shrink-0">✕</button>
-        </div>
-      )}
-      {actionMsg && (
-        <div className="mt-4 border border-forest bg-forest/5 px-4 py-3">
-          <p className="text-forest text-sm font-mono">{actionMsg}</p>
-        </div>
+      {/* ── Mobile overlay ── */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-20 lg:hidden"
+          style={{ background: "rgba(0,0,0,0.5)" }}
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      <div className="flex gap-1 mt-8 border-b border-rule overflow-x-auto">
-        {TABS.map(({ key, label, badge }) => (
-          <button
-            key={key}
-            onClick={() => setTab(key)}
-            className={`px-4 py-2 text-sm font-mono transition-colors flex items-center gap-1.5 whitespace-nowrap ${
-              tab === key ? "border-b-2 border-ink text-ink -mb-px" : "text-slate hover:text-ink"
-            }`}
-          >
-            {label}
-            {badge ? (
-              <span className="text-xs bg-brass text-white px-1.5 py-0.5 rounded-full font-mono leading-none">
-                {badge}
-              </span>
-            ) : null}
+      {/* ── Sidebar ── */}
+      <aside
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        style={{ width: 240, background: "#0B1628", flexShrink: 0 }}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between px-5 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-2.5">
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: "linear-gradient(135deg, #D3622C, #F0813A)" }}>S</div>
+            <span className="text-white font-semibold text-sm tracking-wide">ScolarNav</span>
+          </div>
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/50 hover:text-white transition-colors">
+            <X size={16} />
           </button>
-        ))}
-      </div>
+        </div>
+
+        {/* Label */}
+        <p className="px-5 pt-5 pb-2 text-xs font-mono tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>Navigation</p>
+
+        {/* Nav items */}
+        <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-0.5">
+          {TABS.map(({ key, label, badge, icon }) => {
+            const active = tab === key;
+            return (
+              <button
+                key={key}
+                onClick={() => { setTab(key); setSidebarOpen(false); }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group"
+                style={active
+                  ? { background: "rgba(211,98,44,0.15)", color: "#F0813A", borderLeft: "3px solid #D3622C", paddingLeft: 9 }
+                  : { color: "rgba(255,255,255,0.55)", borderLeft: "3px solid transparent", paddingLeft: 9 }
+                }
+              >
+                <span className="shrink-0 transition-colors" style={{ color: active ? "#F0813A" : "rgba(255,255,255,0.4)" }}>{icon}</span>
+                <span className="flex-1 text-left font-medium">{label}</span>
+                {badge ? (
+                  <span className="text-xs px-1.5 py-0.5 rounded-full font-mono leading-none"
+                    style={{ background: active ? "#D3622C" : "rgba(211,98,44,0.3)", color: active ? "white" : "#F0813A" }}>
+                    {badge}
+                  </span>
+                ) : null}
+              </button>
+            );
+          })}
+        </nav>
+
+        {/* Sidebar footer */}
+        <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
+              style={{ background: "linear-gradient(135deg, #D3622C, #F0813A)", color: "white" }}>
+              {user?.fullName?.[0] ?? "A"}
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-white truncate">{user?.fullName}</p>
+              <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Admin</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main column ── */}
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+
+        {/* ── Header ── */}
+        <header className="flex items-center gap-4 px-6 py-4 bg-white shrink-0" style={{ borderBottom: "1px solid #E2E8F0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="lg:hidden p-2 rounded-lg transition-colors hover:bg-gray-100 text-gray-600"
+          >
+            <Menu size={18} />
+          </button>
+
+          {/* Breadcrumb */}
+          <div className="flex items-center gap-1.5 text-sm">
+            <span className="font-mono text-xs" style={{ color: "#94a3b8" }}>Admin</span>
+            <ChevronRight size={12} style={{ color: "#cbd5e1" }} />
+            <span className="font-semibold" style={{ color: "#0f172a" }}>{activeTab?.label ?? "—"}</span>
+          </div>
+
+          <div className="flex-1" />
+
+          {/* Status badge */}
+          {actionMsg && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+              {actionMsg}
+            </div>
+          )}
+
+          {/* Error badge */}
+          {error && (
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono" style={{ background: "#fff1f2", color: "#e11d48", border: "1px solid #fecdd3" }}>
+              {error}
+              <button onClick={() => setError(null)} className="ml-1 opacity-60 hover:opacity-100">✕</button>
+            </div>
+          )}
+
+          {/* User chip */}
+          <div className="flex items-center gap-2 pl-4" style={{ borderLeft: "1px solid #e2e8f0" }}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+              style={{ background: "linear-gradient(135deg, #D3622C, #F0813A)" }}>
+              {user?.fullName?.[0] ?? "A"}
+            </div>
+            <span className="hidden sm:block text-sm font-medium" style={{ color: "#334155" }}>{user?.fullName}</span>
+          </div>
+        </header>
+
+        {/* Mobile error/action toasts */}
+        {(error || actionMsg) && (
+          <div className="sm:hidden px-4 pt-3 space-y-2">
+            {error && (
+              <div className="flex items-start justify-between gap-3 px-4 py-3 rounded-xl text-sm" style={{ background: "#fff1f2", color: "#e11d48", border: "1px solid #fecdd3" }}>
+                <span>{error}</span>
+                <button onClick={() => setError(null)} className="shrink-0 opacity-60 hover:opacity-100">✕</button>
+              </div>
+            )}
+            {actionMsg && (
+              <div className="px-4 py-3 rounded-xl text-sm font-mono" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
+                {actionMsg}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Content ── */}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-6xl mx-auto px-6 py-6">
 
       {/* ── Overview ── */}
       {tab === "stats" && stats && (
@@ -1807,6 +1927,10 @@ export default function AdminPage() {
           )}
         </div>
       )}
+
+          </div>
+        </main>
+      </div>
     </div>
   );
 }
