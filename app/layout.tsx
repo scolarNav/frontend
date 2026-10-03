@@ -2,9 +2,8 @@ import type { Metadata } from "next";
 import { Fraunces, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
-import NavBar from "@/components/NavBar";
+import ConditionalShell from "@/components/ConditionalShell";
 import CookieBanner from "@/components/CookieBanner";
-import Image from "next/image";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -65,20 +64,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${display.variable} ${body.variable} ${mono.variable} font-body`}>
         <Providers>
-          <NavBar />
-          <main className="min-h-screen">{children}</main>
+          <ConditionalShell>{children}</ConditionalShell>
           <CookieBanner />
-          <footer className="border-t border-rule mt-24">
-            <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row justify-between gap-4 text-sm text-slate">
-              <Image src="/logo/logo.png" alt="Scholarship Portal" width={120} height={32} style={{ width: "auto", height: "32px" }} />
-              <span>case files for the applications that matter.</span>
-              <div className="flex items-center gap-4 font-mono text-xs">
-                <a href="/terms" className="hover:text-ink transition-colors">Terms</a>
-                <a href="/privacy" className="hover:text-ink transition-colors">Privacy</a>
-                <span>BUILT FOR THE JOURNEY ABROAD</span>
-              </div>
-            </div>
-          </footer>
         </Providers>
       </body>
     </html>

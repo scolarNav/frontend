@@ -856,7 +856,7 @@ export default function AdminPage() {
   const activeTab = TABS.find((t) => t.key === tab);
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: "#F5F7FB" }}>
+    <div className="flex overflow-hidden" style={{ height: "100dvh", background: "#F5F7FB" }}>
 
       {/* ── Mobile overlay ── */}
       {sidebarOpen && (
@@ -869,7 +869,7 @@ export default function AdminPage() {
 
       {/* ── Sidebar ── */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col transition-transform duration-300 lg:static lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
+        className={`fixed inset-y-0 left-0 z-30 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 lg:h-full ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
         style={{ width: 240, background: "#0B1628", flexShrink: 0 }}
       >
         {/* Logo */}
