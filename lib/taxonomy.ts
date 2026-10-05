@@ -1,3 +1,4 @@
+import { SHOW_INCUBATORS } from "./site";
 import type { DegreeLevel, OpportunityType } from "./types";
 
 export function slugify(text: string): string {
@@ -16,7 +17,9 @@ export const OPPORTUNITY_TYPES: { slug: string; value: OpportunityType; label: s
   { slug: "fellowships", value: "fellowship", label: "Fellowship", plural: "Fellowships" },
   { slug: "study-programs", value: "study_program", label: "Study Program", plural: "Study Programs" },
   { slug: "immigration-pathways", value: "immigration_pathway", label: "Immigration Pathway", plural: "Immigration Pathways" },
-  { slug: "incubators", value: "incubator", label: "Incubator", plural: "Incubators & Accelerators" },
+  ...(SHOW_INCUBATORS
+    ? [{ slug: "incubators", value: "incubator" as const, label: "Incubator", plural: "Incubators & Accelerators" }]
+    : []),
 ];
 
 export const DEGREE_LEVELS: { slug: string; value: DegreeLevel; label: string }[] = [

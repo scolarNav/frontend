@@ -26,6 +26,13 @@ export const IS_PRODUCTION_SITE =
  */
 export const SHOW_GRANTS = process.env.NEXT_PUBLIC_SHOW_GRANTS === "true";
 
+/**
+ * Incubators/accelerators are for businesses, which the platform does not serve, so they are hidden:
+ * no category page, their detail pages 404, and they are excluded from every listing and the sitemap.
+ * Set NEXT_PUBLIC_SHOW_INCUBATORS=true to bring them back.
+ */
+export const SHOW_INCUBATORS = process.env.NEXT_PUBLIC_SHOW_INCUBATORS === "true";
+
 export const siteConfig = {
   name: "ScolarNav",
   legalName: "ScolarNav",

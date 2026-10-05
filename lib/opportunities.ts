@@ -1,4 +1,4 @@
-import { API_URL } from "./site";
+import { API_URL, SHOW_INCUBATORS } from "./site";
 import type { Celebration, Grant, GrantsResponse, Opportunity } from "./types";
 
 export interface Pagination {
@@ -42,7 +42,8 @@ export interface ListQuery {
 export async function fetchOpportunityList(q: ListQuery): Promise<{ opportunities: Opportunity[]; pagination: Pagination } | null> {
   const params = new URLSearchParams();
   if (q.type) params.set("type", q.type);
-  else if (q.excludeType) params.set("excludeType", q.excludeType);
+  // Incubators are hidden site-wide, so every listing (and the sitemap) excludes them by default.
+  else if (q.excludeType || !SHOW_INCUBATORS) params.set("excludeType", q.excludeType ?? "incubator");
   if (q.country) params.set("country", q.country);
   if (q.degreeLevel) params.set("degreeLevel", q.degreeLevel);
   if (q.openOnly) params.set("openOnly", "true");
@@ -68,6 +69,11 @@ export async function fetchGrantList(page = 1, limit = 100): Promise<GrantsRespo
 export async function fetchGrant(id: string): Promise<Grant | null> {
   const data = await getJson<{ grant?: Grant }>(`/grants/${id}`, ["grants", `grant-${id}`]);
   return data?.grant ?? null;
+}
+
+/** Records that must not be shown publicly (currently: incubators, unless enabled). */
+export function isHiddenType(o: { type?: string }): boolean {
+  return !SHOW_INCUBATORS && o.type === "incubator";
 }
 
 export function isClosed(o: { deadline?: string }): boolean {

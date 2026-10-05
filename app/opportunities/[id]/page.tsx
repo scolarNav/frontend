@@ -6,7 +6,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import OpportunityCard from "@/components/OpportunityCard";
 import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
 import { opportunityJsonLd } from "@/lib/opportunity-schema";
-import { fetchCountryGuides, fetchOpenOpportunities, fetchOpportunity, formatDate, isClosed, knownProvider } from "@/lib/opportunities";
+import { fetchCountryGuides, fetchOpenOpportunities, fetchOpportunity, formatDate, isClosed, isHiddenType, knownProvider } from "@/lib/opportunities";
 import { opportunityPath, parseOpportunityParam } from "@/lib/paths";
 import { pageMetadata } from "@/lib/seo";
 import { countryByValue, levelByValue, typeByValue } from "@/lib/taxonomy";
@@ -20,7 +20,7 @@ async function loadOpportunity(param: string): Promise<Opportunity | null> {
   const id = parseOpportunityParam(param);
   if (!id) return null;
   const opp = await fetchOpportunity(id);
-  return opp && opp.isActive !== false ? opp : null;
+  return opp && opp.isActive !== false && !isHiddenType(opp) ? opp : null;
 }
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {

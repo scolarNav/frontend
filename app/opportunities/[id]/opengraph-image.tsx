@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { OG_SIZE, OgCard } from "@/lib/og-card";
-import { fetchOpportunity, formatDate, isClosed } from "@/lib/opportunities";
+import { fetchOpportunity, formatDate, isClosed, isHiddenType } from "@/lib/opportunities";
 import { parseOpportunityParam } from "@/lib/paths";
 import { typeByValue } from "@/lib/taxonomy";
 
@@ -13,7 +13,7 @@ export default async function OpportunityOgImage({ params }: { params: { id: str
   const id = parseOpportunityParam(params.id);
   const opp = id ? await fetchOpportunity(id).catch(() => null) : null;
 
-  if (!opp) {
+  if (!opp || isHiddenType(opp)) {
     return new ImageResponse(<OgCard eyebrow="Opportunity" title="Scholarships, fellowships & programs" />, size);
   }
 
