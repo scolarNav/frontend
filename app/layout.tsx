@@ -1,9 +1,10 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Fraunces, Plus_Jakarta_Sans, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/Providers";
 import ConditionalShell from "@/components/ConditionalShell";
 import CookieBanner from "@/components/CookieBanner";
+import { IS_PRODUCTION_SITE, SITE_URL, siteConfig } from "@/lib/site";
 
 const display = Fraunces({
   subsets: ["latin"],
@@ -24,44 +25,50 @@ const mono = IBM_Plex_Mono({
   variable: "--font-mono",
 });
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scholarnav.app";
+const DEFAULT_TITLE = `${siteConfig.name} — ${siteConfig.tagline}`;
+
+export const viewport: Viewport = {
+  themeColor: "#1a2d45",
+  width: "device-width",
+  initialScale: 1,
+};
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
+  applicationName: siteConfig.name,
   title: {
-    default: "ScolarNav — Scholarships & Opportunities for Global Talent",
-    template: "%s | ScolarNav",
+    default: DEFAULT_TITLE,
+    template: `%s | ${siteConfig.name}`,
   },
-  description:
-    "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
-  keywords: ["scholarships", "study abroad", "fellowships", "Chevening", "DAAD", "Erasmus", "Gates Cambridge", "opportunities", "application coaching", "scholarship deadline", "international students"],
+  description: siteConfig.description,
+  // Pages set their own canonical via pageMetadata(); a root-level canonical would leak to every child.
   openGraph: {
     type: "website",
-    siteName: "ScolarNav",
-    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
-    description:
-      "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
+    siteName: siteConfig.name,
+    locale: siteConfig.locale,
+    title: DEFAULT_TITLE,
+    description: siteConfig.description,
     url: SITE_URL,
   },
   twitter: {
     card: "summary_large_image",
-    title: "ScolarNav — Scholarships & Opportunities for Global Talent",
-    description:
-      "Find scholarships, study programs, and immigration or incubation pathways abroad. Get a personalized application strategy built from your own CV.",
+    title: DEFAULT_TITLE,
+    description: siteConfig.description,
+    ...(siteConfig.twitterHandle ? { site: siteConfig.twitterHandle } : {}),
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: { index: true, follow: true },
+  verification: {
+    google: siteConfig.verification.google,
+    other: siteConfig.verification.bing ? { "msvalidate.01": siteConfig.verification.bing } : undefined,
   },
+  // Staging/preview deployments must never be indexed; production is indexable by default.
+  robots: IS_PRODUCTION_SITE
+    ? { index: true, follow: true, googleBot: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1 } }
+    : { index: false, follow: false },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <meta charSet="utf-8" />
-      </head>
       <body className={`${display.variable} ${body.variable} ${mono.variable} font-body`}>
         <Providers>
           <ConditionalShell>{children}</ConditionalShell>

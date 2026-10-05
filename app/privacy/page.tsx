@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Privacy Policy",
-  description: "How ScolarNav collects, uses, and protects your personal data.",
-};
+  description: "How ScolarNav collects, uses and protects your personal data.",
+  path: "/privacy",
+});
 
 const LAST_UPDATED = "4 September 2026";
 

@@ -20,7 +20,7 @@ export default function ConditionalShell({ children }: { children: React.ReactNo
         <div className="max-w-6xl mx-auto px-6 py-8 flex flex-col sm:flex-row justify-between gap-4 text-sm text-slate">
           <Image
             src="/logo/logo.png"
-            alt="Scholarship Portal"
+            alt="ScolarNav"
             width={120}
             height={32}
             style={{ width: "auto", height: "32px" }}

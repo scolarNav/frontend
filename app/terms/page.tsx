@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import { pageMetadata } from "@/lib/seo";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = pageMetadata({
   title: "Terms of Service",
-  description: "Terms and conditions for using ScolarNav — the scholarship coaching platform.",
-};
+  description: "Terms and conditions for using ScolarNav, the scholarship discovery and coaching platform.",
+  path: "/terms",
+});
 
 const LAST_UPDATED = "4 September 2026";
 
