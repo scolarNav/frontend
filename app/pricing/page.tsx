@@ -106,12 +106,25 @@ export default function PricingPage() {
     else handleStripeCheckout(type);
   }
 
+  // Rendered in both states so the heading and intro are always in the server HTML.
+  const header = (
+    <div className="text-center max-w-xl mx-auto">
+      <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight">
+        Better prepared.<br />Better odds.
+      </h1>
+      <p className="text-ink-soft mt-4 leading-relaxed">
+        ScolarNav doesn't decide who gets the scholarship — committees do. What we do is help you show up as the strongest version of yourself on paper.
+      </p>
+    </div>
+  );
+
   // Don't render gateway-dependent UI until auth has resolved — prevents Stripe
   // pricing flashing briefly for African users while the user object loads.
   if (authLoading) {
     return (
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20 flex items-center justify-center min-h-[40vh]">
-        <p className="text-slate font-mono text-sm">Loading…</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
+        {header}
+        <p className="mt-10 text-center text-slate font-mono text-sm">Loading plans…</p>
       </div>
     );
   }
@@ -119,15 +132,7 @@ export default function PricingPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-14 sm:py-20">
 
-      {/* Header */}
-      <div className="text-center max-w-xl mx-auto">
-        <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight">
-          Better prepared.<br />Better odds.
-        </h1>
-        <p className="text-ink-soft mt-4 leading-relaxed">
-          ScolarNav doesn't decide who gets the scholarship — committees do. What we do is help you show up as the strongest version of yourself on paper.
-        </p>
-      </div>
+      {header}
 
       {/* Honest positioning */}
       <div className="mt-10 case-card p-6 max-w-2xl mx-auto">

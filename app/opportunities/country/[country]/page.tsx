@@ -30,14 +30,13 @@ export default async function Page({ params, searchParams }: Props) {
   const cfg = config(params.country);
   const c = countryBySlug(params.country)!;
   const guide = (await fetchCountryGuides().catch(() => [])).find((g) => g.name.toLowerCase() === c.value.toLowerCase());
-  return (
-    <>
-      {await renderListing(cfg, parsePage(searchParams))}
-      {guide && (
-        <p className="max-w-6xl mx-auto px-4 sm:px-6 -mt-8 mb-8 text-sm text-ink-soft">
-          Planning to study here? Read the <Link href={`/countries/${guide.code}`} className="text-forest underline">{guide.name} country guide</Link> for costs, visas and intakes.
-        </p>
-      )}
-    </>
+  return renderListing(
+    cfg,
+    parsePage(searchParams),
+    guide && (
+      <p className="mt-3 text-sm text-ink-soft">
+        Planning to study here? Read the <Link href={`/countries/${guide.code}`} className="text-forest underline">{guide.name} country guide</Link> for costs, visas and intakes.
+      </p>
+    )
   );
 }

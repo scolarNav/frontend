@@ -617,7 +617,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
 
             {pagination && pagination.pages > 1 && (
               <nav aria-label="Pagination" className="mt-10 flex items-center justify-center gap-2">
-                <PagerLink basePath="/" target={page - 1} current={page} disabled={page === 1 || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="prev">
+                <PagerLink basePath="/opportunities" firstHref="/" target={page - 1} current={page} disabled={page === 1 || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="prev">
                   ← Prev
                 </PagerLink>
 
@@ -632,7 +632,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
                     p === "…" ? (
                       <span key={`ellipsis-${i}`} className="text-slate font-mono text-sm px-1">…</span>
                     ) : (
-                      <PagerLink basePath="/"
+                      <PagerLink basePath="/opportunities" firstHref="/"
                         key={p}
                         target={p as number}
                         current={page}
@@ -649,7 +649,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
                     )
                   )}
 
-                <PagerLink basePath="/" target={page + 1} current={page} disabled={page === pagination.pages || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="next">
+                <PagerLink basePath="/opportunities" firstHref="/" target={page + 1} current={page} disabled={page === pagination.pages || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="next">
                   Next →
                 </PagerLink>
               </nav>

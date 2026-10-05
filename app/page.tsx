@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { permanentRedirect } from "next/navigation";
 import HomeExplorer from "@/components/HomeExplorer";
 import { BrowseLinks } from "@/components/OpportunityListing";
 import { JsonLd, itemListJsonLd, organizationJsonLd, websiteJsonLd } from "@/lib/jsonld";
@@ -15,15 +15,9 @@ export const dynamic = "force-dynamic";
 
 type Props = { searchParams: { page?: string } };
 
-export function generateMetadata({ searchParams }: Props): Metadata {
-  const page = parsePage(searchParams);
-  const title = `${siteConfig.name} — ${siteConfig.tagline}${page > 1 ? ` (Page ${page})` : ""}`;
-  const base = pageMetadata({
-    title: siteConfig.name,
-    description: siteConfig.description,
-    // Only ?page=N is reflected in the canonical; filters live in client state and never create URLs.
-    path: page > 1 ? `/?page=${page}` : "/",
-  });
+export function generateMetadata(): Metadata {
+  const base = pageMetadata({ title: siteConfig.name, description: siteConfig.description, path: "/" });
+  const title = `${siteConfig.name} — ${siteConfig.tagline}`;
   // The home title is absolute: the "%s | ScolarNav" template would repeat the brand.
   return {
     ...base,
@@ -34,9 +28,11 @@ export function generateMetadata({ searchParams }: Props): Metadata {
 }
 
 export default async function HomePage({ searchParams }: Props) {
+  // Next drops the query string from a root-URL canonical, so ?page=N cannot self-canonicalize here.
+  // Deeper pages live at /opportunities?page=N instead (see app/opportunities/page.tsx).
   const page = parsePage(searchParams);
-  const data = await fetchOpportunityList({ excludeType: "incubator", page, limit: PAGE_SIZE }).catch(() => null);
-  if (data && page > 1 && page > data.pagination.pages) notFound();
+  if (page > 1) permanentRedirect(`/opportunities?page=${page}`);
+  const data = await fetchOpportunityList({ excludeType: "incubator", page: 1, limit: PAGE_SIZE }).catch(() => null);
 
   return (
     <>

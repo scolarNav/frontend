@@ -18,6 +18,7 @@ export interface ListingConfig {
   basePath: string;
   query: ListQuery;
   crumbs: Crumb[];
+  firstHref?: string;
 }
 
 /**
@@ -37,7 +38,7 @@ export async function listingMetadata(cfg: ListingConfig, page: number): Promise
   });
 }
 
-export async function renderListing(cfg: ListingConfig, page: number) {
+export async function renderListing(cfg: ListingConfig, page: number, extra?: React.ReactNode) {
   const data = await fetchOpportunityList({ ...cfg.query, page });
   if (!data || (page > 1 && page > data.pagination.pages)) notFound();
   return (
@@ -48,6 +49,8 @@ export async function renderListing(cfg: ListingConfig, page: number) {
       crumbs={cfg.crumbs}
       opportunities={data.opportunities}
       pagination={data.pagination}
+      extra={extra}
+      firstHref={cfg.firstHref}
     />
   );
 }

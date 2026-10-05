@@ -1,9 +1,9 @@
 import Link from "next/link";
 
 /** Crawlable pagination: real links, canonical-friendly (?page=N only). */
-export default function ListingPagination({ basePath, page, pages }: { basePath: string; page: number; pages: number }) {
+export default function ListingPagination({ basePath, page, pages, firstHref }: { basePath: string; page: number; pages: number; firstHref?: string }) {
   if (pages <= 1) return null;
-  const href = (p: number) => (p === 1 ? basePath : `${basePath}?page=${p}`);
+  const href = (p: number) => (p === 1 ? (firstHref ?? basePath) : `${basePath}?page=${p}`);
   const nums = Array.from({ length: pages }, (_, i) => i + 1).filter((p) => p === 1 || p === pages || Math.abs(p - page) <= 2);
   return (
     <nav aria-label="Pagination" className="mt-10 flex flex-wrap items-center justify-center gap-2">

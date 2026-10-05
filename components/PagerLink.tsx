@@ -7,9 +7,11 @@ import Link from "next/link";
  * navigates client-side on a plain click. Disabled/current states render a non-link element.
  */
 export default function PagerLink({
-  basePath, target, current, disabled, onGo, className, rel, label, children,
+  basePath, firstHref, target, current, disabled, onGo, className, rel, label, children,
 }: {
   basePath: string;
+  /** Where page 1 lives when it is not basePath itself (e.g. the home page). */
+  firstHref?: string;
   target: number;
   current: number;
   disabled: boolean;
@@ -19,7 +21,7 @@ export default function PagerLink({
   label?: string;
   children: React.ReactNode;
 }) {
-  const href = target <= 1 ? basePath : `${basePath}?page=${target}`;
+  const href = target <= 1 ? (firstHref ?? basePath) : `${basePath}?page=${target}`;
   if (disabled || target === current) {
     return (
       <span

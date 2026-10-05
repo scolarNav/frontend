@@ -28,13 +28,15 @@ function ConfettiDot({ style, char }: { style: React.CSSProperties; char: string
   );
 }
 
-export default function WinsPage() {
+export default function WinsWall({ initial }: { initial: Celebration[] | null }) {
   const { user } = useAuth();
-  const [celebrations, setCelebrations] = useState<Celebration[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [celebrations, setCelebrations] = useState<Celebration[]>(initial ?? []);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // The server already rendered the wall; only fetch client-side if that failed.
+    if (initial) return;
     async function load() {
       try {
         const { celebrations: data } = await api.get<{ celebrations: Celebration[] }>("/celebrations", { auth: false });
@@ -46,7 +48,7 @@ export default function WinsPage() {
       }
     }
     load();
-  }, []);
+  }, [initial]);
 
   const featured = celebrations.filter((c) => c.isFeatured);
   const regular = celebrations.filter((c) => !c.isFeatured);

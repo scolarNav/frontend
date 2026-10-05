@@ -54,10 +54,14 @@ interface ListingProps {
   crumbs: Crumb[];
   opportunities: Opportunity[];
   pagination: Pagination;
+  /** Where page 1 lives when it is not basePath (the catalogue's page 1 is the home page). */
+  firstHref?: string;
+  /** Optional note rendered under the intro (e.g. a link to the country guide). */
+  extra?: React.ReactNode;
 }
 
 /** Server-rendered listing page: one h1, real <a> links to every item, crawlable pagination. */
-export default function OpportunityListing({ h1, intro, basePath, crumbs, opportunities, pagination }: ListingProps) {
+export default function OpportunityListing({ h1, intro, basePath, crumbs, opportunities, pagination, extra, firstHref }: ListingProps) {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
       <JsonLd
@@ -69,13 +73,14 @@ export default function OpportunityListing({ h1, intro, basePath, crumbs, opport
       <Breadcrumbs crumbs={crumbs} />
       <h1 className="font-display text-3xl sm:text-4xl text-ink leading-tight">{h1}</h1>
       <p className="text-ink-soft mt-3 max-w-2xl leading-relaxed">{intro}</p>
+      {extra}
       <p className="text-xs text-slate font-mono mt-4 mb-5">
         {pagination.total} listing{pagination.total !== 1 ? "s" : ""}
         {pagination.pages > 1 && ` — page ${pagination.page} of ${pagination.pages}`}
       </p>
 
       <OpportunityGrid opportunities={opportunities} />
-      <ListingPagination basePath={basePath} page={pagination.page} pages={pagination.pages} />
+      <ListingPagination basePath={basePath} page={pagination.page} pages={pagination.pages} firstHref={firstHref} />
       <BrowseLinks className="mt-14 pt-8 border-t border-rule" />
     </div>
   );
