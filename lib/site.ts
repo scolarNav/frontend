@@ -5,7 +5,11 @@
 
 const PRODUCTION_URL = "https://www.scolarnav.com";
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || PRODUCTION_URL).replace(/\/+$/, "");
+const configuredUrl = (process.env.NEXT_PUBLIC_SITE_URL || PRODUCTION_URL).replace(/\/+$/, "");
+
+// The bare domain (and plain http) is the same site as the production URL. Normalising it means a host
+// configured as "https://scolarnav.com" still gets the www canonical instead of being mistaken for staging.
+export const SITE_URL = /^https?:\/\/(www\.)?scolarnav\.com$/i.test(configuredUrl) ? PRODUCTION_URL : configuredUrl;
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 /**
