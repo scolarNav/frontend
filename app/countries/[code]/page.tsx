@@ -1,9 +1,13 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { api, ApiError } from "@/lib/api";
-import { CountryGuide } from "@/lib/types";
+import { notFound } from "next/navigation";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
+import { fetchCountryGuide } from "@/lib/opportunities";
+import { pageMetadata } from "@/lib/seo";
+import { countryByValue } from "@/lib/taxonomy";
+
+export const revalidate = 3600;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -14,31 +18,33 @@ function Section({ title, children }: { title: string; children: React.ReactNode
   );
 }
 
-export default function CountryDetailPage({ params }: { params: { code: string } }) {
-  const { code } = params;
-  const [guide, setGuide] = useState<CountryGuide | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export async function generateMetadata({ params }: { params: { code: string } }): Promise<Metadata> {
+  const guide = await fetchCountryGuide(params.code);
+  if (!guide) return { title: "Country guide not found", robots: { index: false, follow: false } };
+  return pageMetadata({
+    title: `Study in ${guide.name}: scholarships, costs & visas`,
+    description: `${guide.tagline}. ${guide.overview}`,
+    path: `/countries/${guide.code}`,
+  });
+}
 
-  useEffect(() => {
-    api.get<{ country: CountryGuide }>(`/countries/${code}`, { auth: false })
-      .then(({ country }) => setGuide(country))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load guide."))
-      .finally(() => setLoading(false));
-  }, [code]);
+export default async function CountryDetailPage({ params }: { params: { code: string } }) {
+  const guide = await fetchCountryGuide(params.code);
+  if (!guide) notFound();
 
-  if (loading) return <p className="max-w-3xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading…</p>;
-  if (error) return (
-    <div className="max-w-3xl mx-auto px-6 py-20">
-      <p className="text-alert text-sm">{error}</p>
-      <Link href="/countries" className="text-forest text-sm underline mt-3 block">← Back to country guides</Link>
-    </div>
-  );
-  if (!guide) return null;
+  const listing = countryByValue(guide.name);
+  const browseHref = listing ? `/opportunities/country/${listing.slug}` : "/";
+  const crumbs: Crumb[] = [
+    { name: "Home", path: "/" },
+    { name: "Country guides", path: "/countries" },
+    { name: guide.name, path: `/countries/${guide.code}` },
+  ];
 
   return (
+    <>
+    <JsonLd data={breadcrumbJsonLd(crumbs)} />
     <div className="max-w-3xl mx-auto px-6 py-14">
-      <Link href="/countries" className="text-sm text-slate hover:text-ink font-mono mb-6 block">← Country Guides</Link>
+      <Breadcrumbs crumbs={crumbs} />
 
       <div className="flex items-center gap-4 mb-2">
         <span className="text-5xl">{guide.flag}</span>
@@ -151,7 +157,7 @@ export default function CountryDetailPage({ params }: { params: { code: string }
       </Section>
 
       <div className="mt-8 flex flex-wrap gap-3">
-        <Link href="/" className="bg-forest text-white px-5 py-2.5 text-sm hover:bg-forest-light transition-colors" style={{ borderRadius: "4px" }}>
+        <Link href={browseHref} className="bg-forest text-white px-5 py-2.5 text-sm hover:bg-forest-light transition-colors" style={{ borderRadius: "4px" }}>
           Browse {guide.name} scholarships →
         </Link>
         <Link href="/mentor" className="border border-forest text-forest px-5 py-2.5 text-sm hover:bg-forest hover:text-white transition-colors" style={{ borderRadius: "4px" }}>
@@ -159,5 +165,6 @@ export default function CountryDetailPage({ params }: { params: { code: string }
         </Link>
       </div>
     </div>
+    </>
   );
 }

@@ -1,12 +1,14 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Opportunity, RecommendationMatch } from "@/lib/types";
 import OpportunityCard, { CardVariant } from "@/components/OpportunityCard";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
+import { PAGE_SIZE, type Pagination } from "@/lib/opportunities";
+import PagerLink from "@/components/PagerLink";
 
 const TYPES = [
   { value: "", label: "All types" },
@@ -81,15 +83,6 @@ const STUDY_FIELDS = [
   "Mathematics",
   "Public Policy",
 ];
-
-const PAGE_SIZE = 20;
-
-interface Pagination {
-  page: number;
-  limit: number;
-  total: number;
-  pages: number;
-}
 
 const TIER_CONFIG = {
   strong: { label: "Strong fit", color: "#6d8ec5" },
@@ -333,12 +326,26 @@ function ForYouPanel() {
   );
 }
 
-export default function HomePage() {
+export interface HomeInitialData {
+  opportunities: Opportunity[];
+  pagination: Pagination;
+}
+
+/** Hero copy: rendered on the server so the h1 is in the HTML crawlers see. */
+export default function HomeExplorer({ initial }: { initial: HomeInitialData | null }) {
   const { user, loading: authLoading } = useAuth();
 
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
-  const [pagination, setPagination] = useState<Pagination | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Server HTML always contains the guest hero (+ h1). Returning visitors with a stored token
+  // never see it: this flag flips right after hydration, before the profile finishes loading.
+  const [hasStoredSession, setHasStoredSession] = useState(false);
+  useEffect(() => {
+    try { setHasStoredSession(!!localStorage.getItem("ScolarNav_token")); } catch { /* storage blocked */ }
+  }, []);
+  const showGuestHero = !hasStoredSession && (authLoading || !user);
+
+  const [opportunities, setOpportunities] = useState<Opportunity[]>(initial?.opportunities ?? []);
+  const [pagination, setPagination] = useState<Pagination | null>(initial?.pagination ?? null);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState<string | null>(null);
 
   const [q, setQ] = useState("");
@@ -347,7 +354,9 @@ export default function HomePage() {
   const [country, setCountry] = useState("");
   const [field, setField] = useState("");
   const [openOnly, setOpenOnly] = useState(false);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(initial?.pagination.page ?? 1);
+  // The server already rendered the initial view; skip the first client fetch when nothing has changed.
+  const skipInitialFetch = useRef(!!initial);
   const [activeTab, setActiveTab] = useState<"catalogue" | "for-you">("catalogue");
 
   const resetPage = useCallback(() => setPage(1), []);
@@ -382,6 +391,10 @@ export default function HomePage() {
   }, [q, type, degreeLevel, country, field, openOnly, page]);
 
   useEffect(() => {
+    if (skipInitialFetch.current) {
+      skipInitialFetch.current = false;
+      return;
+    }
     const timeout = setTimeout(fetchOpportunities, 300);
     return () => clearTimeout(timeout);
   }, [fetchOpportunities]);
@@ -396,7 +409,7 @@ export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
       {/* Hero — shown only to visitors, hidden once logged in */}
-      {!authLoading && !user && (
+      {showGuestHero && (
         <div className="flex flex-col lg:flex-row lg:items-center gap-14 lg:gap-16">
           <div className="max-w-xl flex-shrink-0">
             <h1 className="font-display text-5xl sm:text-6xl text-ink leading-[1.05] tracking-tight">
@@ -451,7 +464,7 @@ export default function HomePage() {
       )}
 
       {/* Segment control tab switcher */}
-      <div className={!authLoading && user ? "mt-8" : "mt-14"}>
+      <div className={showGuestHero ? "mt-14" : "mt-8"}>
         <div
           className="flex w-full sm:w-auto rounded-lg p-1 gap-1"
           style={{ background: "#dce8f5" }}
@@ -603,14 +616,10 @@ export default function HomePage() {
             )}
 
             {pagination && pagination.pages > 1 && (
-              <div className="mt-10 flex items-center justify-center gap-2">
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1 || loading}
-                  className="btn-secondary text-sm px-4 py-2 disabled:opacity-30"
-                >
+              <nav aria-label="Pagination" className="mt-10 flex items-center justify-center gap-2">
+                <PagerLink basePath="/" target={page - 1} current={page} disabled={page === 1 || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="prev">
                   ← Prev
-                </button>
+                </PagerLink>
 
                 {Array.from({ length: pagination.pages }, (_, i) => i + 1)
                   .filter((p) => p === 1 || p === pagination.pages || Math.abs(p - page) <= 2)
@@ -623,28 +632,27 @@ export default function HomePage() {
                     p === "…" ? (
                       <span key={`ellipsis-${i}`} className="text-slate font-mono text-sm px-1">…</span>
                     ) : (
-                      <button
+                      <PagerLink basePath="/"
                         key={p}
-                        onClick={() => setPage(p as number)}
+                        target={p as number}
+                        current={page}
                         disabled={loading}
-                        className={`w-9 h-9 text-sm font-mono rounded-md transition-colors disabled:opacity-50 ${page === p
+                        onGo={setPage}
+                        label={`Page ${p}`}
+                        className={`w-9 h-9 inline-flex items-center justify-center text-sm font-mono rounded-md transition-colors ${page === p
                           ? "bg-forest text-white"
                           : "border border-rule text-ink-soft hover:border-forest hover:text-forest"
                           }`}
                       >
                         {p}
-                      </button>
+                      </PagerLink>
                     )
                   )}
 
-                <button
-                  onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
-                  disabled={page === pagination.pages || loading}
-                  className="btn-secondary text-sm px-4 py-2 disabled:opacity-30"
-                >
+                <PagerLink basePath="/" target={page + 1} current={page} disabled={page === pagination.pages || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="next">
                   Next →
-                </button>
-              </div>
+                </PagerLink>
+              </nav>
             )}
           </div>
         </>

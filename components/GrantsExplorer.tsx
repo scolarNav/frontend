@@ -1,9 +1,11 @@
-﻿"use client";
+"use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import type { Grant, GrantTag, GrantsResponse } from "@/lib/types";
+import { grantPath } from "@/lib/paths";
+import PagerLink from "@/components/PagerLink";
 
 const TAG_META: Record<GrantTag, { label: string; color: string }> = {
   africa: { label: "Africa", color: "#D97706" },
@@ -101,7 +103,7 @@ function GrantCard({ grant }: { grant: Grant }) {
             {sc.label}
           </span>
           <Link
-            href={`/grants/${grant._id}`}
+            href={grantPath(grant)}
             className="block font-display text-base text-ink hover:text-forest transition-colors line-clamp-2 leading-snug"
           >
             {grant.title}
@@ -151,7 +153,7 @@ function GrantCard({ grant }: { grant: Grant }) {
 
         <div className="flex items-center gap-3">
           <Link
-            href={`/grants/${grant._id}`}
+            href={grantPath(grant)}
             className="font-mono text-xs text-ink-soft hover:text-ink transition-colors"
           >
             Details →
@@ -188,24 +190,29 @@ function SkeletonCard() {
   );
 }
 
-export default function GrantsPage() {
-  const [grants, setGrants] = useState<Grant[]>([]);
-  const [total, setTotal] = useState(0);
-  const [lastScrapedAt, setLastScrapedAt] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+export default function GrantsExplorer({ initial }: { initial: GrantsResponse | null }) {
+  const [grants, setGrants] = useState<Grant[]>(initial?.grants ?? []);
+  const [total, setTotal] = useState(initial?.total ?? 0);
+  const [lastScrapedAt, setLastScrapedAt] = useState<string | null>(initial?.lastScrapedAt ?? null);
+  // The server already rendered this view; skip the first client fetch when nothing has changed.
+  const skipInitialLoad = useRef(!!initial);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<GrantTag | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page, setPage] = useState(1);
-  const [pages, setPages] = useState(1);
+  const [page, setPage] = useState(initial?.page ?? 1);
+  const [pages, setPages] = useState(initial?.pages ?? 1);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(t);
   }, [search]);
 
+  const filtersMounted = useRef(false);
   useEffect(() => {
+    // Don't reset the server-selected page on first mount.
+    if (!filtersMounted.current) { filtersMounted.current = true; return; }
     setPage(1);
   }, [activeTag, debouncedSearch]);
 
@@ -230,6 +237,10 @@ export default function GrantsPage() {
   }, [activeTag, debouncedSearch, page]);
 
   useEffect(() => {
+    if (skipInitialLoad.current) {
+      skipInitialLoad.current = false;
+      return;
+    }
     load();
   }, [load]);
 
@@ -248,7 +259,7 @@ export default function GrantsPage() {
     : null;
 
   return (
-    <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
       <div className="mb-8">
         <p className="font-mono text-xs tracking-widest uppercase text-brass mb-2">Live listings</p>
         <h1 className="font-display text-3xl sm:text-4xl text-ink mb-3">Startup Grants</h1>
@@ -355,25 +366,17 @@ export default function GrantsPage() {
 
       {/* Pagination */}
       {pages > 1 && !loading && !error && (
-        <div className="flex items-center justify-center gap-3 mt-8">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="stamp text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+        <nav aria-label="Pagination" className="flex items-center justify-center gap-3 mt-8">
+          <PagerLink basePath="/grants" target={page - 1} current={page} disabled={page <= 1} onGo={setPage} className="stamp text-sm" rel="prev">
             ← Previous
-          </button>
+          </PagerLink>
           <span className="font-mono text-xs text-slate">
             Page {page} of {pages}
           </span>
-          <button
-            disabled={page >= pages}
-            onClick={() => setPage((p) => p + 1)}
-            className="stamp text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-          >
+          <PagerLink basePath="/grants" target={page + 1} current={page} disabled={page >= pages} onGo={setPage} className="stamp text-sm" rel="next">
             Next →
-          </button>
-        </div>
+          </PagerLink>
+        </nav>
       )}
 
       {grants.length > 0 && !loading && (
@@ -382,6 +385,6 @@ export default function GrantsPage() {
           ScolarNav does not endorse or verify individual listings.
         </p>
       )}
-    </main>
+    </div>
   );
 }

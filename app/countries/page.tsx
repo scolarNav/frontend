@@ -1,23 +1,24 @@
-"use client";
-
-import { useEffect, useState } from "react";
+import type { Metadata } from "next";
 import Link from "next/link";
-import { api, ApiError } from "@/lib/api";
-import { CountrySummary } from "@/lib/types";
+import { JsonLd, breadcrumbJsonLd } from "@/lib/jsonld";
+import { fetchCountryGuides } from "@/lib/opportunities";
+import { pageMetadata } from "@/lib/seo";
 
-export default function CountriesPage() {
-  const [countries, setCountries] = useState<CountrySummary[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export const dynamic = "force-dynamic";
 
-  useEffect(() => {
-    api.get<{ countries: CountrySummary[] }>("/countries", { auth: false })
-      .then(({ countries: c }) => setCountries(c))
-      .catch((err) => setError(err instanceof ApiError ? err.message : "Couldn't load country guides."))
-      .finally(() => setLoading(false));
-  }, []);
+export const metadata: Metadata = pageMetadata({
+  title: "Study Abroad Country Guides",
+  description:
+    "Honest breakdowns of each study destination: scholarship culture, cost of living, visa process, intakes and what type of student thrives there.",
+  path: "/countries",
+});
+
+export default async function CountriesPage() {
+  const countries = await fetchCountryGuides();
 
   return (
+    <>
+    <JsonLd data={breadcrumbJsonLd([{ name: "Home", path: "/" }, { name: "Country guides", path: "/countries" }])} />
     <div className="max-w-5xl mx-auto px-6 py-14">
       <p className="font-mono text-xs tracking-widest uppercase text-slate">Country Guides</p>
       <h1 className="font-display text-4xl text-ink mt-1 mb-3">Where do you want to study?</h1>
@@ -25,10 +26,9 @@ export default function CountriesPage() {
         Honest breakdowns of each country's scholarship culture, cost of living, visa process, and what type of student thrives there.
       </p>
 
-      {loading && <p className="text-slate font-mono text-sm">Loading guides…</p>}
-      {error && <p className="text-alert text-sm">{error}</p>}
+      {countries.length === 0 && <p className="text-slate text-sm">Country guides are temporarily unavailable. Please check back soon.</p>}
 
-      {!loading && !error && (
+      {countries.length > 0 && (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {countries.map((c) => (
             <Link key={c.code} href={`/countries/${c.code}`}>
@@ -59,5 +59,6 @@ export default function CountriesPage() {
         </div>
       )}
     </div>
+    </>
   );
 }
