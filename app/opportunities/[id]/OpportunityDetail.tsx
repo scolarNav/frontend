@@ -392,7 +392,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                     <div className="flex items-start gap-3">
                       <Link href={`/coaches/${coach._id}`} className="shrink-0">
                         {coach.photoUrl ? (
-                          <img src={coach.photoUrl} alt={coach.name} className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity" />
+                          <img src={coach.photoUrl} alt={`Photo of coach ${coach.name}`} width={48} height={48} loading="lazy" className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity" />
                         ) : (
                           <div className="w-12 h-12 rounded-full bg-rule flex items-center justify-center font-display text-lg text-slate hover:bg-rule/70 transition-colors">
                             {coach.name[0]}

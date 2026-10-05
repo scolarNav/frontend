@@ -1,96 +1,124 @@
-import { Metadata } from "next";
-import { notFound } from "next/navigation";
-import Script from "next/script";
+import type { Metadata } from "next";
+import Link from "next/link";
+import { notFound, permanentRedirect } from "next/navigation";
 import OpportunityDetail from "./OpportunityDetail";
-import { Opportunity } from "@/lib/types";
+import Breadcrumbs from "@/components/Breadcrumbs";
+import OpportunityCard from "@/components/OpportunityCard";
+import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
+import { opportunityJsonLd } from "@/lib/opportunity-schema";
+import { fetchCountryGuides, fetchOpenOpportunities, fetchOpportunity, formatDate, isClosed } from "@/lib/opportunities";
+import { opportunityPath, parseOpportunityParam } from "@/lib/paths";
+import { pageMetadata } from "@/lib/seo";
+import { countryByValue, levelByValue, typeByValue } from "@/lib/taxonomy";
+import type { Opportunity } from "@/lib/types";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://scolarnav.com";
+// On-demand ISR: rendered on first request, refreshed hourly, and instantly via revalidateTag(`opportunity-<id>`).
+export const revalidate = 3600;
 
-async function fetchOpportunity(id: string): Promise<Opportunity | null> {
-  try {
-    const res = await fetch(`${API_URL}/opportunities/${id}`, {
-      next: { revalidate: 3600, tags: [`opportunity-${id}`] },
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    return data.opportunity ?? null;
-  } catch {
-    return null;
-  }
+/** Returns null when the record is missing or unpublished (-> real 404). */
+async function loadOpportunity(param: string): Promise<Opportunity | null> {
+  const id = parseOpportunityParam(param);
+  if (!id) return null;
+  const opp = await fetchOpportunity(id);
+  return opp && opp.isActive !== false ? opp : null;
 }
 
-export async function generateMetadata(
-  { params }: { params: { id: string } }
-): Promise<Metadata> {
-  const opp = await fetchOpportunity(params.id);
-  if (!opp) return { title: "Opportunity Not Found" };
+export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
+  const opp = await loadOpportunity(params.id);
+  if (!opp) return { title: "Opportunity not found", robots: { index: false, follow: false } };
 
-  const raw = opp.eligibilitySummary ?? opp.objectives ?? "";
-  const description = raw.length > 155 ? raw.slice(0, 152) + "…" : raw;
-  const deadlineStr = opp.deadline
-    ? ` · Deadline: ${new Date(opp.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}`
-    : "";
-  const fullDescription = `${description}${deadlineStr}`;
+  const path = opportunityPath(opp);
+  const closed = isClosed(opp);
+  const deadline = opp.deadline ? (closed ? `Closed ${formatDate(opp.deadline)}. ` : `Deadline ${formatDate(opp.deadline)}. `) : "";
+  const body = opp.objectives || opp.eligibilitySummary || `${opp.title} offered by ${opp.provider}.`;
+  const title = opp.title.length <= 30 ? `${opp.title} — ${opp.provider}` : opp.title;
 
-  return {
-    title: `${opp.title} ${new Date().getFullYear()} — ${opp.provider}`,
-    description: fullDescription,
-    alternates: { canonical: `${SITE_URL}/opportunities/${params.id}` },
-    openGraph: {
-      title: `${opp.title} | ScolarNav`,
-      description: fullDescription,
-      type: "article",
-      url: `${SITE_URL}/opportunities/${params.id}`,
-    },
-    twitter: {
-      card: "summary",
-      title: `${opp.title} | ScolarNav`,
-      description: fullDescription,
-    },
-  };
+  return pageMetadata({
+    title,
+    description: `${deadline}${body}`,
+    path,
+    type: "article",
+    image: `${path}/opengraph-image`,
+  });
 }
 
-function buildJsonLd(opp: Opportunity, id: string): object {
-  const schema: Record<string, any> = {
-    "@context": "https://schema.org",
-    "@type": "EducationalOccupationalProgram",
-    name: opp.title,
-    provider: {
-      "@type": "Organization",
-      name: opp.provider,
-    },
-    description: opp.objectives ?? opp.eligibilitySummary ?? "",
-    url: `${SITE_URL}/opportunities/${id}`,
-    programType: opp.type,
-    occupationalCategory: opp.fieldsOfStudy?.join(", "),
-    educationalProgramMode: "full-time",
-    inLanguage: "en",
-  };
-  if (opp.deadline) {
-    schema.applicationDeadline = opp.deadline.slice(0, 10);
+async function relatedOpportunities(opp: Opportunity): Promise<Opportunity[]> {
+  const [sameCountry, sameType] = await Promise.all([
+    fetchOpenOpportunities({ type: opp.type, country: opp.country }, 8),
+    fetchOpenOpportunities({ type: opp.type }, 8),
+  ]);
+  const seen = new Set<string>([opp._id]);
+  const out: Opportunity[] = [];
+  for (const o of [...sameCountry, ...sameType]) {
+    if (seen.has(o._id)) continue;
+    seen.add(o._id);
+    out.push(o);
+    if (out.length === 6) break;
   }
-  if (opp.officialUrl) {
-    schema.applicationContact = {
-      "@type": "ContactPoint",
-      url: opp.officialUrl,
-    };
-  }
-  return schema;
+  return out;
 }
 
 export default async function OpportunityPage({ params }: { params: { id: string } }) {
-  const opportunity = await fetchOpportunity(params.id);
-  if (!opportunity) notFound();
+  const opp = await loadOpportunity(params.id);
+  if (!opp) notFound();
+
+  // Stable canonical URL: bare-id and stale-slug URLs permanently redirect to the current slug.
+  const path = opportunityPath(opp);
+  if (decodeURIComponent(params.id) !== path.replace("/opportunities/", "")) permanentRedirect(path);
+
+  const [related, guides] = await Promise.all([relatedOpportunities(opp), fetchCountryGuides().catch(() => [])]);
+
+  const type = typeByValue(opp.type);
+  const country = countryByValue(opp.country);
+  const level = opp.degreeLevel && opp.degreeLevel !== "none" ? levelByValue(opp.degreeLevel) : undefined;
+  const guide = guides.find((g) => g.name.toLowerCase() === opp.country.toLowerCase());
+  const closed = isClosed(opp);
+
+  const crumbs: Crumb[] = [
+    { name: "Home", path: "/" },
+    ...(type ? [{ name: type.plural, path: `/opportunities/type/${type.slug}` }] : []),
+    { name: opp.title, path },
+  ];
 
   return (
     <>
-      <Script
-        id="opp-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(buildJsonLd(opportunity, params.id)) }}
-      />
-      <OpportunityDetail initial={opportunity} />
+      <JsonLd data={[opportunityJsonLd(opp, path), breadcrumbJsonLd(crumbs)]} />
+
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
+        <Breadcrumbs crumbs={crumbs} />
+        {closed && opp.deadline && (
+          <div role="status" className="border border-rule bg-white p-4 text-sm text-ink-soft" style={{ borderRadius: "6px" }}>
+            <strong className="text-ink">This opportunity closed on {formatDate(opp.deadline)}.</strong>{" "}
+            Applications for this cycle are no longer open. Many programmes reopen annually — save it to be ready,
+            or see similar opportunities that are open now below.
+          </div>
+        )}
+      </div>
+
+      <OpportunityDetail initial={opp} />
+
+      <aside aria-label="Related opportunities" className="max-w-5xl mx-auto px-4 sm:px-6 pb-8">
+        <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">
+          {closed ? "Similar opportunities that are open now" : "More opportunities like this"}
+        </h2>
+
+        <ul className="mt-4 flex flex-wrap gap-2 text-sm">
+          {type && <li><Link href={`/opportunities/type/${type.slug}`} className="stamp text-forest border-forest">All {type.plural.toLowerCase()}</Link></li>}
+          {country && <li><Link href={`/opportunities/country/${country.slug}`} className="stamp text-forest border-forest">Opportunities in {country.label}</Link></li>}
+          {level && <li><Link href={`/opportunities/level/${level.slug}`} className="stamp text-forest border-forest">{level.label} opportunities</Link></li>}
+          {guide && <li><Link href={`/countries/${guide.code}`} className="stamp text-forest border-forest">Study in {guide.name}: country guide</Link></li>}
+        </ul>
+
+        {related.length > 0 ? (
+          <div className="mt-6 grid gap-4 sm:grid-cols-2">
+            {related.map((o) => <OpportunityCard key={o._id} opportunity={o} variant="compact" />)}
+          </div>
+        ) : (
+          <p className="mt-4 text-sm text-slate">
+            No similar open opportunities right now. <Link href="/" className="text-forest underline">Browse the full catalogue</Link>.
+          </p>
+        )}
+      </aside>
     </>
   );
 }

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Opportunity } from "@/lib/types";
+import { opportunityPath } from "@/lib/paths";
 
 export type CardVariant = "featured" | "default" | "compact";
 
@@ -167,7 +168,7 @@ export default function OpportunityCard({
   const sc = STATUS_CONFIG[status];
 
   return (
-    <Link href={`/opportunities/${opportunity._id}`} className="block h-full">
+    <Link href={opportunityPath(opportunity)} className="block h-full">
       <article
         className="case-card-interactive h-full flex flex-col p-5"
         style={{ borderTop: `3px solid ${sc.borderColor}` }}

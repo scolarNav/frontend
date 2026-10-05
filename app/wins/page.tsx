@@ -195,7 +195,10 @@ function CelebrationCard({ c, featured = false }: { c: Celebration; featured?: b
         {c.photoUrl ? (
           <img
             src={c.photoUrl}
-            alt={c.displayName}
+            alt={`Photo of ${c.displayName}`}
+            width={32}
+            height={32}
+            loading="lazy"
             className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-brass/30"
           />
         ) : (

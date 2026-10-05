@@ -219,6 +219,8 @@ export interface Opportunity {
   winCount?: number;
   officialUrl: string;
   isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CompetitivePosition {
