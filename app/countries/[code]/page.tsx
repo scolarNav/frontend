@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: { params: { code: string } })
   const guide = await fetchCountryGuide(params.code);
   if (!guide) return { title: "Country guide not found", robots: { index: false, follow: false } };
   return pageMetadata({
-    title: `Study in ${guide.name}: scholarships, costs & visas`,
+    title: `Study in ${guide.name}: Student Guide`,
     description: `${guide.tagline}. ${guide.overview}`,
     path: `/countries/${guide.code}`,
   });

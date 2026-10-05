@@ -1,5 +1,5 @@
 import { API_URL } from "./site";
-import type { Grant, GrantsResponse, Opportunity } from "./types";
+import type { Celebration, Grant, GrantsResponse, Opportunity } from "./types";
 
 export interface Pagination {
   page: number;
@@ -74,8 +74,23 @@ export function isClosed(o: { deadline?: string }): boolean {
   return !!o.deadline && new Date(o.deadline).getTime() < Date.now();
 }
 
+// Deadlines are stored as local midnight of the source site (UTC+1), i.e. 23:00Z the previous day, so a
+// UTC calendar day would be off by one. Render calendar days in Africa/Lagos (UTC+1, no DST).
+const DEADLINE_TZ = "Africa/Lagos";
+
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: DEADLINE_TZ });
+}
+
+/** YYYY-MM-DD in the same calendar as formatDate (for schema.org Date values). */
+export function isoDay(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-CA", { timeZone: DEADLINE_TZ });
+}
+
+/** Provider names the scrapers could not determine are stored as "Unknown". */
+export function knownProvider(provider?: string): string | null {
+  const p = (provider ?? "").trim();
+  return p && p.toLowerCase() !== "unknown" ? p : null;
 }
 
 export interface CountryGuideSummary {
@@ -96,4 +111,9 @@ export async function fetchCountryGuides(): Promise<CountryGuideSummary[]> {
 export async function fetchCountryGuide(code: string) {
   const data = await getJson<{ country: import("./types").CountryGuide }>(`/countries/${code}`, ["countries"]);
   return data?.country ?? null;
+}
+
+export async function fetchCelebrations(): Promise<Celebration[]> {
+  const data = await getJson<{ celebrations: Celebration[] }>("/celebrations", ["celebrations"]);
+  return data?.celebrations ?? [];
 }

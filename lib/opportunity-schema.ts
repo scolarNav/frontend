@@ -1,8 +1,9 @@
 import type { JsonLdNode } from "./jsonld";
+import { isoDay, knownProvider } from "./opportunities";
 import { truncate, absoluteUrl } from "./site";
 import type { Opportunity } from "./types";
 
-const isoDate = (d?: string) => (d ? new Date(d).toISOString().slice(0, 10) : undefined);
+const isoDate = (d?: string) => (d ? isoDay(d) : undefined);
 
 /**
  * Picks the most accurate schema.org type per opportunity kind, using only properties that exist
@@ -14,7 +15,8 @@ const isoDate = (d?: string) => (d ? new Date(d).toISOString().slice(0, 10) : un
 export function opportunityJsonLd(opp: Opportunity, path: string): JsonLdNode {
   const url = absoluteUrl(path);
   const description = truncate(opp.objectives || opp.eligibilitySummary || "", 500) || undefined;
-  const provider = { "@type": "Organization", name: opp.provider };
+  const providerName = knownProvider(opp.provider);
+  const provider = providerName ? { "@type": "Organization", name: providerName } : undefined;
 
   let mainEntity: JsonLdNode | undefined;
   if (opp.type === "scholarship" || opp.type === "fellowship") {

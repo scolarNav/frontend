@@ -39,17 +39,15 @@ async function loadGrant(param: string): Promise<Grant | null> {
 }
 
 const shortDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" });
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Lagos" });
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const grant = await loadGrant(params.id);
   if (!grant) return { title: "Grant not found", robots: { index: false, follow: false } };
-  const deadline = grant.deadline
-    ? `${new Date(grant.deadline) < new Date() ? "Closed" : "Deadline"} ${formatDate(grant.deadline)}. `
-    : "";
   return pageMetadata({
     title: grant.title,
-    description: `${deadline}${grant.description}`,
+    // grant.description is scraped and usually already states the deadline, so no prefix is added.
+    description: grant.description,
     path: grantPath(grant),
     type: "article",
   });

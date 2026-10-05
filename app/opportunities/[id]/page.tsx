@@ -6,7 +6,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import OpportunityCard from "@/components/OpportunityCard";
 import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
 import { opportunityJsonLd } from "@/lib/opportunity-schema";
-import { fetchCountryGuides, fetchOpenOpportunities, fetchOpportunity, formatDate, isClosed } from "@/lib/opportunities";
+import { fetchCountryGuides, fetchOpenOpportunities, fetchOpportunity, formatDate, isClosed, knownProvider } from "@/lib/opportunities";
 import { opportunityPath, parseOpportunityParam } from "@/lib/paths";
 import { pageMetadata } from "@/lib/seo";
 import { countryByValue, levelByValue, typeByValue } from "@/lib/taxonomy";
@@ -28,14 +28,22 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
   if (!opp) return { title: "Opportunity not found", robots: { index: false, follow: false } };
 
   const path = opportunityPath(opp);
-  const closed = isClosed(opp);
-  const deadline = opp.deadline ? (closed ? `Closed ${formatDate(opp.deadline)}. ` : `Deadline ${formatDate(opp.deadline)}. `) : "";
-  const body = opp.objectives || opp.eligibilitySummary || `${opp.title} offered by ${opp.provider}.`;
-  const title = opp.title.length <= 30 ? `${opp.title} — ${opp.provider}` : opp.title;
+  const level = opp.degreeLevel && opp.degreeLevel !== "none" ? levelByValue(opp.degreeLevel) : undefined;
+  const providerName = knownProvider(opp.provider);
+  // Built from structured fields: the free-text objectives/eligibility are scraped and often start
+  // with boilerplate ("Deadline: … Study in: …"), which makes poor search snippets. The type label is
+  // left out on purpose: scraped records are not always classified reliably.
+  const deadline = opp.deadline ? (isClosed(opp) ? `Closed ${formatDate(opp.deadline)}. ` : `Deadline ${formatDate(opp.deadline)}. `) : "";
+  const by = providerName ? ` offered by ${providerName}` : "";
+  const where = opp.country && opp.country !== "Multiple" ? ` in ${opp.country}` : "";
+  const forLevel = level ? ` for ${level.label} study` : "";
+  const funding = opp.fundingCoverage ? ` Funding: ${opp.fundingCoverage}.` : "";
+  const description = `${deadline}${opp.title}: an opportunity${by}${where}${forLevel}.${funding} See eligibility, requirements and how to apply.`;
+  const title = providerName && opp.title.length <= 30 ? `${opp.title} — ${providerName}` : opp.title;
 
   return pageMetadata({
     title,
-    description: `${deadline}${body}`,
+    description,
     path,
     type: "article",
     image: `${path}/opengraph-image`,
