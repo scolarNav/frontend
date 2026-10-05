@@ -9,6 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { PAGE_SIZE, type Pagination } from "@/lib/opportunities";
 import PagerLink from "@/components/PagerLink";
+import { SHOW_GRANTS } from "@/lib/site";
 
 const TYPES = [
   { value: "", label: "All types" },
@@ -498,11 +499,13 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
         <ForYouPanel />
       ) : (
         <>
-          {/* Grants callout — minimal */}
-          <p className="mt-5 text-xs text-slate font-mono">
-            Looking for startup grants?{" "}
-            <Link href="/grants" className="text-forest underline">Browse the grants catalogue →</Link>
-          </p>
+          {/* Grants callout — minimal; hidden unless the grants section is enabled */}
+          {SHOW_GRANTS && (
+            <p className="mt-5 text-xs text-slate font-mono">
+              Looking for startup grants?{" "}
+              <Link href="/grants" className="text-forest underline">Browse the grants catalogue →</Link>
+            </p>
+          )}
 
           {/* Filter bar */}
           <div className="mt-4 flex flex-col md:flex-row gap-2.5">

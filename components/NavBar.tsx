@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import Image from "next/image";
+import { SHOW_GRANTS } from "@/lib/site";
 
 const TOOLS = [
   { href: "/mentor", label: "Mentor", pro: false },
@@ -80,7 +81,7 @@ export default function NavBar() {
         {/* Desktop nav */}
         <nav className="hidden lg:flex items-center gap-0.5 text-sm flex-1">
           <Link href="/" className={linkClass("/")}>Discover</Link>
-          <Link href="/grants" className={linkClass("/grants")}>Grants</Link>
+          {SHOW_GRANTS && <Link href="/grants" className={linkClass("/grants")}>Grants</Link>}
           <Link href="/countries" className={linkClass("/countries")}>Countries</Link>
           <Link href="/wins" className={linkClass("/wins")}>Wins</Link>
 
@@ -260,7 +261,7 @@ export default function NavBar() {
               <div className="py-2">
                 {[
                   { href: "/", label: "Discover" },
-                  { href: "/grants", label: "Grants" },
+                  ...(SHOW_GRANTS ? [{ href: "/grants", label: "Grants" }] : []),
                   { href: "/countries", label: "Country Guides" },
                   { href: "/wins", label: "Wins" },
                 ].map(({ href, label }) => (

@@ -6,12 +6,14 @@ import { parsePage } from "@/lib/listing-route";
 import { fetchGrantList } from "@/lib/opportunities";
 import { grantPath } from "@/lib/paths";
 import { pageMetadata } from "@/lib/seo";
+import { SHOW_GRANTS } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
 type Props = { searchParams: { page?: string } };
 
 export function generateMetadata({ searchParams }: Props): Metadata {
+  if (!SHOW_GRANTS) return { title: "Page not found", robots: { index: false, follow: false } };
   const page = parsePage(searchParams);
   return pageMetadata({
     title: `Startup Grants${page > 1 ? ` — Page ${page}` : ""}`,
@@ -22,6 +24,7 @@ export function generateMetadata({ searchParams }: Props): Metadata {
 }
 
 export default async function GrantsPage({ searchParams }: Props) {
+  if (!SHOW_GRANTS) notFound();
   const page = parsePage(searchParams);
   const data = await fetchGrantList(page, 24).catch(() => null);
   if (data && page > 1 && page > data.pages) notFound();

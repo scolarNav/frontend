@@ -1,5 +1,6 @@
 import { fetchCountryGuides, fetchGrantList, fetchOpportunityList } from "./opportunities";
 import { grantPath, opportunityPath } from "./paths";
+import { SHOW_GRANTS } from "./site";
 import { DEGREE_LEVELS, OPPORTUNITY_COUNTRIES, OPPORTUNITY_TYPES } from "./taxonomy";
 
 /** Google's limit is 50,000 URLs per sitemap; stay well under it. */
@@ -11,7 +12,7 @@ export interface SitemapEntry {
   lastModified?: Date;
 }
 
-export const STATIC_PUBLIC_PATHS = ["/", "/countries", "/grants", "/pricing", "/wins", "/coaches", "/privacy", "/terms"];
+export const STATIC_PUBLIC_PATHS = ["/", "/countries", ...(SHOW_GRANTS ? ["/grants"] : []), "/pricing", "/wins", "/coaches", "/privacy", "/terms"];
 
 async function totals() {
   // Tolerate an API outage here so a build/start without the API still succeeds; chunks are re-listed live by /sitemap.xml.
@@ -29,7 +30,7 @@ async function totals() {
 export async function sitemapIds(): Promise<number[]> {
   const t = await totals();
   const oppChunks = Math.max(1, Math.ceil(t.opportunities / SITEMAP_CHUNK));
-  const grantChunks = t.grants > 0 ? Math.ceil(t.grants / SITEMAP_CHUNK) : 0;
+  const grantChunks = SHOW_GRANTS && t.grants > 0 ? Math.ceil(t.grants / SITEMAP_CHUNK) : 0;
   return Array.from({ length: 1 + oppChunks + grantChunks }, (_, i) => i);
 }
 
@@ -129,6 +130,7 @@ export async function entriesForId(id: number, base: (p: string) => string): Pro
   const opps = await fetchOpportunityList({ page: 1, limit: 1 });
   const oppChunks = Math.max(1, Math.ceil((opps?.pagination.total ?? 0) / SITEMAP_CHUNK));
   if (id <= oppChunks) return opportunityEntries(id, base);
+  if (!SHOW_GRANTS) return null;
   const grants = await fetchGrantList(1, 1);
   const grantChunks = Math.ceil((grants?.total ?? 0) / SITEMAP_CHUNK);
   if (id - oppChunks <= grantChunks) return grantEntries(id - oppChunks, base);

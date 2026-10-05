@@ -19,6 +19,13 @@ export const IS_PRODUCTION_SITE =
   SITE_URL === PRODUCTION_URL &&
   (!process.env.VERCEL_ENV || process.env.VERCEL_ENV === "production");
 
+/**
+ * The startup-grants section (/grants) is for businesses and NGOs, which the platform does not serve, so it
+ * is hidden: routes 404, and it is left out of navigation, sitemap and robots. The data and components
+ * are kept; set NEXT_PUBLIC_SHOW_GRANTS=true to bring it back.
+ */
+export const SHOW_GRANTS = process.env.NEXT_PUBLIC_SHOW_GRANTS === "true";
+
 export const siteConfig = {
   name: "ScolarNav",
   legalName: "ScolarNav",

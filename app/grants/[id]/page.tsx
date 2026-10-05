@@ -7,6 +7,7 @@ import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
 import { fetchGrant, fetchGrantList, formatDate } from "@/lib/opportunities";
 import { grantPath, parseGrantParam } from "@/lib/paths";
 import { pageMetadata } from "@/lib/seo";
+import { SHOW_GRANTS } from "@/lib/site";
 import type { Grant, GrantTag } from "@/lib/types";
 
 export const revalidate = 3600;
@@ -42,7 +43,7 @@ const shortDate = (iso: string) =>
   new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Africa/Lagos" });
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
-  const grant = await loadGrant(params.id);
+  const grant = SHOW_GRANTS ? await loadGrant(params.id) : null;
   if (!grant) return { title: "Grant not found", robots: { index: false, follow: false } };
   return pageMetadata({
     title: grant.title,
@@ -54,7 +55,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
 }
 
 export default async function GrantDetailPage({ params }: { params: { id: string } }) {
-  const grant = await loadGrant(params.id);
+  const grant = SHOW_GRANTS ? await loadGrant(params.id) : null;
   if (!grant) notFound();
 
   const path = grantPath(grant);

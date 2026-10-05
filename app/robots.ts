@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { IS_PRODUCTION_SITE, SITE_URL } from "@/lib/site";
+import { IS_PRODUCTION_SITE, SHOW_GRANTS, SITE_URL } from "@/lib/site";
 
 // Routes that are private, per-user, or transactional. Mirrors the noindex layouts.
 export const PRIVATE_PATHS = [
@@ -29,7 +29,7 @@ export default function robots(): MetadataRoute.Robots {
     return { rules: [{ userAgent: "*", disallow: "/" }] };
   }
   return {
-    rules: [{ userAgent: "*", allow: "/", disallow: PRIVATE_PATHS }],
+    rules: [{ userAgent: "*", allow: "/", disallow: SHOW_GRANTS ? PRIVATE_PATHS : [...PRIVATE_PATHS, "/grants"] }],
     sitemap: `${SITE_URL}/sitemap.xml`,
     host: SITE_URL,
   };
