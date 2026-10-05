@@ -13,6 +13,7 @@ interface OgCardProps {
 
 /** 1200x630 social card. Rendered by next/og, so only flexbox layout and inline styles. */
 export function OgCard({ eyebrow, title, subtitle, footnote }: OgCardProps) {
+  const shown = title.length > 140 ? `${title.slice(0, 137).trimEnd()}…` : title;
   const fontSize = title.length > 90 ? 52 : title.length > 55 ? 62 : 74;
   return (
     <div
@@ -36,7 +37,7 @@ export function OgCard({ eyebrow, title, subtitle, footnote }: OgCardProps) {
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-        <div style={{ display: "flex", fontSize, fontWeight: 700, lineHeight: 1.08, color: "#0f172a" }}>{title}</div>
+        <div style={{ display: "flex", fontSize, fontWeight: 700, lineHeight: 1.08, color: "#0f172a" }}>{shown}</div>
         {subtitle ? <div style={{ display: "flex", fontSize: 36, color: "#334155" }}>{subtitle}</div> : null}
       </div>
 
