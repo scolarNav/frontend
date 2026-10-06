@@ -6,6 +6,9 @@ import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
 import { fetchCountryGuide } from "@/lib/opportunities";
 import { pageMetadata } from "@/lib/seo";
 import { countryByValue } from "@/lib/taxonomy";
+import { countryMedia } from "@/lib/country-media";
+import CountryFlag from "@/components/CountryFlag";
+import CountryPhoto from "@/components/CountryPhoto";
 import { Check, GraduationCap, Minus, Plus } from "lucide-react";
 
 export const revalidate = 3600;
@@ -33,6 +36,7 @@ export default async function CountryDetailPage({ params }: { params: { code: st
   const guide = await fetchCountryGuide(params.code);
   if (!guide) notFound();
 
+  const photos = countryMedia(guide.code)?.photos ?? [];
   const listing = countryByValue(guide.name);
   const browseHref = listing ? `/opportunities/country/${listing.slug}` : "/";
   const crumbs: Crumb[] = [
@@ -48,8 +52,9 @@ export default async function CountryDetailPage({ params }: { params: { code: st
         <Breadcrumbs crumbs={crumbs} />
 
         <header className="mb-10">
+          {photos[0] && <CountryPhoto photo={photos[0]} country={guide.name} priority className="mb-6 aspect-[2/1]" />}
           <div className="flex items-center gap-4">
-            <span className="text-5xl" aria-hidden="true">{guide.flag}</span>
+            <CountryFlag code={guide.code} name={guide.name} className="h-10 w-[3.75rem]" />
             <div>
               <p className="eyebrow">Applications in {guide.applicationLanguage}</p>
               <h1 className="h1">{guide.name}</h1>
@@ -81,6 +86,7 @@ export default async function CountryDetailPage({ params }: { params: { code: st
         <div className="space-y-10">
           <Section title="Overview">
             <p className="max-w-prose leading-relaxed text-ink-soft">{guide.overview}</p>
+            {photos[1] && <div className="mt-6"><CountryPhoto photo={photos[1]} country={guide.name} /></div>}
           </Section>
 
           <Section title="Scholarship culture">
@@ -99,6 +105,7 @@ export default async function CountryDetailPage({ params }: { params: { code: st
 
           <Section title="Cost of living">
             <p className="max-w-prose leading-relaxed text-ink-soft">{guide.livingCosts}</p>
+            {photos[2] && <div className="mt-6"><CountryPhoto photo={photos[2]} country={guide.name} /></div>}
           </Section>
 
           <Section title="Visa process">

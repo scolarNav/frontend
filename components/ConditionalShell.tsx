@@ -22,8 +22,6 @@ const APP_ROUTES = [
   "/bookings",
   "/applications",
   "/submit-scholarship",
-  "/coaches/dashboard",
-  "/coaches/apply",
   "/wins/share",
 ];
 
@@ -107,6 +105,15 @@ export default function ConditionalShell({ children }: { children: React.ReactNo
           {children}
         </main>
       </div>
+    );
+  }
+
+  if (matches(pathname, ["/coaches/dashboard"])) {
+    return (
+      <>
+        <SkipLink />
+        <AppShell variant="coach">{children}</AppShell>
+      </>
     );
   }
 

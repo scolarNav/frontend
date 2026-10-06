@@ -117,7 +117,7 @@ export default function CoachDashboardPage() {
 
   // ── Auth guard ──
   useEffect(() => {
-    if (!authLoading && !user) router.push("/login");
+    if (!authLoading && !user) router.push("/login?next=/coaches/dashboard");
   }, [authLoading, user, router]);
 
   // ── Fetch portal data ──
@@ -175,8 +175,14 @@ export default function CoachDashboardPage() {
     }
   }
 
+  // The portal is for approved coaches only. Applicants who are pending or rejected see their status on the apply page.
+  const notApproved = !!data && data.coach.status !== "approved";
+  useEffect(() => {
+    if (notApproved) router.replace("/coaches/apply");
+  }, [notApproved, router]);
+
   // ── Loading / error states ──
-  if (authLoading || loading) return <PortalSkeleton />;
+  if (authLoading || loading || notApproved) return <PortalSkeleton />;
 
   if (!user) return null;
 

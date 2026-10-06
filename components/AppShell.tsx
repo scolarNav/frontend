@@ -11,6 +11,8 @@ import {
   GraduationCap,
   Globe,
   LayoutDashboard,
+  ListChecks,
+  ArrowLeftRight,
   LogOut,
   Map as MapIcon,
   Menu,
@@ -73,19 +75,37 @@ function buildNav(isCoach: boolean, isAdmin: boolean): { title: string; items: N
   ];
 }
 
+/** Coach portal navigation: only what a coach needs, plus a way back to the student side. */
+function buildCoachNav(): { title: string; items: NavItem[] }[] {
+  return [
+    {
+      title: "Coach portal",
+      items: [
+        { href: "/coaches/dashboard", label: "Overview", Icon: LayoutDashboard },
+        { href: "/coaches/dashboard#bookings-heading", label: "Bookings", Icon: ListChecks },
+        { href: "/coaches/dashboard#profile-heading", label: "Public profile", Icon: UserRound },
+      ],
+    },
+    {
+      title: "Account",
+      items: [{ href: "/dashboard", label: "Switch to student view", Icon: ArrowLeftRight }],
+    },
+  ];
+}
+
 function isActive(pathname: string | null, href: string) {
   if (!pathname) return false;
   if (href === "/") return pathname === "/";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-function NavList({ onNavigate }: { onNavigate?: () => void }) {
+function NavList({ onNavigate, variant }: { onNavigate?: () => void; variant: "student" | "coach" }) {
   const { user } = useAuth();
   const pathname = usePathname();
   const isPro =
     user?.subscription?.plan === "pro" &&
     (user?.subscription?.status === "active" || user?.subscription?.status === "trialing");
-  const groups = buildNav(!!user?.isCoach, !!user?.isAdmin);
+  const groups = variant === "coach" ? buildCoachNav() : buildNav(!!user?.isCoach, !!user?.isAdmin);
 
   return (
     <nav aria-label="Main" className="space-y-6">
@@ -94,7 +114,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
           <p className="px-3 text-xs font-semibold uppercase tracking-widest text-white/60">{g.title}</p>
           <ul className="mt-2 space-y-0.5">
             {g.items.map(({ href, label, Icon, pro }) => {
-              const active = isActive(pathname, href);
+              const active = !href.includes("#") && isActive(pathname, href);
               return (
                 <li key={href}>
                   <Link
@@ -121,7 +141,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
-function UserCard({ onNavigate }: { onNavigate?: () => void }) {
+function UserCard({ onNavigate, variant }: { onNavigate?: () => void; variant: "student" | "coach" }) {
   const { user, loading, logout } = useAuth();
   const isPro =
     user?.subscription?.plan === "pro" &&
@@ -151,7 +171,7 @@ function UserCard({ onNavigate }: { onNavigate?: () => void }) {
         </span>
         <span className="min-w-0">
           <span className="block truncate text-sm font-medium text-white">{user.fullName}</span>
-          <span className="block text-xs text-white/70">{isPro ? "Pro plan" : "Free plan"}</span>
+          <span className="block text-xs text-white/70">{variant === "coach" ? "Coach" : isPro ? "Pro plan" : "Free plan"}</span>
         </span>
       </Link>
       <button
@@ -170,7 +190,8 @@ function UserCard({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /** Layout for signed-in screens: a fixed sidebar on large screens, a top bar with a drawer on small ones. */
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({ children, variant = "student" }: { children: React.ReactNode; variant?: "student" | "coach" }) {
+  const home = variant === "coach" ? "/coaches/dashboard" : "/dashboard";
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -188,21 +209,21 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col bg-navy lg:flex">
         <div className="px-5 py-5">
-          <Link href="/dashboard" aria-label="ScolarNav dashboard">
+          <Link href={home} aria-label="ScolarNav dashboard">
             <Wordmark onDark />
           </Link>
         </div>
         <div className="flex-1 overflow-y-auto px-3 pb-4">
-          <NavList />
+          <NavList variant={variant} />
         </div>
         <div className="border-t border-white/10 p-3">
-          <UserCard />
+          <UserCard variant={variant} />
         </div>
       </aside>
 
       {/* Mobile top bar */}
       <header className="sticky top-0 z-30 flex h-14 items-center justify-between bg-navy px-4 lg:hidden">
-        <Link href="/dashboard" aria-label="ScolarNav dashboard">
+        <Link href={home} aria-label="ScolarNav dashboard">
           <Wordmark onDark />
         </Link>
         <button
@@ -238,10 +259,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
             <div className="flex-1 overflow-y-auto px-3 pb-4">
-              <NavList onNavigate={() => setOpen(false)} />
+              <NavList variant={variant} onNavigate={() => setOpen(false)} />
             </div>
             <div className="border-t border-white/10 p-3">
-              <UserCard onNavigate={() => setOpen(false)} />
+              <UserCard variant={variant} onNavigate={() => setOpen(false)} />
             </div>
           </div>
         </div>

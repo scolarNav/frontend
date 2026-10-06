@@ -5,6 +5,8 @@ import { fetchCountryGuides } from "@/lib/opportunities";
 import { pageMetadata } from "@/lib/seo";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { EmptyState } from "@/components/ui/States";
+import CountryFlag from "@/components/CountryFlag";
+import { countryMedia } from "@/lib/country-media";
 
 export const dynamic = "force-dynamic";
 
@@ -34,11 +36,26 @@ export default async function CountriesPage() {
 
         {countries.length > 0 && (
           <ul className="card-grid">
-            {countries.map((c) => (
+            {countries.map((c) => {
+              const hero = countryMedia(c.code)?.photos[0];
+              return (
               <li key={c.code}>
-                <Link href={`/countries/${c.code}`} className="card-interactive group flex h-full flex-col p-5">
+                <Link href={`/countries/${c.code}`} className="card-interactive group flex h-full flex-col overflow-hidden">
+                  {hero && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={hero.src}
+                      alt={`${hero.place}, ${c.name}`}
+                      width={1280}
+                      height={720}
+                      loading="lazy"
+                      decoding="async"
+                      className="aspect-[16/9] w-full bg-surface-2 object-cover"
+                    />
+                  )}
+                  <div className="flex flex-1 flex-col p-5">
                   <div className="mb-3 flex items-center gap-3">
-                    <span className="text-3xl" aria-hidden="true">{c.flag}</span>
+                    <CountryFlag code={c.code} name={c.name} />
                     <div>
                       <h2 className="font-display text-xl text-ink transition-colors group-hover:text-forest">{c.name}</h2>
                       <p className="text-sm text-slate">Applications in {c.applicationLanguage}</p>
@@ -55,9 +72,11 @@ export default async function CountriesPage() {
                     </ul>
                     <span className="shrink-0 text-sm font-semibold text-ink">~${c.avgMonthlyExpensesUSD.toLocaleString()}/mo</span>
                   </div>
+                  </div>
                 </Link>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
       </div>

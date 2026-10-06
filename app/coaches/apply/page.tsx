@@ -10,6 +10,7 @@ import { CircleCheck, Search } from "lucide-react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Skeleton, SkeletonPage } from "@/components/ui/Skeleton";
 import { Alert } from "@/components/ui/States";
+import Link from "next/link";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -35,10 +36,22 @@ export default function CoachApplyPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
+  // Existing application, if any: applicants are held here until approved.
+  const [existing, setExisting] = useState<{ status: string; rejectionNote?: string } | null>(null);
+  const [checking, setChecking] = useState(true);
 
   useEffect(() => {
     if (!authLoading && !user) router.push("/login?next=/coaches/apply");
   }, [authLoading, user, router]);
+
+  useEffect(() => {
+    if (!user) return;
+    api
+      .get<{ coach: { status: string; rejectionNote?: string } }>("/coaches/portal/me")
+      .then((r) => setExisting(r.coach))
+      .catch(() => setExisting(null))
+      .finally(() => setChecking(false));
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -82,8 +95,34 @@ export default function CoachApplyPage() {
     }
   }
 
-  if (authLoading) return <SkeletonPage variant="form" />;
+  if (authLoading || (user && checking)) return <SkeletonPage variant="form" />;
   if (!user) return null;
+
+  if (existing) {
+    const approved = existing.status === "approved";
+    const rejected = existing.status === "rejected";
+    return (
+      <div className="page-narrow">
+        <div className="card card-pad py-12 text-center">
+          <h1 className="h2">
+            {approved ? "You are approved as a coach" : rejected ? "Application not approved" : "Application under review"}
+          </h1>
+          <p className="mx-auto mt-3 max-w-md leading-relaxed text-ink-soft">
+            {approved
+              ? "Your coach portal is ready."
+              : rejected
+                ? existing.rejectionNote || "Your coach application was not approved at this time. Contact coaches@scolarnav.com for more information."
+                : "Our team is verifying your credentials and will get back to you within a few business days. When you are approved, we will email you a link to your coach dashboard. Until then, the dashboard stays locked."}
+          </p>
+          {approved ? (
+            <Link href="/coaches/dashboard" className="btn-primary mt-8">Go to coach portal</Link>
+          ) : (
+            <Link href="/" className="btn-secondary mt-8">Back to catalogue</Link>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   if (done) {
     return (
@@ -94,7 +133,7 @@ export default function CoachApplyPage() {
           </span>
           <h1 className="h2">Application submitted</h1>
           <p className="mx-auto mt-3 max-w-md leading-relaxed text-ink-soft">
-            Our team will review your application and verify your credentials. You will hear back within a few days.
+            Our team will review your application and verify your credentials. When you are approved, we will email you a link to your coach dashboard. Until then, the dashboard stays locked.
           </p>
           <button type="button" onClick={() => router.push("/")} className="btn-primary mt-8">
             Back to catalogue
