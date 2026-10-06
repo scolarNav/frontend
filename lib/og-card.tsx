@@ -25,7 +25,7 @@ export function OgCard({ eyebrow, title, subtitle, footnote }: OgCardProps) {
         justifyContent: "space-between",
         background: "#f8f6f2",
         padding: "64px 72px",
-        borderLeft: "20px solid #d3622c",
+        borderLeft: "20px solid #b8501f",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
@@ -42,7 +42,7 @@ export function OgCard({ eyebrow, title, subtitle, footnote }: OgCardProps) {
       </div>
 
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 28 }}>
-        <div style={{ display: "flex", color: "#d3622c", fontWeight: 700 }}>{footnote ?? ""}</div>
+        <div style={{ display: "flex", color: "#b8501f", fontWeight: 700 }}>{footnote ?? ""}</div>
         <div style={{ display: "flex", color: "#64748B" }}>www.scolarnav.com</div>
       </div>
     </div>

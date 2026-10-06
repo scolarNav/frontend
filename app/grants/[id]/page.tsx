@@ -13,7 +13,7 @@ import type { Grant, GrantTag } from "@/lib/types";
 export const revalidate = 3600;
 
 const TAG_META: Record<GrantTag, { label: string; color: string }> = {
-  africa: { label: "Africa", color: "#D97706" },
+  africa: { label: "Africa", color: "#92400e" },
   technology: { label: "Technology", color: "#0D6EFD" },
   innovation: { label: "Innovation", color: "#6F42C1" },
   inclusion: { label: "Inclusion", color: "#E91E8C" },
@@ -101,7 +101,7 @@ export default async function GrantDetailPage({ params }: { params: { id: string
               <span className="font-mono text-xs text-slate uppercase tracking-wide">Deadline</span>
               <span
                 className="font-mono text-sm"
-                style={{ color: isPast ? "#94a3b8" : daysLeft !== null && daysLeft <= 14 ? "#d3622c" : "#0F172A" }}
+                style={{ color: isPast ? "#94a3b8" : daysLeft !== null && daysLeft <= 14 ? "#b8501f" : "#0F172A" }}
               >
                 {isPast
                   ? `Closed · ${shortDate(grant.deadline!)}`

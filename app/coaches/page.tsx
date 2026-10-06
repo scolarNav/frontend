@@ -58,7 +58,7 @@ export default function CoachLandingPage() {
 
       {/* Hero */}
       <div className="max-w-2xl">
-        <p className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: "#d3622c" }}>
+        <p className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: "#b8501f" }}>
           Coach on ScolarNav
         </p>
         <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight">
@@ -132,7 +132,7 @@ export default function CoachLandingPage() {
             <div key={step} className="flex gap-5">
               <span
                 className="shrink-0 font-mono text-xs tracking-widest pt-0.5"
-                style={{ color: "#d3622c" }}
+                style={{ color: "#b8501f" }}
               >
                 {step}
               </span>

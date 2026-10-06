@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { CalendarDays, Globe, Map, MessageSquare, Mic, Trophy } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Opportunity, SavedOpportunity, ReadinessScore } from "@/lib/types";
@@ -19,11 +20,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const FEATURE_CARDS = [
-  { href: "/mentor", icon: "💬", label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
-  { href: "/roadmap", icon: "🗺️", label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
-  { href: "/deadlines", icon: "📅", label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
-  { href: "/countries", icon: "🌍", label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
-  { href: "/interview", icon: "🎤", label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
+  { href: "/mentor", Icon: MessageSquare, label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
+  { href: "/roadmap", Icon: Map, label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
+  { href: "/deadlines", Icon: CalendarDays, label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
+  { href: "/countries", Icon: Globe, label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
+  { href: "/interview", Icon: Mic, label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
 ];
 
 function DashboardContent() {
@@ -144,7 +145,7 @@ function DashboardContent() {
       {isTrialing && trialDaysLeft !== null && (
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border border-rule bg-white rounded-lg">
           <div>
-            <p className="text-sm font-medium text-ink" style={{ color: trialDaysLeft <= 2 ? "#d3622c" : undefined }}>
+            <p className="text-sm font-medium text-ink" style={{ color: trialDaysLeft <= 2 ? "#b8501f" : undefined }}>
               {trialDaysLeft === 0
                 ? "Your free trial ends today"
                 : trialDaysLeft === 1
@@ -222,7 +223,7 @@ function DashboardContent() {
         const pipeline = [
           { key: "interested", label: "Saved", color: "#94a3b8" },
           { key: "in_progress", label: "In progress", color: "#6d8ec5" },
-          { key: "submitted", label: "Submitted", color: "#d3622c" },
+          { key: "submitted", label: "Submitted", color: "#b8501f" },
           { key: "awarded", label: "Won", color: "#3d7a5a" },
         ].filter(({ key }) => statusCounts[key]);
         const urgentDeadlines = user.savedOpportunities
@@ -264,7 +265,7 @@ function DashboardContent() {
                   {urgentDeadlines.map(({ s, opp, days }) => (
                     <div key={s.opportunity} className="flex items-center justify-between gap-3">
                       <p className="text-sm text-ink truncate">{opp.title}</p>
-                      <span className="text-xs font-mono shrink-0 px-2 py-0.5 rounded" style={{ background: days <= 7 ? "#fef2f2" : days <= 14 ? "#fff7ed" : "#f8fafc", color: days <= 7 ? "#dc2626" : days <= 14 ? "#d3622c" : "#64748b" }}>
+                      <span className="text-xs font-mono shrink-0 px-2 py-0.5 rounded" style={{ background: days <= 7 ? "#fef2f2" : days <= 14 ? "#fff7ed" : "#f8fafc", color: days <= 7 ? "#dc2626" : days <= 14 ? "#b8501f" : "#64748b" }}>
                         {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days}d`}
                       </span>
                     </div>
@@ -280,7 +281,7 @@ function DashboardContent() {
 
       {/* Feature shortcuts — bento: [8][4] | [4][4][4] on 12-col */}
       <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-10 sm:mb-12">
-        {FEATURE_CARDS.map(({ href, icon, label, desc, pro }, i) => (
+        {FEATURE_CARDS.map(({ href, Icon, label, desc, pro }, i) => (
           <Link
             key={href}
             href={href}
@@ -290,7 +291,7 @@ function DashboardContent() {
               }`}
           >
             <div className="flex items-start justify-between">
-              <span className={i === 0 ? "text-3xl" : "text-2xl"}>{icon}</span>
+              <Icon size={i === 0 ? 32 : 28} className="text-forest" aria-hidden="true" />
               {pro && !isPro && (
                 <span className="font-mono text-xs text-slate border border-rule px-1.5 py-0.5 rounded">Pro</span>
               )}
@@ -344,7 +345,7 @@ function DashboardContent() {
         <div className="mb-10 case-card p-6" style={{ background: "#6d8ec5", border: "none" }}>
           <div className="flex flex-col sm:flex-row sm:items-center gap-4">
             <div className="flex-1">
-              <p className="text-2xl mb-1">🏆</p>
+              <Trophy size={28} className="mb-1 text-brass" aria-hidden="true" />
               <p className="font-display text-xl text-white">
                 You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won — celebrate it
               </p>
@@ -396,7 +397,7 @@ function DashboardContent() {
                       const days = Math.ceil(ms / 86400000);
                       const urgent = days >= 0 && days <= 14;
                       return (
-                        <p className="font-mono text-xs mt-1" style={{ color: urgent ? "#d3622c" : "#94a3b8" }}>
+                        <p className="font-mono text-xs mt-1" style={{ color: urgent ? "#b8501f" : "#94a3b8" }}>
                           {urgent && days <= 3
                             ? days === 0 ? "Closes today" : `${days}d left`
                             : `Due ${new Date(opp.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}

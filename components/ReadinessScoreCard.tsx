@@ -16,7 +16,7 @@ function ScoreRing({ score }: { score: number }) {
   const fill = circ * (1 - score / 100);
 
   const strokeColor =
-    score >= 75 ? "#d3622c" : score >= 50 ? "#f0c845" : "#DC2626";
+    score >= 75 ? "#b8501f" : score >= 50 ? "#f0c845" : "#b91c1c";
 
   useEffect(() => {
     const t = setTimeout(() => setAnimated(true), 120);

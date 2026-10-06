@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Check, ClipboardCheck, Target, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -15,17 +16,17 @@ const FREE_FEATURES = [
   "Save opportunities and track status",
   "CV upload and parsing",
   "Dashboard and deadline tracker",
-  "Readiness Score — one calculation",
-  "Mentor — 5 questions to try it",
+  "Readiness Score: one calculation",
+  "Mentor: 5 questions to try it",
 ];
 
 const PRO_FEATURES = [
   "Everything in Free",
-  "Mentor — unlimited conversations",
-  "My Roadmap — week-by-week application plan",
-  "Mock Interview — practice with feedback",
-  "For You — opportunities matched to your CV",
-  "Readiness Score — unlimited refreshes",
+  "Mentor: unlimited conversations",
+  "My Roadmap: week-by-week application plan",
+  "Mock Interview: practice with feedback",
+  "For You: opportunities matched to your CV",
+  "Readiness Score: unlimited refreshes",
   "Application coaching per opportunity",
 ];
 
@@ -113,7 +114,7 @@ export default function PricingPage() {
         Better prepared.<br />Better odds.
       </h1>
       <p className="text-ink-soft mt-4 leading-relaxed">
-        ScolarNav doesn't decide who gets the scholarship — committees do. What we do is help you show up as the strongest version of yourself on paper.
+        ScolarNav doesn't decide who gets the scholarship. Committees do. What we do is help you show up as the strongest version of yourself on paper.
       </p>
     </div>
   );
@@ -139,14 +140,14 @@ export default function PricingPage() {
         <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">What ScolarNav actually does</p>
         <div className="grid sm:grid-cols-3 gap-4 text-center">
           {[
-            { icon: "📋", label: "Closes gaps", desc: "Shows you exactly what strong applicants have that you don't — yet." },
-            { icon: "🎯", label: "Saves time", desc: "Surfaces opportunities you're actually competitive for, not just broadly eligible." },
-            { icon: "💪", label: "Builds strength", desc: "Helps you prepare, practise, and write at your best before you submit." },
-          ].map(({ icon, label, desc }) => (
+            { Icon: ClipboardCheck, label: "Closes gaps", desc: "Shows you exactly what strong applicants have that you do not have yet." },
+            { Icon: Target, label: "Saves time", desc: "Surfaces opportunities you are actually competitive for, not just broadly eligible." },
+            { Icon: TrendingUp, label: "Builds strength", desc: "Helps you prepare, practise, and write at your best before you submit." },
+          ].map(({ Icon, label, desc }) => (
             <div key={label}>
-              <p className="text-2xl mb-2">{icon}</p>
+              <Icon size={24} className="mx-auto mb-2 text-forest" aria-hidden="true" />
               <p className="text-sm font-medium text-ink">{label}</p>
-              <p className="text-xs text-slate mt-1 leading-relaxed">{desc}</p>
+              <p className="text-sm text-slate mt-1 leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>
@@ -167,7 +168,7 @@ export default function PricingPage() {
               className="px-5 py-2 text-sm font-medium rounded-md transition-all"
               style={
                 billing === "monthly"
-                  ? { background: "#fff", color: "#d3622c" }
+                  ? { background: "#fff", color: "#b8501f" }
                   : { background: "transparent", color: "#64748B" }
               }
             >
@@ -178,12 +179,12 @@ export default function PricingPage() {
               className="px-5 py-2 text-sm font-medium rounded-md transition-all"
               style={
                 billing === "annual"
-                  ? { background: "#fff", color: "#d3622c" }
+                  ? { background: "#fff", color: "#b8501f" }
                   : { background: "transparent", color: "#64748B" }
               }
             >
               Annual
-              <span className="ml-1.5 text-xs font-mono text-brass">save 35%</span>
+              <span className="ml-1.5 text-xs font-semibold text-ok">save 35%</span>
             </button>
           </div>
         </div>
@@ -209,7 +210,7 @@ export default function PricingPage() {
           <ul className="mt-6 space-y-2.5 flex-1">
             {FREE_FEATURES.map((f) => (
               <li key={f} className="flex gap-2.5 text-sm text-ink-soft">
-                <span className="text-forest mt-0.5 shrink-0">✓</span>{f}
+                <Check size={16} className="mt-1 shrink-0 text-forest" aria-hidden="true" />{f}
               </li>
             ))}
           </ul>
@@ -228,7 +229,7 @@ export default function PricingPage() {
         </div>
 
         {/* Pro */}
-        <div className="case-card p-8 flex flex-col" style={{ borderColor: "#d3622c", borderWidth: "1.5px" }}>
+        <div className="case-card p-8 flex flex-col" style={{ borderColor: "#b8501f", borderWidth: "1.5px" }}>
           <div className="flex items-center justify-between">
             <p className="font-mono text-xs tracking-widest uppercase text-forest">Pro</p>
             {!usePaystack && <span className="badge border border-rule text-slate">7-day free trial</span>}
@@ -249,7 +250,7 @@ export default function PricingPage() {
               <>
                 <span className="font-display text-4xl text-ink">$7</span>
                 <span className="text-ink-soft text-sm"> / month</span>
-                <p className="text-xs text-slate font-mono mt-1">or $55/year — save 35%</p>
+                <p className="text-xs text-slate font-mono mt-1">or $55/year, save 35%</p>
               </>
             ) : (
               <>
@@ -266,7 +267,7 @@ export default function PricingPage() {
           <ul className="mt-6 space-y-2.5 flex-1">
             {PRO_FEATURES.map((f) => (
               <li key={f} className="flex gap-2.5 text-sm text-ink-soft">
-                <span className="text-forest mt-0.5 shrink-0">✓</span>{f}
+                <Check size={16} className="mt-1 shrink-0 text-forest" aria-hidden="true" />{f}
               </li>
             ))}
           </ul>
@@ -278,7 +279,7 @@ export default function PricingPage() {
                 <div className="text-center mb-2">
                   {cancelAtPeriodEnd ? (
                     <p className="text-xs font-mono text-slate">
-                      Cancels {periodEnd ? `on ${periodEnd}` : "at end of billing period"} — Pro access remains until then
+                      Cancels {periodEnd ? `on ${periodEnd}` : "at end of billing period"}. Pro access remains until then
                     </p>
                   ) : periodEnd ? (
                     <p className="text-xs font-mono text-slate">
@@ -318,10 +319,10 @@ export default function PricingPage() {
                   {loading
                     ? "Redirecting…"
                     : usePaystack
-                      ? "Subscribe — ₦10,000 first month"
+                      ? "Subscribe: ₦10,000 first month"
                       : billing === "monthly"
-                        ? "Start free trial — $7/mo after"
-                        : "Start free trial — $55/yr after"}
+                        ? "Start free trial, then $7/mo"
+                        : "Start free trial, then $55/yr"}
                 </button>
                 <p className="text-xs text-slate font-mono text-center">
                   {usePaystack
@@ -340,11 +341,11 @@ export default function PricingPage() {
         {[
           {
             q: "Does ScolarNav guarantee I'll get a scholarship?",
-            a: "No — and any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do — and it's worth a lot.",
+            a: "No. Any platform that claims otherwise should be treated with suspicion. Scholarship committees make final decisions based on their own criteria. ScolarNav helps you understand those criteria, close the gaps in your profile, and submit the strongest application you can. That's all preparation can do, and it's worth a lot.",
           },
           {
             q: "How does billing work in Nigeria?",
-            a: "Your first month is ₦10,000. From month 2 onwards, you're charged ₦5,000/month automatically from the card you paid with — no need to do anything. You can cancel at any time and keep Pro access until your current billing period ends.",
+            a: "Your first month is ₦10,000. From month 2 onwards, you're charged ₦5,000/month automatically from the card you paid with, no need to do anything. You can cancel at any time and keep Pro access until your current billing period ends.",
           },
           {
             q: "What happens when my subscription renews?",
@@ -356,11 +357,11 @@ export default function PricingPage() {
           },
           {
             q: "What's the difference between Free and Pro, practically?",
-            a: "Free lets you explore the catalogue, save opportunities, upload your CV, and get a taste of the mentor. Pro is where the preparation happens — your personalised plan, interview practice, coaching per opportunity, and unlimited mentor access.",
+            a: "Free lets you explore the catalogue, save opportunities, upload your CV, and get a taste of the mentor. Pro is where the preparation happens, your personalised plan, interview practice, coaching per opportunity, and unlimited mentor access.",
           },
           {
             q: "What if I can't afford Pro?",
-            a: "Start with Free — it's genuinely useful on its own. Upgrade when you're ready to apply seriously, or when you've identified specific opportunities you want to prepare properly for.",
+            a: "Start with Free, it's genuinely useful on its own. Upgrade when you're ready to apply seriously, or when you've identified specific opportunities you want to prepare properly for.",
           },
         ].map(({ q, a }) => (
           <details key={q} className="case-card p-5 group">

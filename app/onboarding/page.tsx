@@ -102,7 +102,7 @@ export default function OnboardingPage() {
           <div className="h-1 bg-rule rounded-full overflow-hidden">
             <div
               className="h-full rounded-full transition-all duration-500"
-              style={{ width: `${progress}%`, background: "#d3622c" }}
+              style={{ width: `${progress}%`, background: "#b8501f" }}
             />
           </div>
         </div>
@@ -125,7 +125,7 @@ export default function OnboardingPage() {
                     className="px-3 py-1.5 rounded-full text-sm font-medium border transition-all"
                     style={
                       active
-                        ? { background: "#d3622c", color: "#fff", borderColor: "#d3622c" }
+                        ? { background: "#b8501f", color: "#fff", borderColor: "#b8501f" }
                         : { background: "#fff", color: "#475569", borderColor: "#e2e8f0" }
                     }
                   >
@@ -173,7 +173,7 @@ export default function OnboardingPage() {
                     className="px-3 py-1.5 rounded-full text-sm font-medium border transition-all"
                     style={
                       active
-                        ? { background: "#d3622c", color: "#fff", borderColor: "#d3622c" }
+                        ? { background: "#b8501f", color: "#fff", borderColor: "#b8501f" }
                         : { background: "#fff", color: "#475569", borderColor: "#e2e8f0" }
                     }
                   >

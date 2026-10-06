@@ -9,7 +9,10 @@ import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { PAGE_SIZE, type Pagination } from "@/lib/opportunities";
 import PagerLink from "@/components/PagerLink";
+import { Check } from "lucide-react";
 import { SHOW_GRANTS } from "@/lib/site";
+import { opportunityPath } from "@/lib/paths";
+import { knownProvider } from "@/lib/opportunities";
 
 const TYPES = [
   { value: "", label: "All types" },
@@ -89,7 +92,7 @@ const TIER_CONFIG = {
   strong: { label: "Strong fit", color: "#6d8ec5" },
   good: { label: "Good fit", color: "#64748B" },
   moderate: { label: "Moderate fit", color: "#94a3b8" },
-  weak: { label: "Weak fit", color: "#DC2626" },
+  weak: { label: "Weak fit", color: "#b91c1c" },
 };
 
 function ForYouPanel() {
@@ -272,14 +275,14 @@ function ForYouPanel() {
                   onClick={() => handleDismiss(match.opportunityId)}
                   disabled={isDismissing}
                   title="Not for me"
-                  className="shrink-0 font-mono text-[0.65rem] text-slate/40 hover:text-slate border border-transparent hover:border-rule px-2 py-1 rounded transition-all disabled:opacity-30"
+                  className="shrink-0 font-mono text-xs text-slate/40 hover:text-slate border border-transparent hover:border-rule px-2 py-1 rounded transition-all disabled:opacity-30"
                 >
                   {isDismissing ? "…" : "Not for me"}
                 </button>
               </div>
 
               {match.urgency && (
-                <p className="mt-2 font-mono text-xs" style={{ color: "#d3622c" }}>{match.urgency}</p>
+                <p className="mt-2 font-mono text-xs" style={{ color: "#b8501f" }}>{match.urgency}</p>
               )}
 
               <p className="mt-3 text-sm text-ink-soft leading-relaxed">{match.reasoning}</p>
@@ -343,6 +346,12 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
     try { setHasStoredSession(!!localStorage.getItem("ScolarNav_token")); } catch { /* storage blocked */ }
   }, []);
   const showGuestHero = !hasStoredSession && (authLoading || !user);
+
+  // Real data for the hero: open opportunities with the nearest deadlines on the first page.
+  const closingSoon = (initial?.opportunities ?? [])
+    .filter((o) => o.deadline && new Date(o.deadline).getTime() > Date.now())
+    .sort((x, y) => new Date(x.deadline!).getTime() - new Date(y.deadline!).getTime())
+    .slice(0, 4);
 
   const [opportunities, setOpportunities] = useState<Opportunity[]>(initial?.opportunities ?? []);
   const [pagination, setPagination] = useState<Pagination | null>(initial?.pagination ?? null);
@@ -415,10 +424,10 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
           <div className="max-w-xl flex-shrink-0">
             <h1 className="font-display text-5xl sm:text-6xl text-ink leading-[1.05] tracking-tight">
               Study abroad.<br />
-              <span style={{ color: "#d3622c" }}>Without the guesswork.</span>
+              <span className="text-forest">Without the guesswork.</span>
             </h1>
             <p className="text-ink-soft mt-5 text-lg leading-relaxed">
-              Scholarships and programs matched to your profile. Coaching that closes the gaps before you apply. The committee decides — we help you show up prepared.
+              Scholarships and programs matched to your profile. Coaching that closes the gaps before you apply. The committee decides, and we help you show up prepared.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/register" className="btn-primary">Get started free</Link>
@@ -427,21 +436,29 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
             <p className="mt-5 text-xs text-slate font-mono">Free to start · No credit card required</p>
           </div>
 
-          {/* Hero visual */}
-          <div className="hidden lg:flex flex-1 min-h-[400px] rounded-2xl overflow-hidden relative" style={{ background: "#6d8ec5" }}>
-            <div className="absolute top-0 right-0 w-52 h-52 rounded-bl-3xl" style={{ background: "#f0c845" }} />
-            <div className="absolute top-8 right-8 w-28 h-28 rounded-xl" style={{ background: "#d3622c" }} />
-            <div className="absolute bottom-0 left-0 w-36 h-36 rounded-tr-3xl opacity-40" style={{ background: "#1a2d45" }} />
-            <div className="relative flex flex-col justify-end p-10 w-full">
-              <p className="font-mono text-xs tracking-widest uppercase mb-3" style={{ color: "#f0c845" }}>ScolarNav</p>
-              <p className="font-display text-4xl text-white leading-tight">
-                Your scholarship<br />story starts here.
-              </p>
-              <p className="mt-3 text-sm leading-relaxed" style={{ color: "rgba(255,255,255,0.65)" }}>
-                Thousands of students worldwide found their path through ScolarNav.
-              </p>
-            </div>
-          </div>
+          {closingSoon.length > 0 && (
+            <aside aria-label="Closing soon" className="hidden lg:block flex-1 rounded-xl bg-white p-6">
+              <h2 className="font-display text-xl text-ink">Closing soon</h2>
+              <p className="mt-1 text-sm text-slate">Open now, nearest deadline first.</p>
+              <ul className="mt-4 divide-y divide-rule">
+                {closingSoon.map((o) => (
+                  <li key={o._id}>
+                    <Link href={opportunityPath(o)} className="flex items-start justify-between gap-4 py-3 group">
+                      <span className="min-w-0">
+                        <span className="block font-medium text-ink group-hover:text-forest transition-colors line-clamp-2">{o.title}</span>
+                        <span className="block text-sm text-slate line-clamp-1">
+                          {[knownProvider(o.provider), o.country !== "Multiple" ? o.country : null].filter(Boolean).join(" · ")}
+                        </span>
+                      </span>
+                      <span className="shrink-0 text-sm font-semibold text-ink font-mono">
+                        {new Date(o.deadline!).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" })}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </aside>
+          )}
         </div>
       )}
 
@@ -475,7 +492,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
             className="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-md transition-all"
             style={
               activeTab === "catalogue"
-                ? { background: "#fff", color: "#d3622c" }
+                ? { background: "#fff", color: "#b8501f" }
                 : { background: "transparent", color: "#64748B" }
             }
           >
@@ -486,7 +503,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
             className="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-md transition-all"
             style={
               activeTab === "for-you"
-                ? { background: "#fff", color: "#d3622c" }
+                ? { background: "#fff", color: "#b8501f" }
                 : { background: "transparent", color: "#64748B" }
             }
           >
@@ -560,33 +577,30 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
             <button
               onClick={() => { setOpenOnly((v) => !v); setPage(1); }}
               className="flex items-center gap-2 text-sm font-mono transition-colors"
-              style={{ color: openOnly ? "#d3622c" : "#94a3b8" }}
+              style={{ color: openOnly ? "#b8501f" : "#94a3b8" }}
             >
               <span
                 className="inline-flex items-center justify-center w-4 h-4 rounded border transition-colors shrink-0"
-                style={openOnly ? { background: "#d3622c", borderColor: "#d3622c" } : { borderColor: "#cbd5e1" }}
+                style={openOnly ? { background: "#b8501f", borderColor: "#b8501f" } : { borderColor: "#cbd5e1" }}
               >
-                {openOnly && <span className="text-white text-[9px] font-bold leading-none">✓</span>}
+                {openOnly && <Check size={12} strokeWidth={3} className="text-white" aria-hidden="true" />}
               </span>
               Open for applications only
             </button>
           </div>
 
-          {/* TBA info banner */}
+          {/* Explains the "dates to be announced" status */}
           {!openOnly && (
-            <div className="mt-3 flex items-start gap-2.5 px-3 py-2.5 bg-amber-50 border border-amber-100 rounded text-xs text-amber-800">
-              <span className="shrink-0 mt-0.5 text-amber-600">&#9432;</span>
-              <span>
-                <strong>About &ldquo;Dates TBA&rdquo; scholarships:</strong> These are annual programmes on a predictable cycle &mdash; Chevening, Erasmus, DAAD, Gates Cambridge, and others. Dates for the next cycle haven&rsquo;t been announced yet. Save them now to be notified when they open.
-              </span>
-            </div>
+            <p className="mt-3 text-sm text-slate">
+              Programmes marked &ldquo;Dates to be announced&rdquo; repeat every year. Their next dates are not published yet.
+            </p>
           )}
 
           <div className="mt-6">
             {loading && (
-              <div className="bento-discovery">
+              <div className="card-grid">
                 {[...Array(7)].map((_, i) => (
-                  <div key={i} className="case-card p-5 animate-pulse min-h-[160px]">
+                  <div key={i} className="case-card p-5 animate-pulse min-h-40">
                     <div className="h-2.5 bg-rule rounded w-1/4 mb-4" />
                     <div className="h-5 bg-rule rounded w-4/5 mb-2" />
                     <div className="h-3 bg-rule rounded w-1/2 mb-4" />
@@ -608,7 +622,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
             )}
 
             {!loading && (
-              <div className="bento-discovery">
+              <div className="card-grid">
                 {opportunities.map((o, i) => {
                   const pos = i % 7;
                   const variant: CardVariant =

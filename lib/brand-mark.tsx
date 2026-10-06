@@ -22,7 +22,7 @@ export function BrandMark({ size }: { size: number }) {
           width: size * 0.17,
           height: size * 0.17,
           borderRadius: size,
-          background: "#d3622c",
+          background: "#b8501f",
         }}
       />
     </div>

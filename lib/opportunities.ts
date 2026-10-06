@@ -96,7 +96,8 @@ export function isoDay(iso: string): string {
 /** Provider names the scrapers could not determine are stored as "Unknown". */
 export function knownProvider(provider?: string): string | null {
   const p = (provider ?? "").trim();
-  return p && p.toLowerCase() !== "unknown" ? p : null;
+  // Scraped provider text sometimes holds a whole sentence; anything that long is not a provider name.
+  return p && p.toLowerCase() !== "unknown" && p.length <= 70 ? p : null;
 }
 
 export interface CountryGuideSummary {

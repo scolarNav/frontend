@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { Gift } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError, api } from "@/lib/api";
@@ -76,9 +77,9 @@ function RegisterContent() {
         {/* Referral banner */}
         {referrerName && (
           <div className="mt-4 px-4 py-3 rounded-lg border border-rule bg-surface flex items-center gap-2.5">
-            <span className="text-base">🎁</span>
+            <Gift size={18} className="shrink-0 text-forest" aria-hidden="true" />
             <p className="text-sm text-ink-soft">
-              <span className="font-medium text-ink">{referrerName}</span> invited you — when you subscribe, you both get a free month.
+              <span className="font-medium text-ink">{referrerName}</span> invited you. When you subscribe, you both get a free month.
             </p>
           </div>
         )}

@@ -829,7 +829,7 @@ export default function AdminPage() {
     return (
       <div className="flex h-screen items-center justify-center" style={{ background: "#F5F7FB" }}>
         <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#D3622C", borderTopColor: "transparent" }} />
+          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#b8501f", borderTopColor: "transparent" }} />
           <p className="text-sm font-mono" style={{ color: "#64748b" }}>Loading admin panel…</p>
         </div>
       </div>
@@ -875,7 +875,7 @@ export default function AdminPage() {
         {/* Logo */}
         <div className="flex items-center justify-between px-5 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: "linear-gradient(135deg, #D3622C, #F0813A)" }}>S</div>
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: "linear-gradient(135deg, #b8501f, #F0813A)" }}>S</div>
             <span className="text-white font-semibold text-sm tracking-wide">ScolarNav</span>
           </div>
           <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/50 hover:text-white transition-colors">
@@ -896,7 +896,7 @@ export default function AdminPage() {
                 onClick={() => { setTab(key); setSidebarOpen(false); }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group"
                 style={active
-                  ? { background: "rgba(211,98,44,0.15)", color: "#F0813A", borderLeft: "3px solid #D3622C", paddingLeft: 9 }
+                  ? { background: "rgba(211,98,44,0.15)", color: "#F0813A", borderLeft: "3px solid #b8501f", paddingLeft: 9 }
                   : { color: "rgba(255,255,255,0.55)", borderLeft: "3px solid transparent", paddingLeft: 9 }
                 }
               >
@@ -904,7 +904,7 @@ export default function AdminPage() {
                 <span className="flex-1 text-left font-medium">{label}</span>
                 {badge ? (
                   <span className="text-xs px-1.5 py-0.5 rounded-full font-mono leading-none"
-                    style={{ background: active ? "#D3622C" : "rgba(211,98,44,0.3)", color: active ? "white" : "#F0813A" }}>
+                    style={{ background: active ? "#b8501f" : "rgba(211,98,44,0.3)", color: active ? "white" : "#F0813A" }}>
                     {badge}
                   </span>
                 ) : null}
@@ -917,7 +917,7 @@ export default function AdminPage() {
         <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #D3622C, #F0813A)", color: "white" }}>
+              style={{ background: "linear-gradient(135deg, #b8501f, #F0813A)", color: "white" }}>
               {user?.fullName?.[0] ?? "A"}
             </div>
             <div className="flex-1 min-w-0">
@@ -968,7 +968,7 @@ export default function AdminPage() {
           {/* User chip */}
           <div className="flex items-center gap-2 pl-4" style={{ borderLeft: "1px solid #e2e8f0" }}>
             <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-              style={{ background: "linear-gradient(135deg, #D3622C, #F0813A)" }}>
+              style={{ background: "linear-gradient(135deg, #b8501f, #F0813A)" }}>
               {user?.fullName?.[0] ?? "A"}
             </div>
             <span className="hidden sm:block text-sm font-medium" style={{ color: "#334155" }}>{user?.fullName}</span>
@@ -1045,7 +1045,7 @@ export default function AdminPage() {
                 <p className="text-xs text-brass font-mono mt-1">{stats.pendingCelebrations} pending review</p>
               )}
             </div>
-            <div className="case-card p-5" style={{ borderLeft: "3px solid #d3622c" }}>
+            <div className="case-card p-5" style={{ borderLeft: "3px solid #b8501f" }}>
               <p className="text-xs font-mono text-slate uppercase tracking-wide">Total referrals</p>
               <p className="font-display text-3xl text-ink mt-1">{stats.totalReferrals}</p>
               <p className="text-xs text-slate font-mono mt-1">{stats.rewardedReferrals} rewarded · {stats.totalReferrals - stats.rewardedReferrals} pending</p>
@@ -1116,7 +1116,7 @@ export default function AdminPage() {
                         <div key={w._id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
                           <div
                             className="w-full rounded-sm"
-                            style={{ height: `${Math.max(4, (w.totalUSD / maxRevenue) * 96)}px`, background: "#d3622c" }}
+                            style={{ height: `${Math.max(4, (w.totalUSD / maxRevenue) * 96)}px`, background: "#b8501f" }}
                             title={`${w._id}: $${w.totalUSD.toFixed(2)}`}
                           />
                           <span className="text-xs font-mono text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
@@ -1550,7 +1550,7 @@ export default function AdminPage() {
                         {u.subscription.status === "trialing" ? "TRIAL" : u.subscription.plan.toUpperCase()}
                       </span>
                       {daysLeft !== null && (
-                        <span className="text-xs font-mono" style={{ color: daysLeft <= 2 ? "#d3622c" : "#94a3b8" }}>{daysLeft}d left</span>
+                        <span className="text-xs font-mono" style={{ color: daysLeft <= 2 ? "#b8501f" : "#94a3b8" }}>{daysLeft}d left</span>
                       )}
                       {u.subscription.gateway && <span className="text-xs text-slate font-mono">{u.subscription.gateway}</span>}
                       {usdTotal > 0 && <span className="text-xs font-mono text-forest">${usdTotal.toFixed(2)}</span>}

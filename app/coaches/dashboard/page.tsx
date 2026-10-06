@@ -231,7 +231,7 @@ export default function CoachDashboardPage() {
         <div className="flex items-center gap-3 shrink-0">
           <Link
             href={`/coaches/${coach._id}`}
-            className="text-sm font-mono text-forest border border-forest px-4 py-2 rounded hover:bg-forest/5 transition-colors min-h-[44px] flex items-center"
+            className="text-sm font-mono text-forest border border-forest px-4 py-2 rounded hover:bg-forest/5 transition-colors min-h-touch flex items-center"
           >
             Public profile →
           </Link>
@@ -443,14 +443,14 @@ function BookingCard({
           <button
             onClick={() => onPatch({ status: "accepted" })}
             disabled={isLoading}
-            className="btn-primary flex-1 sm:flex-none min-h-[44px]"
+            className="btn-primary flex-1 sm:flex-none min-h-touch"
           >
             {isLoading ? "Processing…" : "Accept booking"}
           </button>
           <button
             onClick={() => onPatch({ status: "cancelled" })}
             disabled={isLoading}
-            className="flex-1 sm:flex-none min-h-[44px] px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-alert hover:text-alert transition-colors"
+            className="flex-1 sm:flex-none min-h-touch px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-alert hover:text-alert transition-colors"
           >
             Decline
           </button>
@@ -479,7 +479,7 @@ function BookingCard({
                     : undefined
                 }
                 disabled={isLoading || !scheduleValue}
-                className="btn-primary shrink-0 min-h-[44px] text-sm"
+                className="btn-primary shrink-0 min-h-touch text-sm"
               >
                 {isLoading ? "Saving…" : "Set time"}
               </button>
@@ -501,7 +501,7 @@ function BookingCard({
             <button
               onClick={() => onPatch({ coachNote: noteValue })}
               disabled={isLoading || !noteValue.trim()}
-              className="mt-2 px-4 py-2 text-sm font-medium border border-rule text-ink rounded hover:border-forest hover:text-forest transition-colors min-h-[44px]"
+              className="mt-2 px-4 py-2 text-sm font-medium border border-rule text-ink rounded hover:border-forest hover:text-forest transition-colors min-h-touch"
             >
               {isLoading ? "Saving…" : "Save note"}
             </button>
@@ -512,14 +512,14 @@ function BookingCard({
             <button
               onClick={() => onPatch({ status: "completed" })}
               disabled={isLoading}
-              className="flex-1 sm:flex-none min-h-[44px] px-4 py-2 text-sm font-medium bg-forest/10 text-forest border border-forest/20 rounded hover:bg-forest/15 transition-colors"
+              className="flex-1 sm:flex-none min-h-touch px-4 py-2 text-sm font-medium bg-forest/10 text-forest border border-forest/20 rounded hover:bg-forest/15 transition-colors"
             >
               {isLoading ? "Updating…" : "Mark as completed"}
             </button>
             <button
               onClick={() => onPatch({ status: "cancelled" })}
               disabled={isLoading}
-              className="flex-1 sm:flex-none min-h-[44px] px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-alert hover:text-alert transition-colors"
+              className="flex-1 sm:flex-none min-h-touch px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-alert hover:text-alert transition-colors"
             >
               Cancel booking
             </button>

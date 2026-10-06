@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Celebration } from "@/lib/types";
+import { Trophy } from "lucide-react";
 
 const AWARD_LABELS: Record<string, string> = {
   scholarship: "Scholarship",
@@ -13,20 +14,6 @@ const AWARD_LABELS: Record<string, string> = {
   incubator: "Incubator",
   immigration_pathway: "Visa / Pathway",
 };
-
-const CONFETTI_CHARS = ["✦", "◆", "★", "✸", "◉", "✿", "⋯", "⬟"];
-
-function ConfettiDot({ style, char }: { style: React.CSSProperties; char: string }) {
-  return (
-    <span
-      aria-hidden
-      className="absolute font-mono text-brass/20 select-none pointer-events-none"
-      style={style}
-    >
-      {char}
-    </span>
-  );
-}
 
 export default function WinsWall({ initial }: { initial: Celebration[] | null }) {
   const { user } = useAuth();
@@ -53,38 +40,17 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
   const featured = celebrations.filter((c) => c.isFeatured);
   const regular = celebrations.filter((c) => !c.isFeatured);
 
-  const confettiItems = Array.from({ length: 18 }, (_, i) => ({
-    char: CONFETTI_CHARS[i % CONFETTI_CHARS.length],
-    top: `${5 + (i * 17 + (i % 3) * 7) % 85}%`,
-    left: `${(i * 23 + (i % 5) * 11) % 96}%`,
-    fontSize: `${10 + (i % 4) * 6}px`,
-    opacity: 0.15 + (i % 3) * 0.05,
-  }));
-
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#1a2d45" }}>
       {/* Hero */}
-      <div className="relative overflow-hidden pt-16 pb-14 px-4 sm:px-6">
-        {confettiItems.map((item, i) => (
-          <ConfettiDot
-            key={i}
-            char={item.char}
-            style={{
-              top: item.top,
-              left: item.left,
-              fontSize: item.fontSize,
-              opacity: item.opacity,
-            }}
-          />
-        ))}
-
+      <div className="pt-16 pb-14 px-4 sm:px-6">
         <div className="relative max-w-2xl mx-auto text-center">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">The wins wall</p>
           <h1 className="font-display text-4xl sm:text-6xl text-white leading-tight">
             ScolarNav students<br />who made it
           </h1>
-          <p className="text-white/60 mt-5 text-base leading-relaxed max-w-lg mx-auto">
-            Real people, real wins. Every one of them prepared for this — now they're in.
+          <p className="text-white/80 mt-5 text-base leading-relaxed max-w-lg mx-auto">
+            Real people, real wins. Each of them prepared for this, and now they are in.
           </p>
           {user ? (
             <Link
@@ -114,7 +80,7 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
 
         {!loading && celebrations.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-4xl mb-4">🏆</p>
+            <Trophy size={40} className="mx-auto mb-4 text-brass" aria-hidden="true" />
             <p className="text-white/60 text-base">No wins shared yet — be the first.</p>
             {user && (
               <Link href="/wins/share" className="inline-flex mt-6 px-5 py-2.5 bg-brass text-white text-sm hover:opacity-90 transition-opacity">
@@ -156,26 +122,9 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
 
 function CelebrationCard({ c, featured = false }: { c: Celebration; featured?: boolean }) {
   return (
-    <div
-      className={`relative overflow-hidden p-5 sm:p-6 flex flex-col gap-3 ${featured ? "sm:p-8" : ""
-        }`}
-      style={{
-        background: featured
-          ? "linear-gradient(135deg, rgba(217,119,6,0.15) 0%, rgba(13,27,42,0.9) 60%)"
-          : "rgba(255,255,255,0.04)",
-        border: featured ? "1px solid rgba(217,119,6,0.4)" : "1px solid rgba(255,255,255,0.08)",
-      }}
-    >
-      {/* Trophy decoration */}
-      <span
-        aria-hidden
-        className="absolute top-3 right-4 text-3xl select-none pointer-events-none opacity-20"
-      >
-        🏆
-      </span>
-
+    <div className={`rounded-xl p-5 sm:p-6 flex flex-col gap-3 ${featured ? "sm:p-8 bg-navy-raised" : "bg-navy-soft"}`}>
       {/* Award type badge */}
-      <span className="font-mono text-xs text-brass uppercase tracking-widest self-start">
+      <span className="text-xs font-semibold text-brass uppercase tracking-widest self-start">
         {AWARD_LABELS[c.awardType] ?? c.awardType}
       </span>
 
@@ -184,16 +133,16 @@ function CelebrationCard({ c, featured = false }: { c: Celebration; featured?: b
         {c.opportunityTitle}
       </p>
       {c.opportunityProvider && (
-        <p className="text-white/40 text-xs font-mono">{c.opportunityProvider}</p>
+        <p className="text-white/70 text-sm">{c.opportunityProvider}</p>
       )}
 
       {/* Message */}
-      <p className="text-white/70 text-sm leading-relaxed flex-1">
+      <p className="text-white/85 text-base leading-relaxed flex-1">
         &ldquo;{c.message}&rdquo;
       </p>
 
       {/* Person */}
-      <div className="flex items-center gap-2 pt-2 border-t border-white/10">
+      <div className="flex items-center gap-2 pt-3 border-t border-white/10">
         {c.photoUrl ? (
           <img
             src={c.photoUrl}

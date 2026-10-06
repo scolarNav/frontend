@@ -8,7 +8,7 @@ import { grantPath } from "@/lib/paths";
 import PagerLink from "@/components/PagerLink";
 
 const TAG_META: Record<GrantTag, { label: string; color: string }> = {
-  africa: { label: "Africa", color: "#D97706" },
+  africa: { label: "Africa", color: "#92400e" },
   technology: { label: "Technology", color: "#0D6EFD" },
   innovation: { label: "Innovation", color: "#6F42C1" },
   inclusion: { label: "Inclusion", color: "#E91E8C" },
@@ -64,10 +64,10 @@ function grantStatus(grant: Grant): {
     return { label: "DEADLINE PASSED", bg: "#F8FAFC", color: "#94A3B8", dot: "#CBD5E1", borderColor: "#E2E8F0" };
   }
   if (daysLeft !== null && daysLeft <= 3) {
-    return { label: "CLOSING", bg: "#FEF2F2", color: "#DC2626", dot: "#DC2626", borderColor: "#FCA5A5", pulse: true };
+    return { label: "CLOSING", bg: "#FEF2F2", color: "#b91c1c", dot: "#b91c1c", borderColor: "#FCA5A5", pulse: true };
   }
   if (daysLeft !== null && daysLeft <= 14) {
-    return { label: "CLOSING SOON", bg: "#FFF7ED", color: "#D97706", dot: "#F59E0B", borderColor: "#FCD34D" };
+    return { label: "CLOSING SOON", bg: "#FFF7ED", color: "#92400e", dot: "#F59E0B", borderColor: "#FCD34D" };
   }
   if (deadlineMs === null) {
     return { label: "OPEN", bg: "#F0FDF4", color: "#15803D", dot: "#86EFAC", borderColor: "#BBF7D0" };
@@ -93,7 +93,7 @@ function GrantCard({ grant }: { grant: Grant }) {
         <div className="flex-1 min-w-0">
           {/* Status badge */}
           <span
-            className="inline-flex items-center gap-1 font-mono text-[0.6rem] font-semibold px-2 py-0.5 rounded-full tracking-wider mb-1.5"
+            className="inline-flex items-center gap-1 font-mono text-xs font-semibold px-2 py-0.5 rounded-full tracking-wider mb-1.5"
             style={{ backgroundColor: sc.bg, color: sc.color }}
           >
             <span
@@ -131,7 +131,7 @@ function GrantCard({ grant }: { grant: Grant }) {
           {deadlineDate && !isPast && daysLeft !== null && (
             <span
               className="font-mono text-xs font-medium"
-              style={{ color: daysLeft <= 14 ? "#D97706" : "#64748B" }}
+              style={{ color: daysLeft <= 14 ? "#92400e" : "#64748B" }}
             >
               {daysLeft <= 0
                 ? "Closes today"

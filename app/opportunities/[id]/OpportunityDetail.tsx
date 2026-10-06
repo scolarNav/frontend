@@ -6,6 +6,10 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Opportunity, HumanCoach } from "@/lib/types";
+import { ExternalLink, Trophy } from "lucide-react";
+import { formatScraped, sameText, type TextBlock } from "@/lib/format-scraped";
+import { knownProvider } from "@/lib/opportunities";
+import { levelByValue } from "@/lib/taxonomy";
 
 function detectScamFlags(opp: Opportunity): string[] {
   const flags: string[] = [];
@@ -174,11 +178,48 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
   const scamFlags = detectScamFlags(opportunity);
   const requiredDocs = opportunity.applicationProcess?.requiredDocuments ?? [];
 
+  const closed = !!opportunity.deadline && new Date(opportunity.deadline).getTime() < Date.now();
+  const day = (iso: string) =>
+    new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "Africa/Lagos" });
+  const levelLabel = opportunity.degreeLevel !== "none" ? levelByValue(opportunity.degreeLevel)?.label : undefined;
+  const providerName = knownProvider(opportunity.provider);
+  const overview = formatScraped(opportunity.objectives);
+  const eligibility = sameText(opportunity.objectives, opportunity.eligibilitySummary) ? [] : formatScraped(opportunity.eligibilitySummary);
+
+  const renderBlocks = (blocks: TextBlock[]) => (
+    <div className="mt-3 space-y-3 max-w-prose">
+      {blocks.map((b, i) => (
+        <p key={i} className="text-ink-soft leading-relaxed">
+          {b.label && <span className="font-semibold text-ink">{b.label}: </span>}
+          {b.text}
+        </p>
+      ))}
+    </div>
+  );
+
+  const facts: { label: string; value: React.ReactNode }[] = [
+    {
+      label: "Deadline",
+      value: opportunity.deadline ? (
+        <span className={closed ? "text-slate" : "text-ink"}>{closed ? `Closed ${day(opportunity.deadline)}` : day(opportunity.deadline)}</span>
+      ) : (
+        <span className="text-slate">To be announced</span>
+      ),
+    },
+    ...(opportunity.applicationOpens && new Date(opportunity.applicationOpens).getTime() > Date.now()
+      ? [{ label: "Opens", value: day(opportunity.applicationOpens) }]
+      : []),
+    ...(levelLabel ? [{ label: "Level", value: levelLabel }] : []),
+    ...(opportunity.country && opportunity.country !== "Multiple" ? [{ label: "Country", value: opportunity.country }] : []),
+    ...(providerName ? [{ label: "Provider", value: providerName }] : []),
+    ...(opportunity.fieldsOfStudy?.length ? [{ label: "Fields", value: opportunity.fieldsOfStudy.slice(0, 4).join(", ") }] : []),
+  ];
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
       {scamFlags.length > 0 && (
-        <div className="mb-8 border border-alert bg-alert/5 p-4" style={{ borderRadius: "6px" }}>
-          <p className="font-mono text-xs tracking-widest uppercase text-alert mb-2">⚠ Verify before applying</p>
+        <div className="mb-8 bg-danger-soft p-4" style={{ borderRadius: "6px" }}>
+          <p className="text-sm font-semibold text-danger mb-2">Verify before applying</p>
           <ul className="space-y-1.5">
             {scamFlags.map((flag, i) => (
               <li key={i} className="text-sm text-ink-soft flex gap-2">
@@ -193,279 +234,290 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         </div>
       )}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <span className="stamp text-forest border-forest">{TYPE_LABELS[opportunity.type]}</span>
-        <span className="text-xs text-slate font-mono">{opportunity.country}</span>
-        {opportunity.deadline && (
-          <span className="text-xs text-slate font-mono">
-            Deadline: {new Date(opportunity.deadline).toLocaleDateString()}
-          </span>
-        )}
-      </div>
 
-      <h1 className="font-display text-3xl sm:text-4xl text-ink mt-4 leading-tight">{opportunity.title}</h1>
-      <div className="flex items-center gap-4 mt-1 flex-wrap">
-        <p className="text-ink-soft">{opportunity.provider}</p>
-        {(opportunity.winCount ?? 0) > 0 && (
-          <span className="font-mono text-xs" style={{ color: "#15803d" }}>
-            🏆 {opportunity.winCount} scholar{(opportunity.winCount ?? 0) !== 1 ? "s" : ""} won this
-          </span>
-        )}
-      </div>
-
-      <div className="flex flex-col sm:flex-row flex-wrap gap-3 mt-6">
-        <button
-          onClick={handleSave}
-          disabled={saved || saving}
-          className="border border-forest text-forest px-5 py-3 sm:py-2.5 text-sm hover:bg-forest hover:text-paper transition-colors disabled:opacity-60 w-full sm:w-auto text-center"
-        >
-          {saved ? "Saved to your case files" : saving ? "Saving…" : "Save to case files"}
-        </button>
-        <Link
-          href={`/applications/${opportunity._id}`}
-          className="bg-forest text-paper px-5 py-3 sm:py-2.5 text-sm hover:bg-forest-light transition-colors w-full sm:w-auto text-center"
-        >
-          Get personalized coaching →
-        </Link>
-        {opportunity.requiresInterview === false ? (
-          <span
-            className="border border-rule text-slate px-5 py-3 sm:py-2.5 text-sm cursor-not-allowed opacity-50 w-full sm:w-auto text-center"
-            title="This scholarship does not include an interview stage"
-          >
-            No interview required
-          </span>
-        ) : (
-          <Link
-            href={`/interview?opportunity=${opportunity._id}`}
-            className="border border-rule text-ink-soft px-5 py-3 sm:py-2.5 text-sm hover:border-forest hover:text-forest transition-colors w-full sm:w-auto text-center"
-          >
-            Practice interview
-          </Link>
-        )}
-        <a
-          href={opportunity.officialUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-sm text-ink-soft underline self-center text-center"
-        >
-          Official page
-        </a>
-      </div>
-
-      <div className="mt-10 space-y-8">
-        <section>
-          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Objectives</h2>
-          <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.objectives}</p>
-        </section>
-
-        <section>
-          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Eligibility, plainly</h2>
-          <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.eligibilitySummary}</p>
-        </section>
-
-        <section>
-          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Requirements</h2>
-          <div className="mt-3 grid sm:grid-cols-2 gap-3">
-            {opportunity.requirements.map((r, i) => (
-              <div key={i} className="case-card p-4">
-                <div className="flex items-center justify-between">
-                  <p className="font-medium text-ink text-sm">{r.label}</p>
-                  <span className={`text-xs font-mono ${r.isHard ? "text-alert" : "text-brass"}`}>
-                    {r.isHard ? "HARD" : "SOFT"}
-                  </span>
-                </div>
-                {r.detail && <p className="text-sm text-slate mt-1">{r.detail}</p>}
-              </div>
-            ))}
-          </div>
-        </section>
-
-        {/* Document checklist — only shown when the user has saved this scholarship and it has required docs */}
-        {saved && requiredDocs.length > 0 && (
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Document checklist</h2>
-            <p className="text-slate text-sm mt-3 mb-4">
-              Track which documents you've gathered. Your progress is saved automatically.
-            </p>
-            <div className="space-y-2">
-              {requiredDocs.map((doc) => {
-                const isDone = checkedDocs.includes(doc.docId);
-                const isToggling = togglingDoc === doc.docId;
-                return (
-                  <button
-                    key={doc.docId}
-                    onClick={() => handleToggleDoc(doc.docId)}
-                    disabled={isToggling}
-                    className="w-full text-left flex items-start gap-3 p-4 case-card hover:border-forest transition-colors group"
-                  >
-                    <span
-                      className="shrink-0 mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors"
-                      style={
-                        isDone
-                          ? { background: "#15803d", borderColor: "#15803d" }
-                          : { borderColor: "#cbd5e1" }
-                      }
-                    >
-                      {isDone && <span className="text-white text-xs">✓</span>}
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-medium ${isDone ? "line-through text-slate" : "text-ink"}`}>
-                        {doc.label}
-                        {doc.isRequired && (
-                          <span className="ml-2 text-xs text-alert font-normal font-mono">required</span>
-                        )}
-                      </p>
-                      <p className="text-xs text-slate mt-0.5 leading-relaxed">{doc.description}</p>
-                      {doc.templateUrl && (
-                        <a
-                          href={doc.templateUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={(e) => e.stopPropagation()}
-                          className="text-xs text-forest underline mt-1 inline-block"
-                        >
-                          Download template →
-                        </a>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-            {checkedDocs.filter((id) => requiredDocs.some((d) => d.docId === id)).length > 0 && (
-              <p className="font-mono text-xs text-slate mt-3">
-                {checkedDocs.filter((id) => requiredDocs.some((d) => d.docId === id)).length} of {requiredDocs.length} documents gathered
-              </p>
+      <header>
+        <p className="text-sm font-medium text-slate">
+          {TYPE_LABELS[opportunity.type]}
+          {opportunity.country && opportunity.country !== "Multiple" ? ` · ${opportunity.country}` : ""}
+        </p>
+        <h1 className="font-display text-3xl sm:text-4xl text-ink mt-2 leading-tight max-w-3xl">{opportunity.title}</h1>
+        {(providerName || (opportunity.winCount ?? 0) > 0) && (
+          <p className="mt-2 text-ink-soft flex flex-wrap items-center gap-x-4 gap-y-1">
+            {providerName && <span>{providerName}</span>}
+            {(opportunity.winCount ?? 0) > 0 && (
+              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-ok">
+                <Trophy size={16} aria-hidden="true" />
+                {opportunity.winCount} scholar{opportunity.winCount !== 1 ? "s" : ""} won this
+              </span>
             )}
-          </section>
+          </p>
         )}
+      </header>
 
-        <section>
-          <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">
-            What a strong applicant looks like
-          </h2>
-          {hasBreakdown ? (
-            <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.strongApplicantProfile}</p>
-          ) : generating ? (
-            <div className="mt-3 flex items-center gap-2">
-              <span className="inline-block w-2 h-2 rounded-full bg-brass animate-pulse shrink-0" />
-              <p className="text-slate text-sm font-mono">Generating breakdown…</p>
-            </div>
-          ) : (
-            <div className="mt-3">
-              <p className="text-slate text-sm mb-3">
-                Get an AI-authored summary of what a strong applicant for this opportunity looks like.
-              </p>
-              <button
-                onClick={handleGenerateBreakdown}
-                className="border border-forest text-forest px-4 py-2 text-sm hover:bg-forest hover:text-paper transition-colors"
-              >
-                Generate breakdown
-              </button>
-            </div>
+      <div className="mt-8 grid gap-10 lg:grid-cols-detail lg:gap-12 items-start">
+        <div className="space-y-10 min-w-0">
+          {overview.length > 0 && (
+            <section>
+              <h2 className="font-display text-xl text-ink">Overview</h2>
+              {renderBlocks(overview)}
+            </section>
           )}
-        </section>
-      </div>
 
-        {/* Human Coaches */}
-        {coaches.length > 0 && (
+          {eligibility.length > 0 && (
+            <section>
+              <h2 className="font-display text-xl text-ink">Who can apply</h2>
+              {renderBlocks(eligibility)}
+            </section>
+          )}
+
+          {opportunity.requirements.length > 0 && (
+            <section>
+              <h2 className="font-display text-xl text-ink">Requirements</h2>
+              <ul className="mt-3 grid sm:grid-cols-2 gap-3">
+                {opportunity.requirements.map((r, i) => (
+                  <li key={i} className="case-card p-4">
+                    <div className="flex items-start justify-between gap-3">
+                      <p className="font-medium text-ink text-sm">{r.label}</p>
+                      <span className={`shrink-0 text-xs font-semibold ${r.isHard ? "text-danger" : "text-slate"}`}>
+                        {r.isHard ? "Required" : "Preferred"}
+                      </span>
+                    </div>
+                    {r.detail && <p className="text-sm text-slate mt-1">{r.detail}</p>}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {/* Document checklist — only shown when the user has saved this scholarship and it has required docs */}
+          {saved && requiredDocs.length > 0 && (
+            <section>
+              <h2 className="font-display text-xl text-ink">Document checklist</h2>
+              <p className="text-slate text-sm mt-3 mb-4">
+                Track which documents you've gathered. Your progress is saved automatically.
+              </p>
+              <div className="space-y-2">
+                {requiredDocs.map((doc) => {
+                  const isDone = checkedDocs.includes(doc.docId);
+                  const isToggling = togglingDoc === doc.docId;
+                  return (
+                    <button
+                      key={doc.docId}
+                      onClick={() => handleToggleDoc(doc.docId)}
+                      disabled={isToggling}
+                      className="w-full text-left flex items-start gap-3 p-4 case-card hover:border-forest transition-colors group"
+                    >
+                      <span
+                        className="shrink-0 mt-0.5 w-5 h-5 rounded border flex items-center justify-center transition-colors"
+                        style={
+                          isDone
+                            ? { background: "#15803d", borderColor: "#15803d" }
+                            : { borderColor: "#cbd5e1" }
+                        }
+                      >
+                        {isDone && <span className="text-white text-xs">✓</span>}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className={`text-sm font-medium ${isDone ? "line-through text-slate" : "text-ink"}`}>
+                          {doc.label}
+                          {doc.isRequired && (
+                            <span className="ml-2 text-xs text-alert font-normal font-mono">required</span>
+                          )}
+                        </p>
+                        <p className="text-xs text-slate mt-0.5 leading-relaxed">{doc.description}</p>
+                        {doc.templateUrl && (
+                          <a
+                            href={doc.templateUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-xs text-forest underline mt-1 inline-block"
+                          >
+                            Download template →
+                          </a>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              {checkedDocs.filter((id) => requiredDocs.some((d) => d.docId === id)).length > 0 && (
+                <p className="font-mono text-xs text-slate mt-3">
+                  {checkedDocs.filter((id) => requiredDocs.some((d) => d.docId === id)).length} of {requiredDocs.length} documents gathered
+                </p>
+              )}
+            </section>
+          )}
+  
+  
           <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">
-              Human coaches for this scholarship
+            <h2 className="font-display text-xl text-ink">
+              What a strong applicant looks like
             </h2>
-            <p className="text-sm text-slate mt-3 mb-5">
-              Work with someone who has been where you want to go — a scholarship alumnus or former selection panel member.
-              All coaches are verified by the ScolarNav team.
-            </p>
-
-            {bookingDone && (
-              <div className="mb-5 p-4 rounded-xl border border-forest bg-forest/5 text-sm text-forest">
-                Booking request sent to <strong>{bookingDone}</strong>. They will confirm a time and reach out to you.
+            {hasBreakdown ? (
+              <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.strongApplicantProfile}</p>
+            ) : generating ? (
+              <div className="mt-3 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-brass animate-pulse shrink-0" />
+                <p className="text-slate text-sm font-mono">Generating breakdown…</p>
+              </div>
+            ) : (
+              <div className="mt-3">
+                <p className="text-slate text-sm mb-3">
+                  Get an AI-authored summary of what a strong applicant for this opportunity looks like.
+                </p>
+                <button
+                  onClick={handleGenerateBreakdown}
+                  className="btn-secondary"
+                >
+                  Generate breakdown
+                </button>
               </div>
             )}
-
-            <div className="grid sm:grid-cols-2 gap-4">
-              {coaches.map((coach) => {
-                const userFee = coach.sessionFeeUSD + Math.round(coach.sessionFeeUSD * (coach.platformFeePercent / 100) * 100) / 100;
-                return (
-                  <div key={coach._id} className="case-card p-5">
-                    <div className="flex items-start gap-3">
-                      <Link href={`/coaches/${coach._id}`} className="shrink-0">
-                        {coach.photoUrl ? (
-                          <img src={coach.photoUrl} alt={`Photo of coach ${coach.name}`} width={48} height={48} loading="lazy" className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity" />
-                        ) : (
-                          <div className="w-12 h-12 rounded-full bg-rule flex items-center justify-center font-display text-lg text-slate hover:bg-rule/70 transition-colors">
-                            {coach.name[0]}
-                          </div>
-                        )}
-                      </Link>
-                      <div className="flex-1 min-w-0">
-                        <Link href={`/coaches/${coach._id}`} className="font-medium text-ink hover:text-forest transition-colors">
-                          {coach.name}
+          </section>
+  
+          {/* Human Coaches */}
+          {coaches.length > 0 && (
+            <section>
+              <h2 className="font-display text-xl text-ink">
+                Human coaches for this scholarship
+              </h2>
+              <p className="text-sm text-slate mt-3 mb-5">
+                Work with someone who has been where you want to go (a scholarship alumnus or former selection panel member).
+                All coaches are verified by the ScolarNav team.
+              </p>
+  
+              {bookingDone && (
+                <div className="mb-5 p-4 rounded-xl border border-forest bg-forest/5 text-sm text-forest">
+                  Booking request sent to <strong>{bookingDone}</strong>. They will confirm a time and reach out to you.
+                </div>
+              )}
+  
+              <div className="grid sm:grid-cols-2 gap-4">
+                {coaches.map((coach) => {
+                  const userFee = coach.sessionFeeUSD + Math.round(coach.sessionFeeUSD * (coach.platformFeePercent / 100) * 100) / 100;
+                  return (
+                    <div key={coach._id} className="case-card p-5">
+                      <div className="flex items-start gap-3">
+                        <Link href={`/coaches/${coach._id}`} className="shrink-0">
+                          {coach.photoUrl ? (
+                            <img src={coach.photoUrl} alt={`Photo of coach ${coach.name}`} width={48} height={48} loading="lazy" className="w-12 h-12 rounded-full object-cover hover:opacity-80 transition-opacity" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-full bg-rule flex items-center justify-center font-display text-lg text-slate hover:bg-rule/70 transition-colors">
+                              {coach.name[0]}
+                            </div>
+                          )}
                         </Link>
-                        <p className="text-xs font-mono text-slate mt-0.5">
-                          {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
-                          {coach.credentialYear ? ` · ${coach.credentialYear}` : ""}
-                        </p>
-                        {coach.averageRating && (
-                          <p className="text-xs text-brass mt-0.5">
-                            {"★".repeat(Math.round(coach.averageRating))} {coach.averageRating}/5
-                            {coach.totalSessions > 0 && ` · ${coach.totalSessions} sessions`}
+                        <div className="flex-1 min-w-0">
+                          <Link href={`/coaches/${coach._id}`} className="font-medium text-ink hover:text-forest transition-colors">
+                            {coach.name}
+                          </Link>
+                          <p className="text-xs font-mono text-slate mt-0.5">
+                            {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
+                            {coach.credentialYear ? ` · ${coach.credentialYear}` : ""}
                           </p>
-                        )}
+                          {coach.averageRating && (
+                            <p className="text-xs text-brass mt-0.5">
+                              {"★".repeat(Math.round(coach.averageRating))} {coach.averageRating}/5
+                              {coach.totalSessions > 0 && ` · ${coach.totalSessions} sessions`}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <p className="text-sm text-ink-soft mt-3 leading-relaxed line-clamp-3">{coach.bio}</p>
+                      <div className="flex items-center justify-between mt-4">
+                        <p className="text-sm font-medium text-ink">${userFee.toFixed(0)}<span className="text-xs text-slate font-normal"> / session</span></p>
+                        <div className="flex items-center gap-2">
+                          <Link
+                            href={`/coaches/${coach._id}`}
+                            className="text-sm px-3 py-2 text-slate hover:text-ink transition-colors"
+                          >
+                            View profile
+                          </Link>
+                          <button
+                            onClick={() => { setBookingCoach(coach); setBookingDone(null); }}
+                            className="text-sm px-4 py-2 border border-forest text-forest hover:bg-forest hover:text-white transition-colors rounded-lg"
+                          >
+                            Book
+                          </button>
+                        </div>
                       </div>
                     </div>
-                    <p className="text-sm text-ink-soft mt-3 leading-relaxed line-clamp-3">{coach.bio}</p>
-                    <div className="flex items-center justify-between mt-4">
-                      <p className="text-sm font-medium text-ink">${userFee.toFixed(0)}<span className="text-xs text-slate font-normal"> / session</span></p>
-                      <div className="flex items-center gap-2">
-                        <Link
-                          href={`/coaches/${coach._id}`}
-                          className="text-sm px-3 py-2 text-slate hover:text-ink transition-colors"
-                        >
-                          View profile
-                        </Link>
-                        <button
-                          onClick={() => { setBookingCoach(coach); setBookingDone(null); }}
-                          className="text-sm px-4 py-2 border border-forest text-forest hover:bg-forest hover:text-white transition-colors rounded-lg"
-                        >
-                          Book
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                  );
+                })}
+              </div>
+  
+            </section>
+          )}
+  
+          {coaches.length === 0 && (
+            <section>
+              <h2 className="font-display text-xl text-ink">Human coaches</h2>
+              <p className="text-sm text-slate mt-3">
+                No human coaches are available for this scholarship yet. Check back soon.
+              </p>
+            </section>
+          )}
+  
+  
+        </div>
 
-          </section>
-        )}
+        <aside aria-label="Key facts and actions" className="order-first lg:order-none lg:sticky lg:top-24 space-y-4">
+          <div className="case-card p-5">
+            <h2 className="font-display text-lg text-ink">At a glance</h2>
+            <dl className="mt-3 divide-y divide-rule">
+              {facts.map((f) => (
+                <div key={f.label} className="flex items-start justify-between gap-4 py-2.5">
+                  <dt className="text-sm text-slate">{f.label}</dt>
+                  <dd className="text-sm font-medium text-right">{f.value}</dd>
+                </div>
+              ))}
+            </dl>
+          </div>
 
-        {coaches.length === 0 && (
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Human coaches</h2>
-            <p className="text-sm text-slate mt-3">
-              No human coaches are available for this scholarship yet. Check back soon.
-            </p>
-          </section>
-        )}
+          <div className="flex flex-col gap-2.5">
+            <Link href={`/applications/${opportunity._id}`} className="btn-primary">
+              Get personalized coaching
+            </Link>
+            <button onClick={handleSave} disabled={saved || saving} className="btn-secondary">
+              {saved ? "Saved to your case files" : saving ? "Saving…" : "Save to case files"}
+            </button>
+            {opportunity.requiresInterview === false ? (
+              <p className="text-sm text-slate text-center py-2">No interview stage for this opportunity.</p>
+            ) : (
+              <Link href={`/interview?opportunity=${opportunity._id}`} className="btn-secondary">
+                Practice interview
+              </Link>
+            )}
+            <a
+              href={opportunity.officialUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-1.5 min-h-touch text-sm font-medium text-forest hover:underline"
+            >
+              Official page
+              <ExternalLink size={14} aria-hidden="true" />
+            </a>
+          </div>
+        </aside>
+      </div>
 
-      <div className="mt-10 pt-6 border-t border-rule flex items-center justify-between">
-        <p className="text-xs text-slate font-mono">See something wrong with this listing?</p>
+      <div className="mt-12 pt-6 border-t border-rule flex items-center justify-between gap-4">
+        <p className="text-sm text-slate">See something wrong with this listing?</p>
         <button
           onClick={() => {
             if (!user) { router.push(`/login?next=/opportunities/${opportunity._id}`); return; }
             setReportOpen(true);
             setReportDone(false);
           }}
-          className="text-xs text-slate font-mono hover:text-ink transition-colors underline"
+          className="text-sm text-slate hover:text-ink transition-colors underline min-h-touch px-1"
         >
           Report wrong data
         </button>
       </div>
 
       {reportDone && (
-        <p className="text-forest text-sm mt-4 font-mono">Thanks for reporting — we'll review this shortly.</p>
+        <p className="text-forest text-sm mt-4">Thanks for reporting. We will review this shortly.</p>
       )}
       {error && <p className="text-alert text-sm mt-6">{error}</p>}
 

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Trophy } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import PhotoUpload from "@/components/PhotoUpload";
@@ -69,7 +70,7 @@ export default function ShareWinPage() {
     return (
       <div className="min-h-[70vh] flex items-center justify-center px-4" style={{ backgroundColor: "#1a2d45" }}>
         <div className="text-center max-w-sm">
-          <p className="text-5xl mb-4">🎉</p>
+          <Trophy size={48} className="mx-auto mb-4 text-brass" aria-hidden="true" />
           <h1 className="font-display text-3xl text-white">Congratulations!</h1>
           <p className="text-white/60 mt-3 leading-relaxed">
             Your win has been shared. It'll show up on the wins wall so other students can see what's possible.

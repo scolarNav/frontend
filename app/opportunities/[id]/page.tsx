@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
+import { CircleSlash } from "lucide-react";
 import OpportunityDetail from "./OpportunityDetail";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import OpportunityCard from "@/components/OpportunityCard";
@@ -92,29 +93,32 @@ export default async function OpportunityPage({ params }: { params: { id: string
     <>
       <JsonLd data={[opportunityJsonLd(opp, path), breadcrumbJsonLd(crumbs)]} />
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-12">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 pt-8 sm:pt-10">
         <Breadcrumbs crumbs={crumbs} />
         {closed && opp.deadline && (
-          <div role="status" className="border border-rule bg-white p-4 text-sm text-ink-soft" style={{ borderRadius: "6px" }}>
+          <div role="status" className="flex items-start gap-3 rounded-lg bg-white p-4 text-sm text-ink-soft">
+            <CircleSlash size={18} className="mt-0.5 shrink-0 text-slate" aria-hidden="true" />
+            <p>
             <strong className="text-ink">This opportunity closed on {formatDate(opp.deadline)}.</strong>{" "}
-            Applications for this cycle are no longer open. Many programmes reopen annually — save it to be ready,
+            Applications for this cycle are no longer open. Many programmes reopen every year, so you can save it to be ready,
             or see similar opportunities that are open now below.
+            </p>
           </div>
         )}
       </div>
 
       <OpportunityDetail initial={opp} />
 
-      <aside aria-label="Related opportunities" className="max-w-5xl mx-auto px-4 sm:px-6 pb-8">
-        <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">
+      <aside aria-label="Related opportunities" className="max-w-5xl mx-auto px-4 sm:px-6 pb-8 pt-4">
+        <h2 className="font-display text-xl sm:text-2xl text-ink">
           {closed ? "Similar opportunities that are open now" : "More opportunities like this"}
         </h2>
 
-        <ul className="mt-4 flex flex-wrap gap-2 text-sm">
-          {type && <li><Link href={`/opportunities/type/${type.slug}`} className="stamp text-forest border-forest">All {type.plural.toLowerCase()}</Link></li>}
-          {country && <li><Link href={`/opportunities/country/${country.slug}`} className="stamp text-forest border-forest">Opportunities in {country.label}</Link></li>}
-          {level && <li><Link href={`/opportunities/level/${level.slug}`} className="stamp text-forest border-forest">{level.label} opportunities</Link></li>}
-          {guide && <li><Link href={`/countries/${guide.code}`} className="stamp text-forest border-forest">Study in {guide.name}: country guide</Link></li>}
+        <ul className="mt-4 flex flex-wrap gap-2">
+          {type && <li><Link href={`/opportunities/type/${type.slug}`} className="inline-flex items-center min-h-touch rounded-full bg-white px-4 text-sm font-medium text-forest hover:bg-surface transition-colors">All {type.plural.toLowerCase()}</Link></li>}
+          {country && <li><Link href={`/opportunities/country/${country.slug}`} className="inline-flex items-center min-h-touch rounded-full bg-white px-4 text-sm font-medium text-forest hover:bg-surface transition-colors">Opportunities in {country.label}</Link></li>}
+          {level && <li><Link href={`/opportunities/level/${level.slug}`} className="inline-flex items-center min-h-touch rounded-full bg-white px-4 text-sm font-medium text-forest hover:bg-surface transition-colors">{level.label} opportunities</Link></li>}
+          {guide && <li><Link href={`/countries/${guide.code}`} className="inline-flex items-center min-h-touch rounded-full bg-white px-4 text-sm font-medium text-forest hover:bg-surface transition-colors">Study in {guide.name}: country guide</Link></li>}
         </ul>
 
         {related.length > 0 ? (

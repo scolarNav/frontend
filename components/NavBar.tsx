@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
-import Image from "next/image";
+import Wordmark from "./Wordmark";
 import { SHOW_GRANTS } from "@/lib/site";
 
 const TOOLS = [
@@ -55,7 +55,7 @@ export default function NavBar() {
   }, []);
 
   const linkClass = (href: string) =>
-    `text-sm transition-colors px-3 py-1.5 rounded-[6px] ${
+    `text-sm transition-colors px-3 py-1.5 rounded ${
       pathname === href
         ? "bg-white/[0.09] text-white"
         : "text-white/50 hover:text-white/90"
@@ -66,16 +66,14 @@ export default function NavBar() {
       className="sticky top-0 z-30 transition-shadow duration-200"
       style={{
         backgroundColor: "#1a2d45",
-        boxShadow: scrolled
-          ? "0 1px 0 rgba(255,255,255,0.05), 0 4px 20px rgba(0,0,0,0.3)"
-          : "none",
+        boxShadow: scrolled ? "0 1px 2px rgba(15,23,42,0.25)" : "none",
       }}
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-6">
 
         {/* Logo */}
-        <Link href="/" className="shrink-0">
-          <Image src="/logo/logo.png" alt="ScolarNav" width={112} height={30} priority />
+        <Link href="/" className="shrink-0" aria-label="ScolarNav home">
+          <Wordmark onDark />
         </Link>
 
         {/* Desktop nav */}
@@ -91,7 +89,7 @@ export default function NavBar() {
               <div className="relative" ref={toolsRef}>
                 <button
                   onClick={() => setToolsOpen((o) => !o)}
-                  className={`text-sm transition-colors px-3 py-1.5 rounded-[6px] flex items-center gap-1.5 ${
+                  className={`text-sm transition-colors px-3 py-1.5 rounded flex items-center gap-1.5 ${
                     toolsOpen ? "bg-white/[0.09] text-white" : "text-white/50 hover:text-white/90"
                   }`}
                 >
@@ -114,8 +112,8 @@ export default function NavBar() {
                       >
                         <span>{label}</span>
                         {pro && !isPro && (
-                          <span className="font-mono text-[0.58rem] tracking-wider px-1.5 py-0.5 rounded-[3px] border"
-                            style={{ color: "#d3622c", borderColor: "rgba(211,98,44,0.3)" }}>
+                          <span className="font-mono text-xs tracking-wider px-1.5 py-0.5 rounded-sm border"
+                            style={{ color: "#b8501f", borderColor: "rgba(211,98,44,0.3)" }}>
                             PRO
                           </span>
                         )}
@@ -130,7 +128,7 @@ export default function NavBar() {
               {user.isAdmin && (
                 <Link
                   href="/admin"
-                  className="ml-1 font-mono text-[0.6rem] uppercase tracking-widest transition-colors px-2 py-1"
+                  className="ml-1 font-mono text-xs uppercase tracking-widest transition-colors px-2 py-1"
                   style={{ color: "rgba(240,200,69,0.6)" }}
                   onMouseEnter={e => (e.currentTarget.style.color = "#f0c845")}
                   onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,200,69,0.6)")}
@@ -156,9 +154,9 @@ export default function NavBar() {
               <Link
                 href="/register"
                 className="text-sm font-medium text-white px-4 py-2 rounded-md transition-colors"
-                style={{ backgroundColor: "#d3622c" }}
+                style={{ backgroundColor: "#b8501f" }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#c05520")}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#d3622c")}
+                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#b8501f")}
               >
                 Get started
               </Link>
@@ -169,7 +167,7 @@ export default function NavBar() {
             <div className="relative" ref={userRef}>
               <button
                 onClick={() => setUserOpen((o) => !o)}
-                className="w-8 h-8 rounded-[6px] text-xs font-semibold flex items-center justify-center hover:opacity-85 transition-opacity"
+                className="w-8 h-8 rounded text-xs font-semibold flex items-center justify-center hover:opacity-85 transition-opacity"
                 style={{ backgroundColor: "#f0c845", color: "#1a2d45" }}
                 aria-label="Account menu"
               >
@@ -182,7 +180,7 @@ export default function NavBar() {
                     <p className="text-xs font-semibold text-ink truncate">{user.fullName}</p>
                     <p className="text-xs text-slate truncate mt-0.5">
                       {isPro
-                        ? <span style={{ color: "#d3622c" }} className="font-medium">Pro</span>
+                        ? <span style={{ color: "#b8501f" }} className="font-medium">Pro</span>
                         : "Free plan"
                       }
                     </p>
@@ -201,8 +199,8 @@ export default function NavBar() {
                   {!isPro && (
                     <Link
                       href="/pricing"
-                      className="block px-4 py-2.5 text-sm font-medium transition-colors hover:bg-[#fff7f4]"
-                      style={{ color: "#d3622c" }}
+                      className="block px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface"
+                      style={{ color: "#b8501f" }}
                     >
                       Upgrade to Pro →
                     </Link>
@@ -232,7 +230,7 @@ export default function NavBar() {
             <Link
               href="/register"
               className="text-xs font-medium text-white px-3.5 py-1.5 rounded-md transition-colors"
-              style={{ backgroundColor: "#d3622c" }}
+              style={{ backgroundColor: "#b8501f" }}
             >
               Get started
             </Link>
@@ -240,8 +238,8 @@ export default function NavBar() {
           {!loading && user && !isPro && (
             <Link
               href="/pricing"
-              className="font-mono text-[0.58rem] tracking-wider px-2.5 py-1 rounded-[4px] uppercase transition-colors"
-              style={{ color: "#d3622c", border: "1px solid rgba(211,98,44,0.35)" }}
+              className="font-mono text-xs tracking-wider px-2.5 py-1 rounded-sm uppercase transition-colors"
+              style={{ color: "#b8501f", border: "1px solid rgba(211,98,44,0.35)" }}
             >
               Upgrade
             </Link>
@@ -273,7 +271,7 @@ export default function NavBar() {
                         ? "font-medium"
                         : "text-ink-soft hover:text-ink hover:bg-surface"
                     }`}
-                    style={pathname === href ? { color: "#d3622c" } : undefined}
+                    style={pathname === href ? { color: "#b8501f" } : undefined}
                   >
                     {label}
                   </Link>
@@ -282,7 +280,7 @@ export default function NavBar() {
                 {!loading && user && (
                   <>
                     <div className="border-t border-rule mt-1 pt-1">
-                      <p className="px-5 py-2 text-[0.6rem] font-mono text-slate/50 uppercase tracking-widest">
+                      <p className="px-5 py-2 text-xs font-mono text-slate/50 uppercase tracking-widest">
                         Tools
                       </p>
                       {TOOLS.map(({ href, label, pro }) => (
@@ -294,8 +292,8 @@ export default function NavBar() {
                           <span>{label}</span>
                           {pro && !isPro && (
                             <span
-                              className="font-mono text-[0.58rem] tracking-wider px-1.5 py-0.5 rounded-[3px] border"
-                              style={{ color: "#d3622c", borderColor: "rgba(211,98,44,0.3)" }}
+                              className="font-mono text-xs tracking-wider px-1.5 py-0.5 rounded-sm border"
+                              style={{ color: "#b8501f", borderColor: "rgba(211,98,44,0.3)" }}
                             >
                               PRO
                             </span>
