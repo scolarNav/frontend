@@ -8,17 +8,17 @@ export default function ListingPagination({ basePath, page, pages, firstHref }: 
   return (
     <nav aria-label="Pagination" className="mt-10 flex flex-wrap items-center justify-center gap-2">
       {page > 1 && (
-        <Link href={href(page - 1)} rel="prev" className="btn-secondary text-sm px-4 py-2">← Prev</Link>
+        <Link href={href(page - 1)} rel="prev" className="btn-secondary btn-sm">Previous</Link>
       )}
       {nums.map((p, i) => (
         <span key={p} className="contents">
-          {i > 0 && p - nums[i - 1] > 1 && <span className="text-slate font-mono text-sm px-1">…</span>}
+          {i > 0 && p - nums[i - 1] > 1 && <span className="px-1 text-sm text-slate" aria-hidden="true">…</span>}
           <Link
             href={href(p)}
             aria-current={p === page ? "page" : undefined}
             aria-label={`Page ${p}`}
-            className={`w-9 h-9 inline-flex items-center justify-center text-sm font-mono rounded-md transition-colors ${
-              p === page ? "bg-forest text-white" : "border border-rule text-ink-soft hover:border-forest hover:text-forest"
+            className={`inline-flex h-11 w-11 items-center justify-center rounded-md text-sm font-semibold transition-colors ${
+              p === page ? "bg-forest text-white" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"
             }`}
           >
             {p}
@@ -26,7 +26,7 @@ export default function ListingPagination({ basePath, page, pages, firstHref }: 
         </span>
       ))}
       {page < pages && (
-        <Link href={href(page + 1)} rel="next" className="btn-secondary text-sm px-4 py-2">Next →</Link>
+        <Link href={href(page + 1)} rel="next" className="btn-secondary btn-sm">Next</Link>
       )}
     </nav>
   );

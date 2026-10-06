@@ -3,23 +3,25 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { api } from "@/lib/api";
 import { Opportunity, RecommendationMatch } from "@/lib/types";
-import OpportunityCard, { CardVariant } from "@/components/OpportunityCard";
-import UpgradePrompt from "@/components/UpgradePrompt";
+import OpportunityCard from "@/components/OpportunityCard";
 import { useAuth } from "@/lib/auth-context";
 import Link from "next/link";
 import { PAGE_SIZE, type Pagination } from "@/lib/opportunities";
 import PagerLink from "@/components/PagerLink";
-import { Check } from "lucide-react";
+import { RefreshCw, Search, SearchX, UserRound } from "lucide-react";
 import { SHOW_GRANTS } from "@/lib/site";
 import { opportunityPath } from "@/lib/paths";
 import { knownProvider } from "@/lib/opportunities";
+import { EmptyState, ErrorState } from "@/components/ui/States";
+import { Skeleton, SkeletonGrid } from "@/components/ui/Skeleton";
+import { ProgressBar } from "@/components/ui/Spinner";
 
 const TYPES = [
   { value: "", label: "All types" },
   { value: "scholarship", label: "Scholarships" },
   { value: "fellowship", label: "Fellowships" },
-  { value: "study_program", label: "Study Programs" },
-  { value: "immigration_pathway", label: "Immigration Pathways" },
+  { value: "study_program", label: "Study programs" },
+  { value: "immigration_pathway", label: "Immigration pathways" },
 ];
 
 const DEGREE_LEVELS = [
@@ -29,10 +31,10 @@ const DEGREE_LEVELS = [
   { value: "phd", label: "PhD" },
   { value: "postdoc", label: "Postdoc" },
   { value: "professional", label: "Professional" },
-  { value: "none", label: "No degree req." },
+  { value: "none", label: "No degree required" },
 ];
 
-// Countries as stored by the scraper — these are the values that appear in the DB
+// Countries as stored by the scraper: these are the values that appear in the DB
 const SCHOLARSHIP_COUNTRIES = [
   { value: "United Kingdom", label: "United Kingdom" },
   { value: "United States", label: "United States" },
@@ -89,10 +91,10 @@ const STUDY_FIELDS = [
 ];
 
 const TIER_CONFIG = {
-  strong: { label: "Strong fit", color: "#6d8ec5" },
-  good: { label: "Good fit", color: "#64748B" },
-  moderate: { label: "Moderate fit", color: "#94a3b8" },
-  weak: { label: "Weak fit", color: "#b91c1c" },
+  strong: { label: "Strong fit", badge: "badge-ok" },
+  good: { label: "Good fit", badge: "badge-info" },
+  moderate: { label: "Moderate fit", badge: "" },
+  weak: { label: "Weak fit", badge: "badge-danger" },
 };
 
 function ForYouPanel() {
@@ -120,7 +122,7 @@ function ForYouPanel() {
       if (force) setDismissedCount(0);
     } catch (err: any) {
       // If the server returns UPGRADE_REQUIRED for a free user, show the upgrade
-      // teaser instead of a raw error — this can happen while the server restarts.
+      // teaser instead of a raw error. This can happen while the server restarts.
       if (err.message?.includes("UPGRADE_REQUIRED") && !isPro) {
         setMatches([]);
         setIsLimited(true);
@@ -140,7 +142,7 @@ function ForYouPanel() {
       setMatches((prev) => prev.filter((m) => m.opportunityId !== opportunityId));
       setDismissedCount((n) => n + 1);
     } catch {
-      // dismiss failed silently — don't disrupt the user
+      // dismiss failed silently, so the user is not disrupted
     } finally {
       setDismissing(null);
     }
@@ -153,44 +155,45 @@ function ForYouPanel() {
 
   if (!user) {
     return (
-      <div className="mt-10 case-card p-8 max-w-lg">
-        <p className="font-display text-xl text-ink">Sign in to see your matches</p>
-        <p className="text-ink-soft mt-2 text-sm leading-relaxed">
-          Create an account, upload your CV, and we'll rank every opportunity by how well it fits your actual background.
-        </p>
-        <div className="mt-5 flex gap-3">
-          <Link href="/login" className="btn-secondary text-sm px-4 py-2">Sign in</Link>
-          <Link href="/register" className="btn-primary text-sm px-4 py-2">Create account</Link>
-        </div>
+      <div className="mt-8 max-w-xl">
+        <EmptyState
+          icon={UserRound}
+          title="Sign in to see your matches"
+          description="Create an account, upload your CV, and we will rank every opportunity by how well it fits your actual background."
+          action={
+            <div className="flex gap-3">
+              <Link href="/login" className="btn-secondary">Sign in</Link>
+              <Link href="/register" className="btn-primary">Create account</Link>
+            </div>
+          }
+        />
       </div>
     );
   }
 
   if (!user.cvData) {
     return (
-      <div className="mt-10 case-card p-8 max-w-lg">
-        <p className="font-display text-xl text-ink">Upload your CV to unlock matches</p>
-        <p className="text-ink-soft mt-2 text-sm leading-relaxed">
-          We read your actual education, experience, and skills — then rank every opportunity against it. No generic suggestions.
-        </p>
-        <Link href="/cv" className="btn-primary inline-flex mt-5 text-sm">Upload CV →</Link>
+      <div className="mt-8 max-w-xl">
+        <EmptyState
+          title="Upload your CV to unlock matches"
+          description="We read your actual education, experience and skills, then rank every opportunity against it. No generic suggestions."
+          action={<Link href="/cv" className="btn-primary">Upload CV</Link>}
+        />
       </div>
     );
   }
 
   if (loading) {
     return (
-      <div className="mt-10">
-        <div className="flex items-center gap-2 mb-6">
-          <span className="inline-block w-2 h-2 rounded-full bg-forest animate-pulse" />
-          <p className="text-sm font-mono text-slate">Scoring opportunities against your CV…</p>
-        </div>
+      <div className="mt-8" role="status" aria-label="Scoring opportunities against your CV">
+        <ProgressBar label="Scoring opportunities against your CV" />
+        <p className="mb-6 mt-2 text-sm text-slate">Scoring opportunities against your CV</p>
         <div className="space-y-3">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="case-card p-5 animate-pulse">
-              <div className="h-4 bg-rule rounded w-2/3 mb-3" />
-              <div className="h-3 bg-rule rounded w-1/3 mb-2" />
-              <div className="h-3 bg-rule rounded w-full" />
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} aria-hidden="true" className="card card-pad space-y-3">
+              <Skeleton className="h-4 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
+              <Skeleton className="h-3 w-full" />
             </div>
           ))}
         </div>
@@ -200,32 +203,29 @@ function ForYouPanel() {
 
   if (error) {
     return (
-      <div className="mt-10">
-        <p className="text-alert text-sm">{error}</p>
-        <button onClick={() => fetchRecommendations()} className="mt-3 text-sm text-forest underline">
-          Try again
-        </button>
+      <div className="mt-8 max-w-xl">
+        <ErrorState title="Could not load your matches" message={error} onRetry={() => fetchRecommendations()} />
       </div>
     );
   }
 
   if (fetched && matches.length === 0) {
     return (
-      <div className="mt-10 case-card p-8 max-w-lg">
-        <p className="font-display text-xl text-ink">No strong matches yet</p>
-        <p className="text-ink-soft mt-2 text-sm leading-relaxed">
-          {dismissedCount > 0
-            ? `You dismissed ${dismissedCount} suggestion${dismissedCount !== 1 ? "s" : ""}. Try refreshing to see new ones, or add target countries and a degree level to your profile for better results.`
-            : "We didn't find opportunities that clearly match your profile. Add target countries and a target degree level to your profile — that's the fastest way to improve results."}
-        </p>
-        <div className="mt-5 flex gap-3 flex-wrap">
-          <button onClick={() => fetchRecommendations(true)} className="btn-primary text-sm">
-            Refresh
-          </button>
-          <Link href="/profile" className="btn-secondary text-sm">
-            Update profile →
-          </Link>
-        </div>
+      <div className="mt-8 max-w-xl">
+        <EmptyState
+          title="No strong matches yet"
+          description={
+            dismissedCount > 0
+              ? `You dismissed ${dismissedCount} suggestion${dismissedCount !== 1 ? "s" : ""}. Refresh to see new ones, or add target countries and a degree level to your profile for better results.`
+              : "We did not find opportunities that clearly match your profile. Adding target countries and a degree level is the fastest way to improve results."
+          }
+          action={
+            <div className="flex flex-wrap justify-center gap-3">
+              <button type="button" onClick={() => fetchRecommendations(true)} className="btn-primary">Refresh</button>
+              <Link href="/profile" className="btn-secondary">Update profile</Link>
+            </div>
+          }
+        />
       </div>
     );
   }
@@ -234,24 +234,19 @@ function ForYouPanel() {
     !!standoutFactor && standoutFactor.toLowerCase().startsWith("none");
 
   return (
-    <div className="mt-10">
-      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
-        <p className="text-xs font-mono text-slate">
+    <div className="mt-8">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-slate">
           {matches.length} opportunit{matches.length !== 1 ? "ies" : "y"} ranked by profile fit
-          {dismissedCount > 0 && (
-            <span className="ml-2 text-slate/60">· {dismissedCount} dismissed</span>
-          )}
+          {dismissedCount > 0 && <span> · {dismissedCount} dismissed</span>}
         </p>
-        <button
-          onClick={() => fetchRecommendations(true)}
-          disabled={loading}
-          className="font-mono text-xs text-forest hover:underline disabled:opacity-40"
-        >
-          {loading ? "Refreshing…" : "↺ Refresh results"}
+        <button type="button" onClick={() => fetchRecommendations(true)} disabled={loading} className="btn-secondary btn-sm">
+          <RefreshCw size={14} aria-hidden="true" />
+          Refresh results
         </button>
       </div>
 
-      <div className="space-y-3">
+      <ul className="space-y-3">
         {matches.map((match) => {
           const tier = TIER_CONFIG[match.fitTier] ?? TIER_CONFIG.moderate;
           const opp = match.opportunity;
@@ -260,70 +255,61 @@ function ForYouPanel() {
           const gapOnly = hasEligibilityGap(match.standoutFactor || "");
 
           return (
-            <div key={match.opportunityId} className="case-card-interactive p-5 group relative">
+            <li key={match.opportunityId} className="card card-pad">
               <div className="flex flex-wrap items-start justify-between gap-3">
-                <Link href={`/opportunities/${match.opportunityId}`} className="min-w-0 flex-1 block">
-                  <p className="font-mono text-xs uppercase tracking-widest mb-1" style={{ color: tier.color }}>
-                    {tier.label}{match.fitScore != null ? ` · ${match.fitScore}/100` : ""}
-                  </p>
-                  <p className="font-display text-lg text-ink group-hover:text-forest transition-colors leading-snug break-words">
+                <Link href={opportunityPath(opp)} className="group block min-w-0 flex-1">
+                  <span className={`badge mb-2 ${tier.badge}`}>
+                    {tier.label}
+                    {match.fitScore != null ? ` · ${match.fitScore}/100` : ""}
+                  </span>
+                  <span className="block break-words font-display text-lg leading-snug text-ink transition-colors group-hover:text-forest">
                     {opp.title}
-                  </p>
-                  <p className="text-sm text-slate mt-0.5">{opp.provider} · {opp.country}</p>
+                  </span>
+                  <span className="mt-0.5 block text-sm text-slate">{[knownProvider(opp.provider), opp.country].filter(Boolean).join(" · ")}</span>
                 </Link>
                 <button
+                  type="button"
                   onClick={() => handleDismiss(match.opportunityId)}
                   disabled={isDismissing}
-                  title="Not for me"
-                  className="shrink-0 font-mono text-xs text-slate/40 hover:text-slate border border-transparent hover:border-rule px-2 py-1 rounded transition-all disabled:opacity-30"
+                  aria-busy={isDismissing}
+                  className="btn-ghost btn-sm shrink-0"
                 >
-                  {isDismissing ? "…" : "Not for me"}
+                  {isDismissing ? "Removing" : "Not for me"}
                 </button>
               </div>
 
-              {match.urgency && (
-                <p className="mt-2 font-mono text-xs" style={{ color: "#b8501f" }}>{match.urgency}</p>
-              )}
+              {match.urgency && <p className="mt-2 text-sm font-semibold text-warn">{match.urgency}</p>}
 
-              <p className="mt-3 text-sm text-ink-soft leading-relaxed">{match.reasoning}</p>
+              <p className="mt-3 text-sm leading-relaxed text-ink-soft">{match.reasoning}</p>
 
-              {match.standoutFactor && !gapOnly && (
-                <p className="mt-2 text-xs text-slate">
-                  <span className="font-medium text-ink">Edge: </span>
+              {match.standoutFactor && (
+                <p className="mt-2 text-sm text-slate">
+                  <span className={`font-semibold ${gapOnly ? "text-danger" : "text-ink"}`}>{gapOnly ? "Gap: " : "Edge: "}</span>
                   {match.standoutFactor}
                 </p>
               )}
-              {match.standoutFactor && gapOnly && (
-                <p className="mt-2 text-xs text-slate">
-                  <span className="font-medium text-alert">Gap: </span>
-                  {match.standoutFactor}
-                </p>
-              )}
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ul>
 
       {isLimited && (
-        <div className="mt-6 rounded-xl border border-rule p-5" style={{ background: "#f8f4ef" }}>
-          <p className="font-display text-base text-ink">Showing 3 heuristic matches</p>
-          <p className="text-sm text-ink-soft mt-1 leading-relaxed">
-            Pro uses your full CV to score every opportunity 0–100, ranks them by fit tier, and explains exactly why each one matches — or doesn't.
+        <div className="mt-6 rounded-xl bg-forest-soft p-5">
+          <p className="font-display text-lg text-ink">Showing 3 heuristic matches</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+            Pro uses your full CV to score every opportunity from 0 to 100, ranks them by fit, and explains exactly why each one matches, or does not.
           </p>
-          <Link href="/pricing" className="btn-primary inline-flex mt-4 text-sm">
-            Unlock full matching →
-          </Link>
+          <Link href="/pricing" className="btn-primary mt-4">Unlock full matching</Link>
         </div>
       )}
 
       {!isLimited && (
-        <p className="mt-8 text-xs text-slate font-mono leading-relaxed">
-          Scores based on your CV{user.cvData?.parsedAt ? ` (uploaded ${new Date(user.cvData.parsedAt).toLocaleDateString()})` : ""}{user.profile?.targetCountries?.length ? ` and target countries (${user.profile.targetCountries.slice(0, 2).join(", ")})` : ""}.
-          Committees make the final call.{" "}
-          <Link href="/cv" className="text-forest underline">Update CV</Link>
-          {" · "}
-          <Link href="/profile" className="text-forest underline">Update profile</Link>
-          {" "}to sharpen results.
+        <p className="mt-8 text-sm leading-relaxed text-slate">
+          Scores are based on your CV{user.cvData?.parsedAt ? ` (uploaded ${new Date(user.cvData.parsedAt).toLocaleDateString()})` : ""}
+          {user.profile?.targetCountries?.length ? ` and target countries (${user.profile.targetCountries.slice(0, 2).join(", ")})` : ""}. Committees make the final call.{" "}
+          <Link href="/cv" className="font-semibold text-forest underline">Update CV</Link>
+          {" or "}
+          <Link href="/profile" className="font-semibold text-forest underline">update profile</Link> to sharpen results.
         </p>
       )}
     </div>
@@ -378,7 +364,7 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
       const params = new URLSearchParams();
       if (q) params.set("q", q);
       if (type) params.set("type", type);
-      // incubators/accelerators live on /grants — exclude when no specific type is selected
+      // incubators/accelerators live on /grants: exclude when no specific type is selected
       else params.set("excludeType", "incubator");
       if (degreeLevel) params.set("degreeLevel", degreeLevel);
       if (country) params.set("country", country);
@@ -416,41 +402,46 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
     };
   }
 
+  const hasFilters = !!(q || type || degreeLevel || country || field || openOnly);
+  function clearFilters() {
+    setQ(""); setType(""); setDegreeLevel(""); setCountry(""); setField(""); setOpenOnly(false); setPage(1);
+  }
+
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-16">
-      {/* Hero — shown only to visitors, hidden once logged in */}
+    <div className="page">
+      {/* Hero: shown only to visitors, hidden once signed in */}
       {showGuestHero && (
-        <div className="flex flex-col lg:flex-row lg:items-center gap-14 lg:gap-16">
-          <div className="max-w-xl flex-shrink-0">
-            <h1 className="font-display text-5xl sm:text-6xl text-ink leading-[1.05] tracking-tight">
+        <section className="mb-14 flex flex-col gap-12 lg:flex-row lg:items-center lg:gap-16">
+          <div className="max-w-xl shrink-0">
+            <h1 className="font-display text-5xl leading-[1.05] tracking-tight text-ink sm:text-6xl">
               Study abroad.<br />
               <span className="text-forest">Without the guesswork.</span>
             </h1>
-            <p className="text-ink-soft mt-5 text-lg leading-relaxed">
+            <p className="lead mt-5">
               Scholarships and programs matched to your profile. Coaching that closes the gaps before you apply. The committee decides, and we help you show up prepared.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link href="/register" className="btn-primary">Get started free</Link>
               <Link href="/cv" className="btn-secondary">Upload your CV</Link>
             </div>
-            <p className="mt-5 text-xs text-slate font-mono">Free to start · No credit card required</p>
+            <p className="mt-4 text-sm text-slate">Free to start. No credit card required.</p>
           </div>
 
           {closingSoon.length > 0 && (
-            <aside aria-label="Closing soon" className="hidden lg:block flex-1 rounded-xl bg-white p-6">
+            <aside aria-label="Closing soon" className="hidden flex-1 rounded-xl bg-white p-6 lg:block">
               <h2 className="font-display text-xl text-ink">Closing soon</h2>
               <p className="mt-1 text-sm text-slate">Open now, nearest deadline first.</p>
               <ul className="mt-4 divide-y divide-rule">
                 {closingSoon.map((o) => (
                   <li key={o._id}>
-                    <Link href={opportunityPath(o)} className="flex items-start justify-between gap-4 py-3 group">
+                    <Link href={opportunityPath(o)} className="group flex min-h-touch items-start justify-between gap-4 py-3">
                       <span className="min-w-0">
-                        <span className="block font-medium text-ink group-hover:text-forest transition-colors line-clamp-2">{o.title}</span>
-                        <span className="block text-sm text-slate line-clamp-1">
+                        <span className="line-clamp-2 block font-medium text-ink transition-colors group-hover:text-forest">{o.title}</span>
+                        <span className="line-clamp-1 block text-sm text-slate">
                           {[knownProvider(o.provider), o.country !== "Multiple" ? o.country : null].filter(Boolean).join(" · ")}
                         </span>
                       </span>
-                      <span className="shrink-0 text-sm font-semibold text-ink font-mono">
+                      <span className="shrink-0 text-sm font-semibold text-ink">
                         {new Date(o.deadline!).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "Africa/Lagos" })}
                       </span>
                     </Link>
@@ -459,137 +450,121 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
               </ul>
             </aside>
           )}
-        </div>
+        </section>
       )}
 
-      {/* Logged-in header */}
+      {/* Signed-in header */}
       {!authLoading && user && (
-        <div className="flex flex-wrap items-baseline justify-between gap-3">
+        <header className="mb-8 flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h1 className="font-display text-3xl sm:text-4xl text-ink">
-              {user.cvData ? "Find your next opportunity" : "Welcome, " + (user.fullName?.split(" ")[0] ?? "there")}
-            </h1>
+            <h1 className="h1">{user.cvData ? "Find your next opportunity" : `Welcome, ${user.fullName?.split(" ")[0] ?? "there"}`}</h1>
             {!user.cvData && (
-              <p className="text-ink-soft text-sm mt-1">
-                <Link href="/cv" className="text-forest underline">Upload your CV</Link> to unlock personalised matching and coaching.
+              <p className="mt-2 text-ink-soft">
+                <Link href="/cv" className="font-semibold text-forest underline">Upload your CV</Link> to unlock personalised matching and coaching.
               </p>
             )}
           </div>
-          <Link href="/dashboard" className="text-sm text-slate hover:text-forest transition-colors font-mono">
-            My applications →
-          </Link>
-        </div>
+          <Link href="/dashboard" className="btn-secondary">My dashboard</Link>
+        </header>
       )}
 
-      {/* Segment control tab switcher */}
-      <div className={showGuestHero ? "mt-14" : "mt-8"}>
-        <div
-          className="flex w-full sm:w-auto rounded-lg p-1 gap-1"
-          style={{ background: "#dce8f5" }}
-        >
-          <button
-            onClick={() => setActiveTab("catalogue")}
-            className="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-md transition-all"
-            style={
-              activeTab === "catalogue"
-                ? { background: "#fff", color: "#b8501f" }
-                : { background: "transparent", color: "#64748B" }
-            }
-          >
-            Catalogue
-          </button>
-          <button
-            onClick={() => setActiveTab("for-you")}
-            className="flex-1 sm:flex-none px-5 py-2 text-sm font-medium rounded-md transition-all"
-            style={
-              activeTab === "for-you"
-                ? { background: "#fff", color: "#b8501f" }
-                : { background: "transparent", color: "#64748B" }
-            }
-          >
-            For You
-          </button>
-        </div>
+      {/* Tabs */}
+      <div role="tablist" aria-label="Catalogue view" className="inline-flex w-full gap-1 rounded-lg bg-surface-2 p-1 sm:w-auto">
+        {([
+          { key: "catalogue", label: "Catalogue" },
+          { key: "for-you", label: "For you" },
+        ] as const).map((t) => {
+          const selected = activeTab === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              role="tab"
+              aria-selected={selected}
+              onClick={() => setActiveTab(t.key)}
+              className={`min-h-touch flex-1 rounded-md px-6 text-sm font-semibold transition-colors sm:flex-none ${
+                selected ? "bg-white text-forest" : "text-slate hover:text-ink"
+              }`}
+            >
+              {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {activeTab === "for-you" ? (
         <ForYouPanel />
       ) : (
         <>
-          {/* Grants callout — minimal; hidden unless the grants section is enabled */}
           {SHOW_GRANTS && (
-            <p className="mt-5 text-xs text-slate font-mono">
+            <p className="mt-5 text-sm text-slate">
               Looking for startup grants?{" "}
-              <Link href="/grants" className="text-forest underline">Browse the grants catalogue →</Link>
+              <Link href="/grants" className="font-semibold text-forest underline">Browse the grants catalogue</Link>
             </p>
           )}
 
-          {/* Filter bar */}
-          <div className="mt-4 flex flex-col md:flex-row gap-2.5">
-            <input
-              value={q}
-              onChange={handleFilterChange(setQ)}
-              placeholder="Search by title, provider, or keyword…"
-              className="input flex-1"
-            />
-            <select
-              value={type}
-              onChange={handleFilterChange(setType)}
-              className="input md:w-44"
-            >
-              {TYPES.map((t) => (
-                <option key={t.value} value={t.value}>{t.label}</option>
-              ))}
-            </select>
-            <select
-              value={degreeLevel}
-              onChange={handleFilterChange(setDegreeLevel)}
-              className="input md:w-36"
-            >
-              {DEGREE_LEVELS.map((d) => (
-                <option key={d.value} value={d.value}>{d.label}</option>
-              ))}
-            </select>
-            <select
-              value={field}
-              onChange={handleFilterChange(setField)}
-              className="input md:w-44"
-            >
-              <option value="">All fields</option>
-              {STUDY_FIELDS.map((f) => (
-                <option key={f} value={f}>{f}</option>
-              ))}
-            </select>
-            <select
-              value={country}
-              onChange={handleFilterChange(setCountry)}
-              className="input md:w-48"
-            >
-              <option value="">All countries</option>
-              {SCHOLARSHIP_COUNTRIES.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
-            </select>
-          </div>
+          {/* Filters */}
+          <form role="search" onSubmit={(e) => e.preventDefault()} className="card card-pad mt-5 space-y-3">
+            <div className="relative">
+              <label htmlFor="f-q" className="sr-only">Search by title, provider or keyword</label>
+              <Search size={18} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate" aria-hidden="true" />
+              <input
+                id="f-q"
+                type="search"
+                value={q}
+                onChange={handleFilterChange(setQ)}
+                placeholder="Search by title, provider or keyword"
+                className="input pl-11"
+              />
+            </div>
 
-          {/* Open-only toggle */}
-          <div className="mt-3 flex items-center gap-2">
-            <button
-              onClick={() => { setOpenOnly((v) => !v); setPage(1); }}
-              className="flex items-center gap-2 text-sm font-mono transition-colors"
-              style={{ color: openOnly ? "#b8501f" : "#94a3b8" }}
-            >
-              <span
-                className="inline-flex items-center justify-center w-4 h-4 rounded border transition-colors shrink-0"
-                style={openOnly ? { background: "#b8501f", borderColor: "#b8501f" } : { borderColor: "#cbd5e1" }}
-              >
-                {openOnly && <Check size={12} strokeWidth={3} className="text-white" aria-hidden="true" />}
-              </span>
-              Open for applications only
-            </button>
-          </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div>
+                <label htmlFor="f-type" className="sr-only">Type</label>
+                <select id="f-type" value={type} onChange={handleFilterChange(setType)} className="input">
+                  {TYPES.map((t) => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="f-level" className="sr-only">Degree level</label>
+                <select id="f-level" value={degreeLevel} onChange={handleFilterChange(setDegreeLevel)} className="input">
+                  {DEGREE_LEVELS.map((d) => <option key={d.value} value={d.value}>{d.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="f-field" className="sr-only">Field of study</label>
+                <select id="f-field" value={field} onChange={handleFilterChange(setField)} className="input">
+                  <option value="">All fields</option>
+                  {STUDY_FIELDS.map((f) => <option key={f} value={f}>{f}</option>)}
+                </select>
+              </div>
+              <div>
+                <label htmlFor="f-country" className="sr-only">Country</label>
+                <select id="f-country" value={country} onChange={handleFilterChange(setCountry)} className="input">
+                  <option value="">All countries</option>
+                  {SCHOLARSHIP_COUNTRIES.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+            </div>
 
-          {/* Explains the "dates to be announced" status */}
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="flex min-h-touch cursor-pointer items-center gap-3 text-sm font-medium text-ink-soft">
+                <input
+                  type="checkbox"
+                  checked={openOnly}
+                  onChange={() => { setOpenOnly((v) => !v); setPage(1); }}
+                  className="h-5 w-5 accent-forest"
+                />
+                Open for applications only
+              </label>
+              {hasFilters && (
+                <button type="button" onClick={clearFilters} className="btn-ghost btn-sm">
+                  Clear filters
+                </button>
+              )}
+            </div>
+          </form>
+
           {!openOnly && (
             <p className="mt-3 text-sm text-slate">
               Programmes marked &ldquo;Dates to be announced&rdquo; repeat every year. Their next dates are not published yet.
@@ -597,45 +572,41 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
           )}
 
           <div className="mt-6">
-            {loading && (
+            <p className="mb-5 text-sm text-slate" aria-live="polite">
+              {pagination && !loading && !error && (
+                <>
+                  {pagination.total} result{pagination.total !== 1 ? "s" : ""}
+                  {pagination.pages > 1 && ` · page ${pagination.page} of ${pagination.pages}`}
+                </>
+              )}
+              {loading && "Loading results"}
+            </p>
+
+            {loading && <SkeletonGrid count={6} />}
+
+            {error && !loading && <ErrorState title="Could not load opportunities" message={error} onRetry={fetchOpportunities} />}
+
+            {!loading && !error && opportunities.length === 0 && (
+              <EmptyState
+                icon={SearchX}
+                title="No opportunities match those filters"
+                description="Try widening your search or removing a filter."
+                action={hasFilters ? <button type="button" onClick={clearFilters} className="btn-primary">Clear filters</button> : undefined}
+              />
+            )}
+
+            {!loading && !error && opportunities.length > 0 && (
               <div className="card-grid">
-                {[...Array(7)].map((_, i) => (
-                  <div key={i} className="case-card p-5 animate-pulse min-h-40">
-                    <div className="h-2.5 bg-rule rounded w-1/4 mb-4" />
-                    <div className="h-5 bg-rule rounded w-4/5 mb-2" />
-                    <div className="h-3 bg-rule rounded w-1/2 mb-4" />
-                    <div className="h-2.5 bg-rule rounded w-1/3 mt-auto" />
-                  </div>
+                {opportunities.map((o) => (
+                  <OpportunityCard key={o._id} opportunity={o} />
                 ))}
               </div>
             )}
-            {error && <p className="text-alert text-sm">{error}</p>}
-            {!loading && !error && opportunities.length === 0 && (
-              <p className="text-slate text-sm">No opportunities match those filters. Try widening your search.</p>
-            )}
 
-            {pagination && !loading && (
-              <p className="text-xs text-slate font-mono mb-5">
-                {pagination.total} result{pagination.total !== 1 ? "s" : ""}
-                {pagination.pages > 1 && ` — page ${pagination.page} of ${pagination.pages}`}
-              </p>
-            )}
-
-            {!loading && (
-              <div className="card-grid">
-                {opportunities.map((o, i) => {
-                  const pos = i % 7;
-                  const variant: CardVariant =
-                    pos === 0 ? "featured" : pos >= 5 ? "default" : "compact";
-                  return <OpportunityCard key={o._id} opportunity={o} variant={variant} />;
-                })}
-              </div>
-            )}
-
-            {pagination && pagination.pages > 1 && (
-              <nav aria-label="Pagination" className="mt-10 flex items-center justify-center gap-2">
-                <PagerLink basePath="/opportunities" firstHref="/" target={page - 1} current={page} disabled={page === 1 || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="prev">
-                  ← Prev
+            {pagination && pagination.pages > 1 && !loading && (
+              <nav aria-label="Pagination" className="mt-10 flex flex-wrap items-center justify-center gap-2">
+                <PagerLink basePath="/opportunities" firstHref="/" target={page - 1} current={page} disabled={page === 1 || loading} onGo={setPage} className="btn-secondary btn-sm" rel="prev">
+                  Previous
                 </PagerLink>
 
                 {Array.from({ length: pagination.pages }, (_, i) => i + 1)
@@ -647,27 +618,28 @@ export default function HomeExplorer({ initial }: { initial: HomeInitialData | n
                   }, [])
                   .map((p, i) =>
                     p === "…" ? (
-                      <span key={`ellipsis-${i}`} className="text-slate font-mono text-sm px-1">…</span>
+                      <span key={`ellipsis-${i}`} className="px-1 text-sm text-slate" aria-hidden="true">…</span>
                     ) : (
-                      <PagerLink basePath="/opportunities" firstHref="/"
+                      <PagerLink
                         key={p}
+                        basePath="/opportunities"
+                        firstHref="/"
                         target={p as number}
                         current={page}
                         disabled={loading}
                         onGo={setPage}
                         label={`Page ${p}`}
-                        className={`w-9 h-9 inline-flex items-center justify-center text-sm font-mono rounded-md transition-colors ${page === p
-                          ? "bg-forest text-white"
-                          : "border border-rule text-ink-soft hover:border-forest hover:text-forest"
-                          }`}
+                        className={`inline-flex h-11 w-11 items-center justify-center rounded-md text-sm font-semibold transition-colors ${
+                          page === p ? "bg-forest text-white" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"
+                        }`}
                       >
                         {p}
                       </PagerLink>
                     )
                   )}
 
-                <PagerLink basePath="/opportunities" firstHref="/" target={page + 1} current={page} disabled={page === pagination.pages || loading} onGo={setPage} className="btn-secondary text-sm px-4 py-2" rel="next">
-                  Next →
+                <PagerLink basePath="/opportunities" firstHref="/" target={page + 1} current={page} disabled={page === pagination.pages || loading} onGo={setPage} className="btn-secondary btn-sm" rel="next">
+                  Next
                 </PagerLink>
               </nav>
             )}

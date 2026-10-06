@@ -12,26 +12,18 @@ import type { Grant, GrantTag } from "@/lib/types";
 
 export const revalidate = 3600;
 
-const TAG_META: Record<GrantTag, { label: string; color: string }> = {
-  africa: { label: "Africa", color: "#92400e" },
-  technology: { label: "Technology", color: "#0D6EFD" },
-  innovation: { label: "Innovation", color: "#6F42C1" },
-  inclusion: { label: "Inclusion", color: "#E91E8C" },
-  talent: { label: "Talent", color: "#20C997" },
-  education: { label: "Education", color: "#0DCAF0" },
-  youth: { label: "Youth", color: "#FD7E14" },
+const TAG_LABELS: Record<GrantTag, string> = {
+  africa: "Africa",
+  technology: "Technology",
+  innovation: "Innovation",
+  inclusion: "Inclusion",
+  talent: "Talent",
+  education: "Education",
+  youth: "Youth",
 };
 
 function GrantTagPill({ tag }: { tag: GrantTag }) {
-  const { label, color } = TAG_META[tag] ?? { label: tag, color: "#64748B" };
-  return (
-    <span
-      className="font-mono text-xs px-2.5 py-1 rounded-full border"
-      style={{ color, borderColor: color, backgroundColor: `${color}15` }}
-    >
-      {label}
-    </span>
-  );
+  return <span className="badge">{TAG_LABELS[tag] ?? tag}</span>;
 }
 
 async function loadGrant(param: string): Promise<Grant | null> {
@@ -82,7 +74,7 @@ export default async function GrantDetailPage({ params }: { params: { id: string
 
         {/* Header */}
         <div className="mb-6">
-          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">{grant.source}</p>
+          <p className="eyebrow mb-3 text-warn">{grant.source}</p>
           <h1 className="h1">{grant.title}</h1>
           <p className="text-slate text-sm">by {grant.provider}</p>
         </div>
@@ -100,8 +92,7 @@ export default async function GrantDetailPage({ params }: { params: { id: string
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-slate uppercase tracking-wide">Deadline</span>
               <span
-                className="font-mono text-sm"
-                style={{ color: isPast ? "#94a3b8" : daysLeft !== null && daysLeft <= 14 ? "#b8501f" : "#0F172A" }}
+                className={`text-sm font-semibold ${isPast ? "text-slate" : daysLeft !== null && daysLeft <= 14 ? "text-forest" : "text-ink"}`}
               >
                 {isPast
                   ? `Closed · ${shortDate(grant.deadline!)}`

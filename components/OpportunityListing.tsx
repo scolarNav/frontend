@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Breadcrumbs from "./Breadcrumbs";
+import { PageHeader } from "./ui/PageHeader";
 import ListingPagination from "./ListingPagination";
 import OpportunityCard from "./OpportunityCard";
 import { JsonLd, breadcrumbJsonLd, itemListJsonLd, type Crumb } from "@/lib/jsonld";
@@ -64,7 +65,7 @@ interface ListingProps {
 /** Server-rendered listing page: one h1, real <a> links to every item, crawlable pagination. */
 export default function OpportunityListing({ h1, intro, basePath, crumbs, opportunities, pagination, extra, firstHref }: ListingProps) {
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
+    <div className="page">
       <JsonLd
         data={[
           breadcrumbJsonLd(crumbs),
@@ -72,12 +73,11 @@ export default function OpportunityListing({ h1, intro, basePath, crumbs, opport
         ]}
       />
       <Breadcrumbs crumbs={crumbs} />
-      <h1 className="font-display text-3xl sm:text-4xl text-ink leading-tight">{h1}</h1>
-      <p className="text-ink-soft mt-3 max-w-2xl leading-relaxed">{intro}</p>
+      <PageHeader title={h1} description={intro} />
       {extra}
-      <p className="text-sm text-slate mt-4 mb-6">
+      <p className="mb-6 text-sm text-slate">
         {pagination.total} listing{pagination.total !== 1 ? "s" : ""}
-        {pagination.pages > 1 && ` — page ${pagination.page} of ${pagination.pages}`}
+        {pagination.pages > 1 && ` · page ${pagination.page} of ${pagination.pages}`}
       </p>
 
       <OpportunityGrid opportunities={opportunities} />

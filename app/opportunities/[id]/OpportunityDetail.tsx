@@ -10,6 +10,9 @@ import { ExternalLink, Trophy } from "lucide-react";
 import { formatScraped, sameText, type TextBlock } from "@/lib/format-scraped";
 import { knownProvider } from "@/lib/opportunities";
 import { levelByValue } from "@/lib/taxonomy";
+import { Modal } from "@/components/ui/Modal";
+import { ProgressBar } from "@/components/ui/Spinner";
+import { Alert } from "@/components/ui/States";
 
 function detectScamFlags(opp: Opportunity): string[] {
   const flags: string[] = [];
@@ -321,7 +324,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                         <p className={`text-sm font-medium ${isDone ? "line-through text-slate" : "text-ink"}`}>
                           {doc.label}
                           {doc.isRequired && (
-                            <span className="ml-2 text-xs text-alert font-normal font-mono">required</span>
+                            <span className="badge badge-danger ml-2">Required</span>
                           )}
                         </p>
                         <p className="text-xs text-slate mt-0.5 leading-relaxed">{doc.description}</p>
@@ -342,7 +345,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                 })}
               </div>
               {checkedDocs.filter((id) => requiredDocs.some((d) => d.docId === id)).length > 0 && (
-                <p className="font-mono text-xs text-slate mt-3">
+                <p className="mt-3 text-sm text-slate">
                   {checkedDocs.filter((id) => requiredDocs.some((d) => d.docId === id)).length} of {requiredDocs.length} documents gathered
                 </p>
               )}
@@ -357,9 +360,9 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
             {hasBreakdown ? (
               <p className="text-ink-soft mt-3 leading-relaxed">{opportunity.strongApplicantProfile}</p>
             ) : generating ? (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="inline-block w-2 h-2 rounded-full bg-brass animate-pulse shrink-0" />
-                <p className="text-slate text-sm font-mono">Generating breakdown…</p>
+              <div className="mt-3" role="status">
+                <ProgressBar label="Generating breakdown" />
+                <p className="mt-2 text-sm text-slate">Generating breakdown</p>
               </div>
             ) : (
               <div className="mt-3">
@@ -388,7 +391,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
               </p>
   
               {bookingDone && (
-                <div className="mb-5 p-4 rounded-xl border border-forest bg-forest/5 text-sm text-forest">
+                <div className="alert alert-ok mb-5">
                   Booking request sent to <strong>{bookingDone}</strong>. They will confirm a time and reach out to you.
                 </div>
               )}
@@ -412,12 +415,12 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                           <Link href={`/coaches/${coach._id}`} className="font-medium text-ink hover:text-forest transition-colors">
                             {coach.name}
                           </Link>
-                          <p className="text-xs font-mono text-slate mt-0.5">
+                          <p className="mt-0.5 text-sm text-slate">
                             {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
                             {coach.credentialYear ? ` · ${coach.credentialYear}` : ""}
                           </p>
                           {coach.averageRating && (
-                            <p className="text-xs text-brass mt-0.5">
+                            <p className="text-xs text-warn mt-0.5">
                               {"★".repeat(Math.round(coach.averageRating))} {coach.averageRating}/5
                               {coach.totalSessions > 0 && ` · ${coach.totalSessions} sessions`}
                             </p>
@@ -436,7 +439,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                           </Link>
                           <button
                             onClick={() => { setBookingCoach(coach); setBookingDone(null); }}
-                            className="text-sm px-4 py-2 border border-forest text-forest hover:bg-forest hover:text-white transition-colors rounded-lg"
+                            className="btn-secondary btn-sm"
                           >
                             Book
                           </button>
@@ -479,8 +482,8 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
             <Link href={`/applications/${opportunity._id}`} className="btn-primary">
               Get personalized coaching
             </Link>
-            <button onClick={handleSave} disabled={saved || saving} className="btn-secondary">
-              {saved ? "Saved to your case files" : saving ? "Saving…" : "Save to case files"}
+            <button type="button" onClick={handleSave} disabled={saved || saving} aria-busy={saving} className="btn-secondary">
+              {saved ? "Saved to your case files" : saving ? "Saving" : "Save to case files"}
             </button>
             {opportunity.requiresInterview === false ? (
               <p className="text-sm text-slate text-center py-2">No interview stage for this opportunity.</p>
@@ -516,150 +519,133 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
         </button>
       </div>
 
-      {reportDone && (
-        <p className="text-forest text-sm mt-4">Thanks for reporting. We will review this shortly.</p>
-      )}
-      {error && <p className="text-alert text-sm mt-6">{error}</p>}
+      {reportDone && <Alert variant="ok" className="mt-4">Thanks for reporting. We will review this shortly.</Alert>}
+      {error && <Alert variant="danger" className="mt-6">{error}</Alert>}
 
-      {/* Booking modal */}
-      {bookingCoach && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setBookingCoach(null); }}
-        >
-          <div className="bg-white rounded-2xl p-5 sm:p-7 max-w-md w-full shadow-xl">
-            <h3 className="font-display text-2xl text-ink mb-1">Book a session</h3>
-            <p className="text-sm text-slate mb-5">with <span className="font-medium text-ink">{bookingCoach.name}</span></p>
+      {/* Booking dialog */}
+      <Modal open={!!bookingCoach} onClose={() => setBookingCoach(null)} title="Book a session">
+        {bookingCoach && (
+          <div className="space-y-5">
+            <p className="-mt-3 text-sm text-slate">with <span className="font-semibold text-ink">{bookingCoach.name}</span></p>
 
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-ink mb-2">Session type</label>
-              <div className="flex flex-col sm:flex-row gap-3">
+            <fieldset>
+              <legend className="label">Session type</legend>
+              <div className="flex flex-col gap-3 sm:flex-row" role="radiogroup">
                 {[
                   { value: "coaching", label: "Strategy coaching", sub: "Application strategy, essay direction, interview prep" },
                   { value: "review", label: "Document review", sub: "Feedback on your draft essays or application documents" },
-                ].map((opt) => (
-                  <button
-                    key={opt.value}
-                    type="button"
-                    onClick={() => setBookingType(opt.value as any)}
-                    className={`flex-1 text-left p-3 rounded-xl border text-sm transition-colors ${
-                      bookingType === opt.value ? "border-forest bg-forest/5" : "border-rule hover:border-forest"
-                    }`}
-                  >
-                    <p className="font-medium text-ink">{opt.label}</p>
-                    <p className="text-xs text-slate mt-0.5 leading-snug">{opt.sub}</p>
-                  </button>
-                ))}
+                ].map((opt) => {
+                  const selected = bookingType === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      onClick={() => setBookingType(opt.value as any)}
+                      className={`min-h-touch flex-1 rounded-xl p-3 text-left text-sm transition-colors ${
+                        selected ? "bg-forest-soft ring-2 ring-forest" : "bg-white ring-1 ring-inset ring-control hover:bg-surface-2"
+                      }`}
+                    >
+                      <span className="block font-semibold text-ink">{opt.label}</span>
+                      <span className="mt-0.5 block text-sm leading-snug text-slate">{opt.sub}</span>
+                    </button>
+                  );
+                })}
               </div>
-            </div>
+            </fieldset>
 
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-ink mb-1.5">Message to coach <span className="text-slate font-normal">(optional)</span></label>
+            <div>
+              <label htmlFor="bk-msg" className="label">Message to coach <span className="font-normal text-slate">(optional)</span></label>
               <textarea
+                id="bk-msg"
                 rows={3}
                 value={bookingMsg}
                 onChange={(e) => setBookingMsg(e.target.value)}
-                className="input resize-none"
-                placeholder="Tell the coach briefly about where you are in the process…"
+                className="textarea"
+                placeholder="Tell the coach briefly about where you are in the process."
               />
             </div>
 
-            <div className="flex items-center justify-between mb-5 p-3 bg-canvas rounded-xl text-sm">
+            <div className="flex items-center justify-between rounded-lg bg-surface p-3 text-sm">
               <span className="text-slate">Total</span>
-              <span className="font-medium text-ink">
+              <span className="font-semibold text-ink">
                 ${(bookingCoach.sessionFeeUSD + Math.round(bookingCoach.sessionFeeUSD * (bookingCoach.platformFeePercent / 100) * 100) / 100).toFixed(0)}
               </span>
             </div>
 
             <div className="flex gap-3">
-              <button
-                onClick={() => setBookingCoach(null)}
-                className="flex-1 btn-secondary"
-              >
+              <button type="button" onClick={() => setBookingCoach(null)} className="btn-secondary flex-1">
                 Cancel
               </button>
-              <button
-                onClick={handleBook}
-                disabled={bookingLoading}
-                className="flex-1 btn-primary"
-              >
-                {bookingLoading ? "Sending…" : "Request session"}
+              <button type="button" onClick={handleBook} disabled={bookingLoading} aria-busy={bookingLoading} className="btn-primary flex-1">
+                {bookingLoading ? "Sending" : "Request session"}
               </button>
             </div>
-            <p className="text-xs text-slate text-center mt-3">
-              Payment is collected once the coach confirms. You won't be charged now.
-            </p>
+            <p className="text-center text-sm text-slate">Payment is collected once the coach confirms. You will not be charged now.</p>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
-      {/* Report modal */}
-      {reportOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: "rgba(0,0,0,0.45)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) setReportOpen(false); }}
-        >
-          <div className="bg-white rounded-2xl p-5 sm:p-7 max-w-md w-full shadow-xl">
-            <h3 className="font-display text-2xl text-ink mb-1">Report wrong data</h3>
-            <p className="text-sm text-slate mb-5">Help us keep this listing accurate.</p>
+      {/* Report dialog */}
+      <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Report wrong data">
+        <div className="space-y-5">
+          <p className="-mt-3 text-sm text-slate">Help us keep this listing accurate.</p>
 
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-ink mb-2">What's wrong?</label>
-              <div className="grid grid-cols-2 gap-2">
-                {[
-                  { value: "wrong_deadline", label: "Wrong deadline" },
-                  { value: "wrong_country", label: "Wrong country" },
-                  { value: "wrong_degree", label: "Wrong degree level" },
-                  { value: "broken_link", label: "Broken link" },
-                  { value: "inactive", label: "No longer active" },
-                  { value: "wrong_info", label: "Other wrong info" },
-                  { value: "other", label: "Other" },
-                ].map((opt) => (
+          <fieldset>
+            <legend className="label">What is wrong?</legend>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup">
+              {[
+                { value: "wrong_deadline", label: "Wrong deadline" },
+                { value: "wrong_country", label: "Wrong country" },
+                { value: "wrong_degree", label: "Wrong degree level" },
+                { value: "broken_link", label: "Broken link" },
+                { value: "inactive", label: "No longer active" },
+                { value: "wrong_info", label: "Other wrong info" },
+                { value: "other", label: "Other" },
+              ].map((opt) => {
+                const selected = reportType === opt.value;
+                return (
                   <button
                     key={opt.value}
                     type="button"
+                    role="radio"
+                    aria-checked={selected}
                     onClick={() => setReportType(opt.value)}
-                    className={`text-left p-3 rounded-xl border text-xs transition-colors ${
-                      reportType === opt.value ? "border-forest bg-forest/5 text-forest font-medium" : "border-rule text-ink-soft hover:border-forest"
+                    className={`min-h-touch rounded-xl p-3 text-left text-sm transition-colors ${
+                      selected ? "bg-forest-soft font-semibold text-forest ring-2 ring-forest" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"
                     }`}
                   >
                     {opt.label}
                   </button>
-                ))}
-              </div>
+                );
+              })}
             </div>
+          </fieldset>
 
-            <div className="mb-5">
-              <label className="block text-sm font-medium text-ink mb-1.5">
-                Details <span className="text-slate font-normal">(optional)</span>
-              </label>
-              <textarea
-                rows={3}
-                value={reportDetails}
-                onChange={(e) => setReportDetails(e.target.value)}
-                className="input resize-none"
-                placeholder="What's the correct information?"
-                maxLength={500}
-              />
-            </div>
+          <div>
+            <label htmlFor="rp-details" className="label">Details <span className="font-normal text-slate">(optional)</span></label>
+            <textarea
+              id="rp-details"
+              rows={3}
+              value={reportDetails}
+              onChange={(e) => setReportDetails(e.target.value)}
+              className="textarea"
+              placeholder="What is the correct information?"
+              maxLength={500}
+            />
+          </div>
 
-            <div className="flex gap-3">
-              <button onClick={() => setReportOpen(false)} className="flex-1 btn-secondary">
-                Cancel
-              </button>
-              <button
-                onClick={handleReport}
-                disabled={!reportType || reportLoading}
-                className="flex-1 btn-primary"
-              >
-                {reportLoading ? "Sending…" : "Submit report"}
-              </button>
-            </div>
+          <div className="flex gap-3">
+            <button type="button" onClick={() => setReportOpen(false)} className="btn-secondary flex-1">
+              Cancel
+            </button>
+            <button type="button" onClick={handleReport} disabled={!reportType || reportLoading} aria-busy={reportLoading} className="btn-primary flex-1">
+              {reportLoading ? "Sending" : "Submit report"}
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

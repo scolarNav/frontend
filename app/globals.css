@@ -100,12 +100,12 @@
 
   .card,
   .case-card {
-    @apply rounded-xl bg-white;
+    @apply min-w-0 rounded-xl bg-white;
   }
 
   .card-interactive,
   .case-card-interactive {
-    @apply rounded-xl bg-white transition-colors duration-150 hover:bg-surface-2;
+    @apply min-w-0 rounded-xl bg-white transition-colors duration-150 hover:bg-surface-2;
   }
 
   .card-pad {

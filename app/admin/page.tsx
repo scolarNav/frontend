@@ -3,11 +3,14 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import Wordmark from "@/components/Wordmark";
+import { PageLoader } from "@/components/ui/PageLoader";
 import {
   BarChart3, TrendingUp, Database, BookOpen, Users, Trophy,
   UserCheck, Share2, Inbox, Flag, Menu, X, LogOut,
-  ChevronRight, Bell, Search,
+  ChevronRight, ChevronDown,
 } from "lucide-react";
 
 interface PaymentRecord {
@@ -213,10 +216,10 @@ function oppStatus(opp: Opportunity): "open" | "opening" | "tba" | "closed" {
 }
 
 const STATUS_BADGE: Record<string, string> = {
-  open: "bg-green-100 text-green-800",
-  opening: "bg-blue-100 text-blue-800",
-  tba: "bg-amber-100 text-amber-800",
-  closed: "bg-red-100 text-red-800",
+  open: "badge-ok",
+  opening: "badge-info",
+  tba: "badge-warn",
+  closed: "badge-danger",
 };
 const STATUS_LABEL: Record<string, string> = {
   open: "OPEN",
@@ -250,37 +253,37 @@ function CoachCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium text-ink text-sm">{coach.name}</p>
-            <span className={`text-xs font-mono px-2 py-0.5 ${coach.status === "approved" ? "bg-green-100 text-green-800" : coach.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+            <span className={`badge ${coach.status === "approved" ? "badge-ok" : coach.status === "rejected" ? "badge-danger" : "badge-warn"}`}>
               {coach.status.toUpperCase()}
             </span>
-            <span className="text-xs text-slate font-mono">{coach.credential === "alumni" ? "Alumnus" : "Panel member"}{coach.credentialYear ? ` · ${coach.credentialYear}` : ""}</span>
+            <span className="text-sm text-slate">{coach.credential === "alumni" ? "Alumnus" : "Panel member"}{coach.credentialYear ? ` · ${coach.credentialYear}` : ""}</span>
           </div>
-          <p className="text-xs text-slate font-mono mt-0.5">
+          <p className="mt-0.5 text-sm text-slate">
             Fee: ${coach.sessionFeeUSD} + {coach.platformFeePercent}% platform · {coach.scholarships.length} scholarship{coach.scholarships.length !== 1 ? "s" : ""}
             {coach.totalSessions > 0 && ` · ${coach.totalSessions} sessions`}
           </p>
-          <p className="text-xs text-slate font-mono mt-0.5">{new Date(coach.createdAt).toLocaleDateString()}</p>
+          <p className="mt-0.5 text-sm text-slate">{new Date(coach.createdAt).toLocaleDateString()}</p>
         </div>
-        <span className="text-slate text-xs font-mono mt-1">{expanded ? "▲" : "▼"}</span>
+        <ChevronDown size={16} aria-hidden="true" className={`mt-1 shrink-0 text-slate transition-transform duration-150 ${expanded ? "rotate-180" : ""}`} />
       </div>
 
       {expanded && (
         <div className="border-t border-rule px-5 py-4 bg-surface/30 space-y-4">
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">Bio</p>
+            <p className="mb-1 text-sm text-slate">Bio</p>
             <p className="text-sm text-ink-soft leading-relaxed">{coach.bio}</p>
           </div>
           {coach.applicationNote && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Why qualified</p>
+              <p className="mb-1 text-sm text-slate">Why qualified</p>
               <p className="text-sm text-ink-soft leading-relaxed">{coach.applicationNote}</p>
             </div>
           )}
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">Scholarships</p>
+            <p className="mb-1 text-sm text-slate">Scholarships</p>
             <div className="flex flex-wrap gap-1">
               {coach.scholarships.map((s) => (
-                <span key={s.opportunityId} className="text-xs border border-rule px-2 py-0.5 text-ink-soft">{s.opportunityTitle}</span>
+                <span key={s.opportunityId} className="badge">{s.opportunityTitle}</span>
               ))}
             </div>
           </div>
@@ -308,7 +311,7 @@ function CoachCard({
           {/* Actions */}
           <div className="flex flex-wrap gap-3 pt-2">
             {coach.status !== "approved" && (
-              <button onClick={() => onUpdate({ status: "approved", rejectionNote: undefined })} className="text-xs border border-forest text-forest px-3 py-1.5 hover:bg-forest hover:text-white transition-colors">Approve</button>
+              <button onClick={() => onUpdate({ status: "approved", rejectionNote: undefined })} className="btn-secondary btn-sm">Approve</button>
             )}
             {coach.status !== "rejected" && (
               <div className="flex gap-2 items-center">
@@ -825,16 +828,7 @@ export default function AdminPage() {
     }
   }
 
-  if (authLoading || loading) {
-    return (
-      <div className="flex h-screen items-center justify-center" style={{ background: "#F5F7FB" }}>
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-8 h-8 rounded-full border-2 border-t-transparent animate-spin" style={{ borderColor: "#b8501f", borderTopColor: "transparent" }} />
-          <p className="text-sm font-mono" style={{ color: "#64748b" }}>Loading admin panel…</p>
-        </div>
-      </div>
-    );
-  }
+  if (authLoading || loading) return <PageLoader fullScreen label="Loading the admin panel" />;
 
   if (!user?.isAdmin) return null;
 
@@ -856,145 +850,107 @@ export default function AdminPage() {
   const activeTab = TABS.find((t) => t.key === tab);
 
   return (
-    <div className="flex overflow-hidden" style={{ height: "100dvh", background: "#F5F7FB" }}>
+    <div className="flex h-dvh overflow-hidden bg-surface">
+      {/* Mobile overlay */}
+      {sidebarOpen && <div className="fixed inset-0 z-20 animate-fade-in bg-ink/50 lg:hidden" onClick={() => setSidebarOpen(false)} aria-hidden="true" />}
 
-      {/* ── Mobile overlay ── */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 z-20 lg:hidden"
-          style={{ background: "rgba(0,0,0,0.5)" }}
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* ── Sidebar ── */}
+      {/* Sidebar */}
       <aside
-        className={`fixed inset-y-0 left-0 z-30 flex flex-col transition-transform duration-300 lg:relative lg:translate-x-0 lg:h-full ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}`}
-        style={{ width: 240, background: "#0B1628", flexShrink: 0 }}
+        className={`fixed inset-y-0 left-0 z-30 flex w-60 shrink-0 flex-col bg-navy transition-transform duration-200 lg:static lg:h-full lg:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-between px-5 py-5" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style={{ background: "linear-gradient(135deg, #b8501f, #F0813A)" }}>S</div>
-            <span className="text-white font-semibold text-sm tracking-wide">ScolarNav</span>
-          </div>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden text-white/50 hover:text-white transition-colors">
-            <X size={16} />
+        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <Link href="/" aria-label="ScolarNav home">
+            <Wordmark onDark />
+          </Link>
+          <button type="button" onClick={() => setSidebarOpen(false)} aria-label="Close menu" className="flex h-11 w-11 items-center justify-center rounded-md text-white/80 transition-colors hover:bg-white/10 hover:text-white lg:hidden">
+            <X size={18} aria-hidden="true" />
           </button>
         </div>
 
-        {/* Label */}
-        <p className="px-5 pt-5 pb-2 text-xs font-mono tracking-widest uppercase" style={{ color: "rgba(255,255,255,0.35)" }}>Navigation</p>
+        <p className="px-5 pb-2 pt-5 text-xs font-semibold uppercase tracking-widest text-white/60">Admin</p>
 
-        {/* Nav items */}
-        <nav className="flex-1 overflow-y-auto px-3 pb-4 space-y-0.5">
+        <nav aria-label="Admin sections" className="flex-1 space-y-0.5 overflow-y-auto px-3 pb-4">
           {TABS.map(({ key, label, badge, icon }) => {
             const active = tab === key;
             return (
               <button
                 key={key}
+                type="button"
                 onClick={() => { setTab(key); setSidebarOpen(false); }}
-                className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-150 group"
-                style={active
-                  ? { background: "rgba(211,98,44,0.15)", color: "#F0813A", borderLeft: "3px solid #b8501f", paddingLeft: 9 }
-                  : { color: "rgba(255,255,255,0.55)", borderLeft: "3px solid transparent", paddingLeft: 9 }
-                }
+                aria-current={active ? "page" : undefined}
+                className={`flex min-h-touch w-full items-center gap-3 rounded-md px-3 text-sm font-medium transition-colors ${
+                  active ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
+                }`}
               >
-                <span className="shrink-0 transition-colors" style={{ color: active ? "#F0813A" : "rgba(255,255,255,0.4)" }}>{icon}</span>
-                <span className="flex-1 text-left font-medium">{label}</span>
-                {badge ? (
-                  <span className="text-xs px-1.5 py-0.5 rounded-full font-mono leading-none"
-                    style={{ background: active ? "#b8501f" : "rgba(211,98,44,0.3)", color: active ? "white" : "#F0813A" }}>
-                    {badge}
-                  </span>
-                ) : null}
+                <span aria-hidden="true" className="shrink-0">{icon}</span>
+                <span className="flex-1 text-left">{label}</span>
+                {badge ? <span className="rounded-full bg-brass px-2 py-0.5 text-xs font-semibold text-navy">{badge}</span> : null}
               </button>
             );
           })}
         </nav>
 
-        {/* Sidebar footer */}
-        <div className="px-5 py-4" style={{ borderTop: "1px solid rgba(255,255,255,0.07)" }}>
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold"
-              style={{ background: "linear-gradient(135deg, #b8501f, #F0813A)", color: "white" }}>
-              {user?.fullName?.[0] ?? "A"}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{user?.fullName}</p>
-              <p className="text-xs" style={{ color: "rgba(255,255,255,0.4)" }}>Admin</p>
+        <div className="border-t border-white/10 p-3">
+          <div className="flex items-center gap-3 px-3 py-2">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brass text-sm font-semibold text-navy">{user?.fullName?.[0] ?? "A"}</span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-white">{user?.fullName}</p>
+              <p className="text-xs text-white/70">Administrator</p>
             </div>
           </div>
+          <Link href="/dashboard" className="flex min-h-touch items-center gap-3 rounded-md px-3 text-sm font-medium text-white/80 transition-colors hover:bg-white/10 hover:text-white">
+            <LogOut size={16} aria-hidden="true" />
+            Back to the app
+          </Link>
         </div>
       </aside>
 
-      {/* ── Main column ── */}
-      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-
-        {/* ── Header ── */}
-        <header className="flex items-center gap-4 px-6 py-4 bg-white shrink-0" style={{ borderBottom: "1px solid #E2E8F0", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-          <button
-            onClick={() => setSidebarOpen(true)}
-            className="lg:hidden p-2 rounded-lg transition-colors hover:bg-gray-100 text-gray-600"
-          >
-            <Menu size={18} />
+      {/* Main column */}
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        <header className="flex shrink-0 items-center gap-3 bg-white px-4 py-3 sm:px-6">
+          <button type="button" onClick={() => setSidebarOpen(true)} aria-label="Open menu" className="flex h-11 w-11 items-center justify-center rounded-md text-ink-soft transition-colors hover:bg-surface-2 lg:hidden">
+            <Menu size={20} aria-hidden="true" />
           </button>
 
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-1.5 text-sm">
-            <span className="font-mono text-xs" style={{ color: "#94a3b8" }}>Admin</span>
-            <ChevronRight size={12} style={{ color: "#cbd5e1" }} />
-            <span className="font-semibold" style={{ color: "#0f172a" }}>{activeTab?.label ?? "—"}</span>
-          </div>
+          <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm">
+            <span className="text-slate">Admin</span>
+            <ChevronRight size={14} className="text-control" aria-hidden="true" />
+            <span className="font-semibold text-ink" aria-current="page">{activeTab?.label ?? "Overview"}</span>
+          </nav>
 
           <div className="flex-1" />
 
-          {/* Status badge */}
           {actionMsg && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <div role="status" className="alert alert-ok hidden !py-1.5 sm:flex">
               {actionMsg}
             </div>
           )}
-
-          {/* Error badge */}
           {error && (
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono" style={{ background: "#fff1f2", color: "#e11d48", border: "1px solid #fecdd3" }}>
-              {error}
-              <button onClick={() => setError(null)} className="ml-1 opacity-60 hover:opacity-100">✕</button>
+            <div role="alert" className="alert alert-danger hidden !py-1.5 sm:flex">
+              <span>{error}</span>
+              <button type="button" onClick={() => setError(null)} aria-label="Dismiss error" className="ml-1 font-semibold underline">Dismiss</button>
             </div>
           )}
-
-          {/* User chip */}
-          <div className="flex items-center gap-2 pl-4" style={{ borderLeft: "1px solid #e2e8f0" }}>
-            <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
-              style={{ background: "linear-gradient(135deg, #b8501f, #F0813A)" }}>
-              {user?.fullName?.[0] ?? "A"}
-            </div>
-            <span className="hidden sm:block text-sm font-medium" style={{ color: "#334155" }}>{user?.fullName}</span>
-          </div>
         </header>
 
-        {/* Mobile error/action toasts */}
+        {/* Small-screen messages */}
         {(error || actionMsg) && (
-          <div className="sm:hidden px-4 pt-3 space-y-2">
+          <div className="space-y-2 px-4 pt-3 sm:hidden">
             {error && (
-              <div className="flex items-start justify-between gap-3 px-4 py-3 rounded-xl text-sm" style={{ background: "#fff1f2", color: "#e11d48", border: "1px solid #fecdd3" }}>
+              <div role="alert" className="alert alert-danger justify-between">
                 <span>{error}</span>
-                <button onClick={() => setError(null)} className="shrink-0 opacity-60 hover:opacity-100">✕</button>
+                <button type="button" onClick={() => setError(null)} aria-label="Dismiss error" className="shrink-0 font-semibold underline">Dismiss</button>
               </div>
             )}
-            {actionMsg && (
-              <div className="px-4 py-3 rounded-xl text-sm font-mono" style={{ background: "#f0fdf4", color: "#15803d", border: "1px solid #bbf7d0" }}>
-                {actionMsg}
-              </div>
-            )}
+            {actionMsg && <div role="status" className="alert alert-ok">{actionMsg}</div>}
           </div>
         )}
 
-        {/* ── Content ── */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="page">
+        <main id="main" className="flex-1 overflow-y-auto">
+          <div className="page-wide">
+            <h1 className="h1">{activeTab?.label ?? "Overview"}</h1>
 
       {/* ── Overview ── */}
       {tab === "stats" && stats && (
@@ -1007,19 +963,19 @@ export default function AdminPage() {
               { label: "Active opportunities", value: stats.totalOpportunities },
             ].map(({ label, value }) => (
               <div key={label} className="case-card p-5">
-                <p className="text-xs font-mono text-slate uppercase tracking-wide">{label}</p>
+                <p className="text-sm text-slate">{label}</p>
                 <p className="font-display text-3xl text-ink mt-1">{value}</p>
               </div>
             ))}
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <div className="case-card p-5" style={{ borderLeft: "3px solid #6d8ec5" }}>
-              <p className="text-xs font-mono text-slate uppercase tracking-wide">Stripe revenue (USD)</p>
+            <div className="case-card p-5">
+              <p className="text-sm text-slate">Stripe revenue (USD)</p>
               <p className="font-display text-3xl text-ink mt-1">${stats.totalRevenueUSD.toFixed(2)}</p>
             </div>
             <div className="case-card p-5">
-              <p className="text-xs font-mono text-slate uppercase tracking-wide">Paystack revenue</p>
+              <p className="text-sm text-slate">Paystack revenue</p>
               {stats.paystackRevenue.length > 0 ? (
                 <div className="mt-1 space-y-0.5">
                   {stats.paystackRevenue.map((r) => (
@@ -1032,23 +988,23 @@ export default function AdminPage() {
               ) : (
                 <p className="font-display text-3xl text-ink mt-1">—</p>
               )}
-              <p className="text-xs text-slate font-mono mt-1">{stats.totalPaystackPayments} total payments</p>
+              <p className="mt-1 text-sm text-slate">{stats.totalPaystackPayments} total payments</p>
             </div>
             <div className="case-card p-5">
-              <p className="text-xs font-mono text-slate uppercase tracking-wide">Applications</p>
+              <p className="text-sm text-slate">Applications</p>
               <p className="font-display text-3xl text-ink mt-1">{stats.totalApplications}</p>
             </div>
             <div className="case-card p-5">
-              <p className="text-xs font-mono text-slate uppercase tracking-wide">Winner celebrations</p>
+              <p className="text-sm text-slate">Winner celebrations</p>
               <p className="font-display text-3xl text-ink mt-1">{stats.totalCelebrations}</p>
               {stats.pendingCelebrations > 0 && (
-                <p className="text-xs text-brass font-mono mt-1">{stats.pendingCelebrations} pending review</p>
+                <p className="text-xs text-warn font-mono mt-1">{stats.pendingCelebrations} pending review</p>
               )}
             </div>
-            <div className="case-card p-5" style={{ borderLeft: "3px solid #b8501f" }}>
-              <p className="text-xs font-mono text-slate uppercase tracking-wide">Total referrals</p>
+            <div className="case-card p-5">
+              <p className="text-sm text-slate">Total referrals</p>
               <p className="font-display text-3xl text-ink mt-1">{stats.totalReferrals}</p>
-              <p className="text-xs text-slate font-mono mt-1">{stats.rewardedReferrals} rewarded · {stats.totalReferrals - stats.rewardedReferrals} pending</p>
+              <p className="mt-1 text-sm text-slate">{stats.rewardedReferrals} rewarded · {stats.totalReferrals - stats.rewardedReferrals} pending</p>
             </div>
           </div>
         </div>
@@ -1057,7 +1013,7 @@ export default function AdminPage() {
       {/* ── Analytics ── */}
       {tab === "analytics" && (
         <div className="mt-8 space-y-8">
-          {analyticsLoading && <p className="text-slate font-mono text-sm">Loading analytics...</p>}
+          {analyticsLoading && <PageLoader label="Loading analytics" />}
           {analytics && (() => {
             const maxSignups = Math.max(...analytics.signupsByWeek.map((w) => w.count), 1);
             const maxRevenue = Math.max(...analytics.revenueByWeek.map((w) => w.totalUSD), 1);
@@ -1077,7 +1033,7 @@ export default function AdminPage() {
                     { label: "Total bookings (12w)", value: analytics.bookingsByWeek.reduce((s, w) => s + w.count, 0) },
                   ].map(({ label, value }) => (
                     <div key={label} className="case-card p-5">
-                      <p className="text-xs font-mono text-slate uppercase tracking-wide">{label}</p>
+                      <p className="text-sm text-slate">{label}</p>
                       <p className="font-display text-3xl text-ink mt-1">{value}</p>
                     </div>
                   ))}
@@ -1093,11 +1049,11 @@ export default function AdminPage() {
                       {analytics.signupsByWeek.map((w) => (
                         <div key={w._id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
                           <div
-                            className="w-full rounded-sm"
-                            style={{ height: `${Math.max(4, (w.count / maxSignups) * 96)}px`, background: "#6d8ec5" }}
+                            className="w-full rounded-sm bg-info"
+                            style={{ height: `${Math.max(4, (w.count / maxSignups) * 96)}px` }}
                             title={`${w._id}: ${w.count} sign-ups`}
                           />
-                          <span className="text-sm text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
+                          <span className="w-full truncate text-center text-xs text-slate">{w._id.slice(-2)}</span>
                         </div>
                       ))}
                     </div>
@@ -1115,11 +1071,11 @@ export default function AdminPage() {
                       {analytics.revenueByWeek.map((w) => (
                         <div key={w._id} className="flex flex-col items-center gap-1 flex-1 min-w-0">
                           <div
-                            className="w-full rounded-sm"
-                            style={{ height: `${Math.max(4, (w.totalUSD / maxRevenue) * 96)}px`, background: "#b8501f" }}
+                            className="w-full rounded-sm bg-forest"
+                            style={{ height: `${Math.max(4, (w.totalUSD / maxRevenue) * 96)}px` }}
                             title={`${w._id}: $${w.totalUSD.toFixed(2)}`}
                           />
-                          <span className="text-sm text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
+                          <span className="w-full truncate text-center text-xs text-slate">{w._id.slice(-2)}</span>
                         </div>
                       ))}
                     </div>
@@ -1136,8 +1092,8 @@ export default function AdminPage() {
                           <span className="text-sm text-slate w-20 shrink-0">{w._id}</span>
                           <div className="flex-1 bg-surface rounded-full h-2 overflow-hidden">
                             <div
-                              className="h-full rounded-full"
-                              style={{ width: `${(w.count / Math.max(...analytics.bookingsByWeek.map((b) => b.count), 1)) * 100}%`, background: "#3d7a5a" }}
+                              className="h-full rounded-full bg-ok"
+                              style={{ width: `${(w.count / Math.max(...analytics.bookingsByWeek.map((b) => b.count), 1)) * 100}%` }}
                             />
                           </div>
                           <span className="text-xs font-mono text-ink-soft w-8 text-right">{w.count}</span>
@@ -1157,7 +1113,7 @@ export default function AdminPage() {
       {tab === "database" && (
         <div className="mt-8 space-y-8">
           {dbHealthLoading ? (
-            <p className="text-slate font-mono text-sm">Loading database health…</p>
+            <PageLoader label="Loading database health" />
           ) : dbHealth ? (
             <>
               {/* Status breakdown */}
@@ -1165,24 +1121,24 @@ export default function AdminPage() {
                 <h2 className="h3 mb-4">Scholarship Status Breakdown</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
-                    { label: "Open now", value: dbHealth.open, color: "#15803d", hint: "Deadline in future, applications open" },
-                    { label: "Opening soon", value: dbHealth.openingSoon, color: "#2563eb", hint: "Application window not yet open" },
-                    { label: "Dates TBA", value: dbHealth.tba, color: "#b45309", hint: "No deadline stored, need date update" },
-                    { label: "Closed (active)", value: dbHealth.closed, color: "#dc2626", hint: "Past deadline, still isActive=true" },
-                    { label: "Inactive", value: dbHealth.inactive, color: "#94a3b8", hint: "isActive=false (90+ days past deadline)" },
-                    { label: "Total active", value: dbHealth.active, color: "#1e293b", hint: "open + opening + TBA + closed" },
-                  ].map(({ label, value, color, hint }) => (
-                    <div key={label} className="case-card p-4" style={{ borderLeft: `3px solid ${color}` }}>
-                      <p className="text-xs font-mono text-slate uppercase tracking-wide">{label}</p>
-                      <p className="font-display text-3xl mt-1" style={{ color }}>{value}</p>
+                    { label: "Open now", value: dbHealth.open, tone: "text-ok", hint: "Deadline in future, applications open" },
+                    { label: "Opening soon", value: dbHealth.openingSoon, tone: "text-info", hint: "Application window not yet open" },
+                    { label: "Dates TBA", value: dbHealth.tba, tone: "text-warn", hint: "No deadline stored, need date update" },
+                    { label: "Closed (active)", value: dbHealth.closed, tone: "text-danger", hint: "Past deadline, still isActive=true" },
+                    { label: "Inactive", value: dbHealth.inactive, tone: "text-slate", hint: "isActive=false (90+ days past deadline)" },
+                    { label: "Total active", value: dbHealth.active, tone: "text-ink", hint: "open + opening + TBA + closed" },
+                  ].map(({ label, value, tone, hint }) => (
+                    <div key={label} className="case-card p-4">
+                      <p className="text-sm text-slate">{label}</p>
+                      <p className={`font-display text-3xl mt-1 ${tone}`}>{value}</p>
                       <p className="text-xs text-slate mt-1">{hint}</p>
                     </div>
                   ))}
                 </div>
                 {dbHealth.duplicateTitleGroups > 0 && (
                   <div className="mt-3 border border-brass/40 bg-brass/5 px-4 py-3">
-                    <p className="text-sm text-brass font-mono">
-                      ⚠ {dbHealth.duplicateTitleGroups} duplicate title groups detected, use "Deduplicate" below to clean up.
+                    <p className="text-sm text-warn font-mono">
+                      {dbHealth.duplicateTitleGroups} duplicate title groups detected, use "Deduplicate" below to clean up.
                     </p>
                   </div>
                 )}
@@ -1193,7 +1149,7 @@ export default function AdminPage() {
                 <h2 className="font-display text-lg text-ink mb-3">Top Countries in Database</h2>
                 <div className="flex flex-wrap gap-2">
                   {dbHealth.topCountries.map(({ country, count }) => (
-                    <span key={country} className="border border-rule px-3 py-1 text-xs font-mono text-ink-soft">
+                    <span key={country} className="badge">
                       {country || "(none)"} <span className="text-slate">{count}</span>
                     </span>
                   ))}
@@ -1205,7 +1161,7 @@ export default function AdminPage() {
                 <h2 className="font-display text-lg text-ink mb-3">By Type</h2>
                 <div className="flex flex-wrap gap-2">
                   {dbHealth.byType.map(({ type, count }) => (
-                    <span key={type} className="border border-rule px-3 py-1 text-xs font-mono text-ink-soft">
+                    <span key={type} className="badge">
                       {type} <span className="text-slate">{count}</span>
                     </span>
                   ))}
@@ -1216,7 +1172,7 @@ export default function AdminPage() {
 
           <button
             onClick={loadDbHealth}
-            className="border border-rule text-ink-soft px-4 py-2 text-sm hover:border-forest hover:text-forest transition-colors font-mono"
+            className="btn-secondary btn-sm"
           >
             ↻ Refresh health stats
           </button>
@@ -1265,7 +1221,7 @@ export default function AdminPage() {
                 </p>
                 <button
                   onClick={handleDeduplicate}
-                  className="border border-rule text-ink-soft px-4 py-2 text-xs hover:border-forest hover:text-forest transition-colors font-mono"
+                  className="btn-secondary btn-sm"
                 >
                   Run: Deduplicate
                 </button>
@@ -1279,7 +1235,7 @@ export default function AdminPage() {
                 </p>
                 <button
                   onClick={handleRunPrimary}
-                  className="border border-rule text-ink-soft px-4 py-2 text-xs hover:border-forest hover:text-forest transition-colors font-mono"
+                  className="btn-secondary btn-sm"
                 >
                   Run: Primary scraper
                 </button>
@@ -1293,7 +1249,7 @@ export default function AdminPage() {
                 </p>
                 <button
                   onClick={handleRunAggregator}
-                  className="border border-rule text-ink-soft px-4 py-2 text-xs hover:border-forest hover:text-forest transition-colors font-mono"
+                  className="btn-secondary btn-sm"
                 >
                   Run: Aggregator scraper
                 </button>
@@ -1319,7 +1275,7 @@ export default function AdminPage() {
                   placeholder="Search by title or keyword…"
                   className="input flex-1 text-sm"
                 />
-                <button type="submit" className="border border-rule text-ink-soft px-3 py-2 text-sm hover:border-forest hover:text-forest transition-colors">Search</button>
+                <button type="submit" className="btn-secondary">Search</button>
                 {oppSearch && (
                   <button type="button" onClick={() => { setOppSearch(""); setOppPage(1); loadOpportunities("", 1, oppStatusFilter, oppCountryFilter, oppTypeFilter); }} className="text-xs text-slate underline px-1">Clear</button>
                 )}
@@ -1335,7 +1291,7 @@ export default function AdminPage() {
               <select
                 value={oppStatusFilter}
                 onChange={(e) => { setOppStatusFilter(e.target.value as any); setOppPage(1); }}
-                className="border border-rule bg-paper text-sm px-3 py-1.5 text-ink-soft font-mono focus:border-forest outline-none"
+                className="input w-auto"
               >
                 <option value="all">All statuses</option>
                 <option value="open">Open now</option>
@@ -1345,7 +1301,7 @@ export default function AdminPage() {
               <select
                 value={oppTypeFilter}
                 onChange={(e) => { setOppTypeFilter(e.target.value); setOppPage(1); }}
-                className="border border-rule bg-paper text-sm px-3 py-1.5 text-ink-soft font-mono focus:border-forest outline-none"
+                className="input w-auto"
               >
                 <option value="">All types</option>
                 <option value="scholarship">Scholarship</option>
@@ -1359,7 +1315,7 @@ export default function AdminPage() {
                 onChange={(e) => setOppCountryFilter(e.target.value)}
                 onBlur={() => { setOppPage(1); loadOpportunities(oppSearch, 1, oppStatusFilter, oppCountryFilter, oppTypeFilter); }}
                 placeholder="Filter by country…"
-                className="border border-rule bg-paper text-sm px-3 py-1.5 font-mono focus:border-forest outline-none"
+                className="input w-auto"
               />
             </div>
           </div>
@@ -1367,15 +1323,15 @@ export default function AdminPage() {
           {showOppForm && (
             <form onSubmit={handleSaveOpp} className="case-card p-6 mb-6 space-y-4">
               <h2 className="h3">{editingOpp ? "Edit opportunity" : "New opportunity"}</h2>
-              <div className="grid sm:grid-cols-2 gap-4 p-4 bg-surface border border-rule">
+              <div className="grid sm:grid-cols-2 gap-4 rounded-xl bg-white p-4">
                 <div>
-                  <label className="text-xs font-mono uppercase text-slate block mb-1">Applications Open</label>
-                  <input type="date" value={oppForm.applicationOpens} onChange={(e) => setOppForm((p) => ({ ...p, applicationOpens: e.target.value }))} className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none" />
+                  <label className="label">Applications Open</label>
+                  <input type="date" value={oppForm.applicationOpens} onChange={(e) => setOppForm((p) => ({ ...p, applicationOpens: e.target.value }))} className="input" />
                   <p className="text-xs text-slate mt-1">When users can start applying</p>
                 </div>
                 <div>
-                  <label className="text-xs font-mono uppercase text-slate block mb-1">Deadline</label>
-                  <input type="date" value={oppForm.deadline} onChange={(e) => setOppForm((p) => ({ ...p, deadline: e.target.value }))} className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none" />
+                  <label className="label">Deadline</label>
+                  <input type="date" value={oppForm.deadline} onChange={(e) => setOppForm((p) => ({ ...p, deadline: e.target.value }))} className="input" />
                   <p className="text-xs text-slate mt-1">Final submission date</p>
                 </div>
                 <div className="sm:col-span-2 flex items-center gap-6">
@@ -1393,36 +1349,36 @@ export default function AdminPage() {
               <div className="grid sm:grid-cols-2 gap-4">
                 {(["title", "provider", "country", "officialUrl", "fundingCoverage", "fieldsOfStudy"] as const).map((field) => (
                   <div key={field}>
-                    <label className="text-xs font-mono uppercase text-slate block mb-1">{field}</label>
+                    <label className="label">{field}</label>
                     <input
                       required={!editingOpp && ["title", "provider", "country", "officialUrl", "fieldsOfStudy"].includes(field)}
                       value={(oppForm as any)[field]}
                       onChange={(e) => setOppForm((p) => ({ ...p, [field]: e.target.value }))}
                       placeholder={field === "fieldsOfStudy" ? "comma-separated" : ""}
-                      className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
+                      className="input"
                     />
                   </div>
                 ))}
                 <div>
-                  <label className="text-xs font-mono uppercase text-slate block mb-1">Type</label>
-                  <select value={oppForm.type} onChange={(e) => setOppForm((p) => ({ ...p, type: e.target.value }))} className="w-full border border-rule px-3 py-2 text-sm bg-paper focus:border-forest outline-none">
+                  <label className="label">Type</label>
+                  <select value={oppForm.type} onChange={(e) => setOppForm((p) => ({ ...p, type: e.target.value }))} className="input">
                     {["scholarship", "study_program", "immigration_pathway", "incubator", "fellowship"].map((t) => <option key={t} value={t}>{t}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-mono uppercase text-slate block mb-1">Degree Level</label>
-                  <select value={oppForm.degreeLevel} onChange={(e) => setOppForm((p) => ({ ...p, degreeLevel: e.target.value }))} className="w-full border border-rule px-3 py-2 text-sm bg-paper focus:border-forest outline-none">
+                  <label className="label">Degree Level</label>
+                  <select value={oppForm.degreeLevel} onChange={(e) => setOppForm((p) => ({ ...p, degreeLevel: e.target.value }))} className="input">
                     {["undergraduate", "masters", "phd", "postdoc", "professional", "none"].map((d) => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
               </div>
               <div>
-                <label className="text-xs font-mono uppercase text-slate block mb-1">Objectives</label>
-                <textarea required={!editingOpp} rows={3} value={oppForm.objectives} onChange={(e) => setOppForm((p) => ({ ...p, objectives: e.target.value }))} className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none" />
+                <label className="label">Objectives</label>
+                <textarea required={!editingOpp} rows={3} value={oppForm.objectives} onChange={(e) => setOppForm((p) => ({ ...p, objectives: e.target.value }))} className="input" />
               </div>
               <div>
-                <label className="text-xs font-mono uppercase text-slate block mb-1">Eligibility Summary</label>
-                <textarea required={!editingOpp} rows={3} value={oppForm.eligibilitySummary} onChange={(e) => setOppForm((p) => ({ ...p, eligibilitySummary: e.target.value }))} className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none" />
+                <label className="label">Eligibility Summary</label>
+                <textarea required={!editingOpp} rows={3} value={oppForm.eligibilitySummary} onChange={(e) => setOppForm((p) => ({ ...p, eligibilitySummary: e.target.value }))} className="input" />
               </div>
 
               <div>
@@ -1430,18 +1386,18 @@ export default function AdminPage() {
                   <label className="text-xs font-mono uppercase text-slate">Essay Prompts</label>
                   <button type="button" onClick={() => setEssayPrompts((p) => [...p, { promptId: "", label: "", question: "", maxCharacters: "", maxWords: "", guidance: "" }])} className="text-xs text-forest border border-forest px-2 py-1 hover:bg-forest hover:text-paper transition-colors">+ Add prompt</button>
                 </div>
-                {essayPrompts.length === 0 && <p className="text-xs text-slate font-mono">No essay prompts configured.</p>}
+                {essayPrompts.length === 0 && <p className="text-sm text-slate">No essay prompts configured.</p>}
                 {essayPrompts.map((p, i) => (
-                  <div key={i} className="border border-rule p-4 mb-3 space-y-2">
+                  <div key={i} className="mb-3 space-y-2 rounded-lg bg-surface p-4">
                     <div className="grid grid-cols-2 gap-2">
-                      <div><label className="text-xs text-slate font-mono block mb-1">ID (slug)</label><input value={p.promptId} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, promptId: e.target.value } : x))} placeholder="e.g. why_sg" className="w-full border border-rule px-2 py-1.5 text-xs bg-transparent focus:border-forest outline-none" /></div>
-                      <div><label className="text-xs text-slate font-mono block mb-1">Short label</label><input value={p.label} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} placeholder="e.g. Why Singapore?" className="w-full border border-rule px-2 py-1.5 text-xs bg-transparent focus:border-forest outline-none" /></div>
+                      <div><label className="label">ID (slug)</label><input value={p.promptId} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, promptId: e.target.value } : x))} placeholder="e.g. why_sg" className="input" /></div>
+                      <div><label className="label">Short label</label><input value={p.label} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, label: e.target.value } : x))} placeholder="e.g. Why Singapore?" className="input" /></div>
                     </div>
-                    <div><label className="text-xs text-slate font-mono block mb-1">Full question text</label><textarea rows={2} value={p.question} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, question: e.target.value } : x))} className="w-full border border-rule px-2 py-1.5 text-xs bg-transparent focus:border-forest outline-none" /></div>
+                    <div><label className="label">Full question text</label><textarea rows={2} value={p.question} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, question: e.target.value } : x))} className="input" /></div>
                     <div className="grid grid-cols-3 gap-2">
-                      <div><label className="text-xs text-slate font-mono block mb-1">Max chars</label><input type="number" value={p.maxCharacters} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, maxCharacters: e.target.value } : x))} className="w-full border border-rule px-2 py-1.5 text-xs bg-transparent focus:border-forest outline-none" /></div>
-                      <div><label className="text-xs text-slate font-mono block mb-1">Max words</label><input type="number" value={p.maxWords} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, maxWords: e.target.value } : x))} className="w-full border border-rule px-2 py-1.5 text-xs bg-transparent focus:border-forest outline-none" /></div>
-                      <div><label className="text-xs text-slate font-mono block mb-1">Guidance</label><input value={p.guidance} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, guidance: e.target.value } : x))} className="w-full border border-rule px-2 py-1.5 text-xs bg-transparent focus:border-forest outline-none" /></div>
+                      <div><label className="label">Max chars</label><input type="number" value={p.maxCharacters} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, maxCharacters: e.target.value } : x))} className="input" /></div>
+                      <div><label className="label">Max words</label><input type="number" value={p.maxWords} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, maxWords: e.target.value } : x))} className="input" /></div>
+                      <div><label className="label">Guidance</label><input value={p.guidance} onChange={(e) => setEssayPrompts((prev) => prev.map((x, j) => j === i ? { ...x, guidance: e.target.value } : x))} className="input" /></div>
                     </div>
                     <button type="button" onClick={() => setEssayPrompts((prev) => prev.filter((_, j) => j !== i))} className="text-xs text-alert underline">Remove</button>
                   </div>
@@ -1450,13 +1406,13 @@ export default function AdminPage() {
 
               <div className="flex gap-3">
                 <button type="submit" disabled={saving} className="btn-primary btn-sm">{saving ? "Saving…" : "Save"}</button>
-                <button type="button" onClick={() => setShowOppForm(false)} className="border border-rule text-ink-soft px-5 py-2.5 text-sm">Cancel</button>
+                <button type="button" onClick={() => setShowOppForm(false)} className="btn-secondary">Cancel</button>
               </div>
             </form>
           )}
 
           {oppLoading ? (
-            <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="case-card p-4 animate-pulse h-14" />)}</div>
+            <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="skeleton h-14" />)}</div>
           ) : (
             <div className="space-y-2">
               {opportunities.length === 0 && <p className="text-slate text-sm font-mono py-4">No opportunities found.</p>}
@@ -1470,11 +1426,11 @@ export default function AdminPage() {
                         <span className={`text-xs font-mono px-1.5 py-0.5 rounded ${STATUS_BADGE[status]}`}>{STATUS_LABEL[status]}</span>
                         {!opp.isActive && <span className="text-xs font-mono text-alert">INACTIVE</span>}
                       </div>
-                      <p className="text-xs text-slate font-mono mt-0.5">
+                      <p className="mt-0.5 text-sm text-slate">
                         {opp.provider} · {opp.country} · {opp.type}
                         {opp.applicationOpens && ` · opens ${new Date(opp.applicationOpens).toLocaleDateString()}`}
                         {opp.deadline && ` · closes ${new Date(opp.deadline).toLocaleDateString()}`}
-                        {!opp.applicationOpens && !opp.deadline && <span className="text-brass"> · dates TBA</span>}
+                        {!opp.applicationOpens && !opp.deadline && <span className="text-warn"> · dates TBA</span>}
                       </p>
                     </div>
                     <div className="flex gap-3 shrink-0">
@@ -1491,9 +1447,9 @@ export default function AdminPage() {
 
           {oppPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-2">
-              <button onClick={() => setOppPage((p) => Math.max(1, p - 1))} disabled={oppPage === 1 || oppLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">← Prev</button>
-              <span className="font-mono text-sm text-slate">{oppPage} / {oppPages}</span>
-              <button onClick={() => setOppPage((p) => Math.min(oppPages, p + 1))} disabled={oppPage === oppPages || oppLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">Next →</button>
+              <button onClick={() => setOppPage((p) => Math.max(1, p - 1))} disabled={oppPage === 1 || oppLoading} className="btn-secondary btn-sm">← Prev</button>
+              <span className="text-sm text-slate">{oppPage} / {oppPages}</span>
+              <button onClick={() => setOppPage((p) => Math.min(oppPages, p + 1))} disabled={oppPage === oppPages || oppLoading} className="btn-secondary btn-sm">Next →</button>
             </div>
           )}
         </div>
@@ -1510,7 +1466,7 @@ export default function AdminPage() {
               placeholder="Search by name or email…"
               className="input flex-1 text-sm"
             />
-            <button type="submit" disabled={userSearching} className="border border-rule text-ink-soft px-3 py-2 text-sm hover:border-forest hover:text-forest transition-colors disabled:opacity-50">
+            <button type="submit" disabled={userSearching} aria-busy={userSearching} className="btn-secondary">
               {userSearching ? "…" : "Search"}
             </button>
             {userSearchResults && (
@@ -1519,7 +1475,7 @@ export default function AdminPage() {
           </form>
 
           {userSearchResults && (
-            <p className="text-xs text-slate font-mono">{userSearchResults.length} result{userSearchResults.length !== 1 ? "s" : ""} for "{userSearch}"</p>
+            <p className="text-sm text-slate">{userSearchResults.length} result{userSearchResults.length !== 1 ? "s" : ""} for "{userSearch}"</p>
           )}
 
           <div className="space-y-2">
@@ -1537,8 +1493,8 @@ export default function AdminPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-ink text-sm">{u.fullName}</p>
-                        {u.isAdmin && <span className="text-xs font-mono text-brass">ADMIN</span>}
-                        {u.country && <span className="text-xs text-slate font-mono">{u.country}</span>}
+                        {u.isAdmin && <span className="text-xs font-mono text-warn">ADMIN</span>}
+                        {u.country && <span className="text-sm text-slate">{u.country}</span>}
                       </div>
                       <p className="text-xs text-slate font-mono mt-0.5 truncate">
                         {u.email} · joined {new Date(u.createdAt).toLocaleDateString()}
@@ -1546,18 +1502,18 @@ export default function AdminPage() {
                     </div>
 
                     <div className="flex items-center gap-2 flex-wrap shrink-0">
-                      <span className={`text-xs font-mono px-2 py-0.5 border ${u.subscription.plan === "pro" ? "border-ink text-ink" : "border-rule text-slate"}`}>
+                      <span className={`badge ${u.subscription.plan === "pro" ? "badge-brand" : ""}`}>
                         {u.subscription.status === "trialing" ? "TRIAL" : u.subscription.plan.toUpperCase()}
                       </span>
                       {daysLeft !== null && (
-                        <span className="text-xs font-mono" style={{ color: daysLeft <= 2 ? "#b8501f" : "#94a3b8" }}>{daysLeft}d left</span>
+                        <span className={`text-sm ${daysLeft <= 2 ? "font-semibold text-forest" : "text-slate"}`}>{daysLeft} days left</span>
                       )}
-                      {u.subscription.gateway && <span className="text-xs text-slate font-mono">{u.subscription.gateway}</span>}
+                      {u.subscription.gateway && <span className="text-sm text-slate">{u.subscription.gateway}</span>}
                       {usdTotal > 0 && <span className="text-xs font-mono text-forest">${usdTotal.toFixed(2)}</span>}
                       {paystackByCurrency.map((r) => (
-                        <span key={r.currency} className="text-xs font-mono text-brass">{r.total.toLocaleString(undefined, { maximumFractionDigits: 0 })} {r.currency}</span>
+                        <span key={r.currency} className="text-xs font-mono text-warn">{r.total.toLocaleString(undefined, { maximumFractionDigits: 0 })} {r.currency}</span>
                       ))}
-                      <span className="text-slate text-xs font-mono">{isExpanded ? "▲" : "▼"}</span>
+                      <ChevronDown size={16} aria-hidden="true" className={`text-slate transition-transform duration-150 ${isExpanded ? "rotate-180" : ""}`} />
                     </div>
                   </div>
 
@@ -1565,17 +1521,17 @@ export default function AdminPage() {
                     <div className="border-t border-rule px-4 py-4 bg-surface/30 space-y-4">
                       <div className="grid sm:grid-cols-3 gap-3">
                         <div>
-                          <p className="text-xs font-mono text-slate uppercase mb-1">Plan status</p>
+                          <p className="mb-1 text-sm text-slate">Plan status</p>
                           <p className="text-sm text-ink">{u.subscription.plan} · {u.subscription.status}</p>
                         </div>
                         {u.subscription.currentPeriodEnd && (
                           <div>
-                            <p className="text-xs font-mono text-slate uppercase mb-1">{u.subscription.status === "trialing" ? "Trial ends" : "Period ends"}</p>
+                            <p className="mb-1 text-sm text-slate">{u.subscription.status === "trialing" ? "Trial ends" : "Period ends"}</p>
                             <p className="text-sm text-ink">{new Date(u.subscription.currentPeriodEnd).toLocaleDateString()}</p>
                           </div>
                         )}
                         <div>
-                          <p className="text-xs font-mono text-slate uppercase mb-1">Coaching used</p>
+                          <p className="mb-1 text-sm text-slate">Coaching used</p>
                           <p className="text-sm text-ink">{u.coachingUsed}</p>
                         </div>
                       </div>
@@ -1601,13 +1557,13 @@ export default function AdminPage() {
                           </div>
                           {usdTotal > 0 && <p className="text-xs font-mono text-forest mt-2">Stripe total: ${usdTotal.toFixed(2)}</p>}
                           {paystackByCurrency.map((r) => (
-                            <p key={r.currency} className="text-xs font-mono text-brass mt-1">
+                            <p key={r.currency} className="text-xs font-mono text-warn mt-1">
                               Paystack: {r.total.toLocaleString(undefined, { maximumFractionDigits: 0 })} {r.currency} ({r.count}×)
                             </p>
                           ))}
                         </div>
                       ) : (
-                        <p className="text-xs text-slate font-mono">No payment records yet.</p>
+                        <p className="text-sm text-slate">No payment records yet.</p>
                       )}
 
                       <div className="flex gap-3 pt-1">
@@ -1648,16 +1604,16 @@ export default function AdminPage() {
                   <button
                     key={s}
                     onClick={() => setCoachStatusFilter(s)}
-                    className={`text-xs font-mono px-3 py-1.5 border transition-colors capitalize ${coachStatusFilter === s ? "border-ink text-ink" : "border-rule text-slate hover:text-ink"}`}
+                    className={`inline-flex min-h-touch items-center rounded-full px-4 text-sm font-medium capitalize transition-colors ${coachStatusFilter === s ? "bg-navy text-white" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"}`}
                   >
                     {s}
                   </button>
                 ))}
               </div>
 
-              {coachesLoading && <p className="text-slate font-mono text-sm">Loading…</p>}
+              {coachesLoading && <PageLoader label="Loading" />}
               {!coachesLoading && coaches.length === 0 && (
-                <p className="text-slate font-mono text-sm">No {coachStatusFilter} coach applications.</p>
+                <p className="text-sm text-slate">No {coachStatusFilter} coach applications.</p>
               )}
 
               {coaches.map((coach) => (
@@ -1673,32 +1629,32 @@ export default function AdminPage() {
 
           {coachSubTab === "bookings" && (
             <div className="space-y-3">
-              {bookingsLoading && <p className="text-slate font-mono text-sm">Loading…</p>}
-              {!bookingsLoading && bookings.length === 0 && <p className="text-slate font-mono text-sm">No bookings yet.</p>}
+              {bookingsLoading && <PageLoader label="Loading" />}
+              {!bookingsLoading && bookings.length === 0 && <p className="text-sm text-slate">No bookings yet.</p>}
               {bookings.map((b) => (
                 <div key={b._id} className="case-card p-5">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
                         <p className="font-medium text-ink text-sm">{b.userId?.fullName ?? "—"}</p>
-                        <span className="text-xs text-slate font-mono">{b.userId?.email}</span>
-                        <span className={`text-xs font-mono px-2 py-0.5 ${
-                          b.status === "completed" ? "bg-green-100 text-green-800" :
-                          b.status === "accepted" ? "bg-blue-100 text-blue-800" :
-                          b.status === "cancelled" ? "bg-red-100 text-red-800" :
-                          "bg-amber-100 text-amber-800"
+                        <span className="text-sm text-slate">{b.userId?.email}</span>
+                        <span className={`badge ${
+                          b.status === "completed" ? "badge-ok" :
+                          b.status === "accepted" ? "badge-info" :
+                          b.status === "cancelled" ? "badge-danger" :
+                          "badge-warn"
                         }`}>{b.status.toUpperCase()}</span>
                       </div>
-                      <p className="text-xs text-slate font-mono mt-0.5">
+                      <p className="mt-0.5 text-sm text-slate">
                         Coach: {b.coachId?.name ?? "—"} · {b.sessionType} · ${b.totalAmountUSD} total (${b.coachPayoutUSD} to coach, ${b.platformFeeUSD} platform)
                       </p>
-                      {b.opportunityId && <p className="text-xs text-slate font-mono mt-0.5">Scholarship: {b.opportunityId.title}</p>}
+                      {b.opportunityId && <p className="mt-0.5 text-sm text-slate">Scholarship: {b.opportunityId.title}</p>}
                       {b.userMessage && <p className="text-xs text-ink-soft mt-1 italic">"{b.userMessage}"</p>}
-                      {b.rating && <p className="text-xs text-brass mt-0.5">{"★".repeat(b.rating)} · {b.ratingComment}</p>}
+                      {b.rating && <p className="text-xs text-warn mt-0.5">{"★".repeat(b.rating)} · {b.ratingComment}</p>}
                     </div>
                     <div className="flex gap-2 flex-wrap">
                       {b.status === "requested" && (
-                        <button onClick={() => handleBookingUpdate(b._id, "accepted")} className="text-xs border border-forest text-forest px-3 py-1.5 hover:bg-forest hover:text-white transition-colors">Accept</button>
+                        <button onClick={() => handleBookingUpdate(b._id, "accepted")} className="btn-secondary btn-sm">Accept</button>
                       )}
                       {b.status === "accepted" && (
                         <button onClick={() => handleBookingUpdate(b._id, "completed")} className="text-xs border border-ink text-ink px-3 py-1.5 hover:bg-ink hover:text-white transition-colors">Mark complete</button>
@@ -1719,7 +1675,7 @@ export default function AdminPage() {
       {tab === "referrals" && (
         <div className="mt-6 space-y-4">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-mono text-slate uppercase tracking-widest">
+            <p className="eyebrow">
               {referralsTotal} total referral{referralsTotal !== 1 ? "s" : ""}
             </p>
             <button
@@ -1731,7 +1687,7 @@ export default function AdminPage() {
           </div>
 
           {referralsLoading && (
-            <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="case-card p-4 animate-pulse h-14" />)}</div>
+            <div className="space-y-2">{[...Array(6)].map((_, i) => <div key={i} className="skeleton h-14" />)}</div>
           )}
 
           {!referralsLoading && referrals.length === 0 && (
@@ -1746,37 +1702,37 @@ export default function AdminPage() {
                     {/* Referrer */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-xs font-mono text-slate uppercase tracking-widest">Referrer</p>
+                        <p className="eyebrow">Referrer</p>
                         <p className="text-sm font-medium text-ink">
                           {r.referrerId?.fullName ?? "—"}
                         </p>
                         <span className="text-xs text-slate font-mono truncate">{r.referrerId?.email}</span>
                       </div>
                       <div className="flex items-center gap-2 flex-wrap mt-1">
-                        <p className="text-xs font-mono text-slate uppercase tracking-widest">Referee</p>
+                        <p className="eyebrow">Referee</p>
                         <p className="text-sm text-ink-soft">
                           {r.refereeId?.fullName ?? r.refereeEmail}
                         </p>
-                        <span className="text-xs text-slate font-mono">{r.refereeId?.email ?? r.refereeEmail}</span>
+                        <span className="text-sm text-slate">{r.refereeId?.email ?? r.refereeEmail}</span>
                       </div>
                     </div>
 
                     {/* Status + dates */}
                     <div className="flex flex-col items-end gap-1 shrink-0 text-right">
                       <span
-                        className={`text-xs font-mono px-2 py-0.5 ${
+                        className={`badge ${
                           r.status === "rewarded"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-amber-100 text-amber-800"
+                            ? "badge-ok"
+                            : "badge-warn"
                         }`}
                       >
                         {r.status === "rewarded" ? "REWARDED" : "PENDING"}
                       </span>
-                      <p className="text-xs text-slate font-mono">
+                      <p className="text-sm text-slate">
                         Referred {new Date(r.createdAt).toLocaleDateString()}
                       </p>
                       {r.rewardedAt && (
-                        <p className="text-xs text-green-700 font-mono">
+                        <p className="text-xs text-sm text-ok">
                           Subscribed {new Date(r.rewardedAt).toLocaleDateString()}
                         </p>
                       )}
@@ -1792,15 +1748,15 @@ export default function AdminPage() {
               <button
                 onClick={() => setReferralsPage((p) => Math.max(1, p - 1))}
                 disabled={referralsPage === 1 || referralsLoading}
-                className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors"
+                className="btn-secondary btn-sm"
               >
                 ← Prev
               </button>
-              <span className="font-mono text-sm text-slate">{referralsPage} / {referralsPages}</span>
+              <span className="text-sm text-slate">{referralsPage} / {referralsPages}</span>
               <button
                 onClick={() => setReferralsPage((p) => Math.min(referralsPages, p + 1))}
                 disabled={referralsPage === referralsPages || referralsLoading}
-                className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors"
+                className="btn-secondary btn-sm"
               >
                 Next →
               </button>
@@ -1811,20 +1767,20 @@ export default function AdminPage() {
 
       {tab === "celebrations" && (
         <div className="mt-6 space-y-3">
-          {celebrations.length === 0 && <p className="text-slate font-mono text-sm">No celebrations submitted yet.</p>}
+          {celebrations.length === 0 && <p className="text-sm text-slate">No celebrations submitted yet.</p>}
           {celebrations.map((c) => (
             <div key={c._id} className={`case-card p-5 ${!c.isApproved ? "opacity-60" : ""}`}>
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-ink text-sm">{c.displayName}</p>
-                    {c.country && <span className="text-xs text-slate font-mono">{c.country}</span>}
+                    {c.country && <span className="text-sm text-slate">{c.country}</span>}
                     <span className="text-sm text-slate">{new Date(c.createdAt).toLocaleDateString()}</span>
-                    {c.isFeatured && <span className="text-sm text-slate border border-rule px-1.5 py-0.5">Featured</span>}
+                    {c.isFeatured && <span className="badge badge-brand">Featured</span>}
                     {!c.isApproved && <span className="text-xs font-mono bg-slate-100 text-slate px-1.5 py-0.5 rounded">Hidden</span>}
                   </div>
                   <p className="text-xs text-forest font-mono mt-0.5">{c.opportunityTitle}{c.opportunityProvider && ` · ${c.opportunityProvider}`}</p>
-                  {c.user && <p className="text-xs text-slate font-mono mt-0.5">User: {c.user.fullName} ({c.user.email})</p>}
+                  {c.user && <p className="mt-0.5 text-sm text-slate">User: {c.user.fullName} ({c.user.email})</p>}
                   <p className="text-sm text-ink-soft mt-2 leading-relaxed">{c.message}</p>
                 </div>
               </div>
@@ -1832,7 +1788,7 @@ export default function AdminPage() {
                 <button onClick={() => handleCelebration(c._id, { isApproved: !c.isApproved })} className="text-xs underline text-ink-soft">
                   {c.isApproved ? "Hide" : "Approve"}
                 </button>
-                <button onClick={() => handleCelebration(c._id, { isFeatured: !c.isFeatured })} className="text-xs underline text-brass">
+                <button onClick={() => handleCelebration(c._id, { isFeatured: !c.isFeatured })} className="text-xs underline text-warn">
                   {c.isFeatured ? "Unfeature" : "Feature"}
                 </button>
                 <button onClick={() => handleDeleteCelebration(c._id)} className="text-xs underline text-alert">Delete</button>
@@ -1850,7 +1806,7 @@ export default function AdminPage() {
               <button
                 key={s}
                 onClick={() => { setSubmissionsFilter(s); setSubmissionsPage(1); }}
-                className={`text-xs font-mono px-3 py-1.5 border transition-colors capitalize ${submissionsFilter === s ? "border-ink text-ink" : "border-rule text-slate hover:text-ink"}`}
+                className={`inline-flex min-h-touch items-center rounded-full px-4 text-sm font-medium capitalize transition-colors ${submissionsFilter === s ? "bg-navy text-white" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"}`}
               >
                 {s}
               </button>
@@ -1877,9 +1833,9 @@ export default function AdminPage() {
 
           {submissionsPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
-              <button onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))} disabled={submissionsPage === 1 || submissionsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">← Prev</button>
-              <span className="font-mono text-sm text-slate">{submissionsPage} / {submissionsPages}</span>
-              <button onClick={() => setSubmissionsPage((p) => Math.min(submissionsPages, p + 1))} disabled={submissionsPage === submissionsPages || submissionsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">Next →</button>
+              <button onClick={() => setSubmissionsPage((p) => Math.max(1, p - 1))} disabled={submissionsPage === 1 || submissionsLoading} className="btn-secondary btn-sm">← Prev</button>
+              <span className="text-sm text-slate">{submissionsPage} / {submissionsPages}</span>
+              <button onClick={() => setSubmissionsPage((p) => Math.min(submissionsPages, p + 1))} disabled={submissionsPage === submissionsPages || submissionsLoading} className="btn-secondary btn-sm">Next →</button>
             </div>
           )}
         </div>
@@ -1893,7 +1849,7 @@ export default function AdminPage() {
               <button
                 key={s}
                 onClick={() => { setReportsFilter(s); setReportsPage(1); }}
-                className={`text-xs font-mono px-3 py-1.5 border transition-colors capitalize ${reportsFilter === s ? "border-ink text-ink" : "border-rule text-slate hover:text-ink"}`}
+                className={`inline-flex min-h-touch items-center rounded-full px-4 text-sm font-medium capitalize transition-colors ${reportsFilter === s ? "bg-navy text-white" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"}`}
               >
                 {s}
               </button>
@@ -1902,7 +1858,7 @@ export default function AdminPage() {
           </div>
 
           {reportsLoading && (
-            <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="case-card p-5 animate-pulse h-20" />)}</div>
+            <div className="space-y-2">{[...Array(4)].map((_, i) => <div key={i} className="skeleton h-20" />)}</div>
           )}
 
           {!reportsLoading && reports.length === 0 && (
@@ -1920,9 +1876,9 @@ export default function AdminPage() {
 
           {reportsPages > 1 && (
             <div className="flex items-center justify-center gap-2 mt-4">
-              <button onClick={() => setReportsPage((p) => Math.max(1, p - 1))} disabled={reportsPage === 1 || reportsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">← Prev</button>
-              <span className="font-mono text-sm text-slate">{reportsPage} / {reportsPages}</span>
-              <button onClick={() => setReportsPage((p) => Math.min(reportsPages, p + 1))} disabled={reportsPage === reportsPages || reportsLoading} className="border border-rule text-ink-soft px-3 py-1.5 text-sm disabled:opacity-30 hover:border-forest hover:text-forest transition-colors">Next →</button>
+              <button onClick={() => setReportsPage((p) => Math.max(1, p - 1))} disabled={reportsPage === 1 || reportsLoading} className="btn-secondary btn-sm">← Prev</button>
+              <span className="text-sm text-slate">{reportsPage} / {reportsPages}</span>
+              <button onClick={() => setReportsPage((p) => Math.min(reportsPages, p + 1))} disabled={reportsPage === reportsPages || reportsLoading} className="btn-secondary btn-sm">Next →</button>
             </div>
           )}
         </div>
@@ -1966,74 +1922,74 @@ function SubmissionCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="font-medium text-ink text-sm">{submission.title}</p>
-            <span className={`text-xs font-mono px-2 py-0.5 ${submission.status === "approved" ? "bg-green-100 text-green-800" : submission.status === "rejected" ? "bg-red-100 text-red-800" : "bg-amber-100 text-amber-800"}`}>
+            <span className={`badge ${submission.status === "approved" ? "badge-ok" : submission.status === "rejected" ? "badge-danger" : "badge-warn"}`}>
               {submission.status.toUpperCase()}
             </span>
-            <span className="text-xs text-slate font-mono">{submission.type.replace(/_/g, " ")}</span>
+            <span className="text-sm text-slate">{submission.type.replace(/_/g, " ")}</span>
           </div>
-          <p className="text-xs text-slate font-mono mt-0.5">
+          <p className="mt-0.5 text-sm text-slate">
             {submission.provider} · {submission.country} · {submission.degreeLevel}
           </p>
           {submission.userId && (
-            <p className="text-xs text-slate font-mono mt-0.5">
+            <p className="mt-0.5 text-sm text-slate">
               By {submission.userId.fullName} ({submission.userId.email}) · {new Date(submission.createdAt).toLocaleDateString()}
             </p>
           )}
         </div>
-        <span className="text-slate text-xs font-mono mt-1 shrink-0">{expanded ? "▲" : "▼"}</span>
+        <ChevronDown size={16} aria-hidden="true" className={`mt-1 shrink-0 text-slate transition-transform duration-150 ${expanded ? "rotate-180" : ""}`} />
       </div>
 
       {expanded && (
         <div className="border-t border-rule px-5 py-4 bg-surface/30 space-y-4">
           <div className="grid sm:grid-cols-2 gap-3">
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Official URL</p>
+              <p className="mb-1 text-sm text-slate">Official URL</p>
               <a href={submission.officialUrl} target="_blank" rel="noreferrer" className="text-forest underline text-xs break-all">{submission.officialUrl}</a>
             </div>
             {submission.fundingCoverage && (
               <div>
-                <p className="text-xs font-mono text-slate uppercase mb-1">Funding</p>
+                <p className="mb-1 text-sm text-slate">Funding</p>
                 <p className="text-xs text-ink-soft">{submission.fundingCoverage}</p>
               </div>
             )}
             {submission.deadline && (
               <div>
-                <p className="text-xs font-mono text-slate uppercase mb-1">Deadline</p>
+                <p className="mb-1 text-sm text-slate">Deadline</p>
                 <p className="text-xs text-ink">{new Date(submission.deadline).toLocaleDateString()}</p>
               </div>
             )}
             {submission.applicationOpens && (
               <div>
-                <p className="text-xs font-mono text-slate uppercase mb-1">Opens</p>
+                <p className="mb-1 text-sm text-slate">Opens</p>
                 <p className="text-xs text-ink">{new Date(submission.applicationOpens).toLocaleDateString()}</p>
               </div>
             )}
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Fields of study</p>
+              <p className="mb-1 text-sm text-slate">Fields of study</p>
               <p className="text-xs text-ink-soft">{submission.fieldsOfStudy.join(", ")}</p>
             </div>
           </div>
           {submission.objectives && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Objectives</p>
+              <p className="mb-1 text-sm text-slate">Objectives</p>
               <p className="text-sm text-ink-soft leading-relaxed">{submission.objectives}</p>
             </div>
           )}
           {submission.eligibilitySummary && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Eligibility</p>
+              <p className="mb-1 text-sm text-slate">Eligibility</p>
               <p className="text-sm text-ink-soft leading-relaxed">{submission.eligibilitySummary}</p>
             </div>
           )}
           {submission.notes && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Submitter notes</p>
+              <p className="mb-1 text-sm text-slate">Submitter notes</p>
               <p className="text-sm text-ink-soft italic">"{submission.notes}"</p>
             </div>
           )}
           {submission.rejectionReason && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Rejection reason</p>
+              <p className="mb-1 text-sm text-slate">Rejection reason</p>
               <p className="text-sm text-alert">{submission.rejectionReason}</p>
             </div>
           )}
@@ -2043,7 +1999,7 @@ function SubmissionCard({
               <button
                 onClick={approve}
                 disabled={acting}
-                className="text-xs border border-forest text-forest px-3 py-1.5 hover:bg-forest hover:text-white transition-colors disabled:opacity-50"
+                className="btn-secondary btn-sm"
               >
                 Approve & publish
               </button>
@@ -2112,19 +2068,19 @@ function ReportCard({
             <p className="font-medium text-ink text-sm">
               {report.opportunityId?.title ?? <span className="text-slate italic">[deleted]</span>}
             </p>
-            <span className="text-xs font-mono px-2 py-0.5 bg-amber-100 text-amber-800">
+            <span className="badge badge-warn">
               {TYPE_LABEL[report.type] ?? report.type}
             </span>
           </div>
           {report.opportunityId && (
-            <p className="text-xs text-slate font-mono mt-0.5">
+            <p className="mt-0.5 text-sm text-slate">
               {report.opportunityId.provider}
               {report.opportunityId.country ? ` · ${report.opportunityId.country}` : ""}
               {report.opportunityId.deadline ? ` · deadline ${new Date(report.opportunityId.deadline).toLocaleDateString()}` : ""}
             </p>
           )}
           {report.userId && (
-            <p className="text-xs text-slate font-mono mt-0.5">
+            <p className="mt-0.5 text-sm text-slate">
               Reported by {report.userId.fullName} ({report.userId.email})
               {report.userId.country ? ` · ${report.userId.country}` : ""}
               {" · "}{new Date(report.createdAt).toLocaleDateString()}
@@ -2144,15 +2100,15 @@ function ReportCard({
       </div>
 
       {report.details && (
-        <div className="bg-surface/50 border border-rule px-3 py-2">
-          <p className="text-xs font-mono text-slate uppercase mb-1">User note</p>
+        <div className="rounded-lg bg-surface px-3 py-2">
+          <p className="mb-1 text-sm text-slate">User note</p>
           <p className="text-sm text-ink-soft italic">"{report.details}"</p>
         </div>
       )}
 
       {report.adminNote && (
         <div>
-          <p className="text-xs font-mono text-slate uppercase mb-1">Admin note</p>
+          <p className="mb-1 text-sm text-slate">Admin note</p>
           <p className="text-sm text-ink-soft">{report.adminNote}</p>
         </div>
       )}
@@ -2168,14 +2124,14 @@ function ReportCard({
           <button
             onClick={review}
             disabled={acting}
-            className="text-xs border border-forest text-forest px-3 py-1.5 hover:bg-forest hover:text-white transition-colors disabled:opacity-50"
+            className="btn-secondary btn-sm"
           >
             Mark reviewed
           </button>
           <button
             onClick={dismiss}
             disabled={acting}
-            className="text-xs border border-rule text-slate px-3 py-1.5 hover:border-ink hover:text-ink transition-colors disabled:opacity-50"
+            className="btn-secondary btn-sm"
           >
             Dismiss
           </button>

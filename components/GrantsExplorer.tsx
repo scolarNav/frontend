@@ -7,73 +7,37 @@ import type { Grant, GrantTag, GrantsResponse } from "@/lib/types";
 import { grantPath } from "@/lib/paths";
 import PagerLink from "@/components/PagerLink";
 import { Alert } from "@/components/ui/States";
+import { Chip } from "@/components/ui/Chip";
 
-const TAG_META: Record<GrantTag, { label: string; color: string }> = {
-  africa: { label: "Africa", color: "#92400e" },
-  technology: { label: "Technology", color: "#0D6EFD" },
-  innovation: { label: "Innovation", color: "#6F42C1" },
-  inclusion: { label: "Inclusion", color: "#E91E8C" },
-  talent: { label: "Talent", color: "#20C997" },
-  education: { label: "Education", color: "#0DCAF0" },
-  youth: { label: "Youth", color: "#FD7E14" },
+const TAG_LABELS: Record<GrantTag, string> = {
+  africa: "Africa",
+  technology: "Technology",
+  innovation: "Innovation",
+  inclusion: "Inclusion",
+  talent: "Talent",
+  education: "Education",
+  youth: "Youth",
 };
 
-const ALL_TAGS = Object.keys(TAG_META) as GrantTag[];
+const ALL_TAGS = Object.keys(TAG_LABELS) as GrantTag[];
 
 function TagChip({ tag, active, onClick }: { tag: GrantTag; active: boolean; onClick: () => void }) {
-  const { label, color } = TAG_META[tag];
-  return (
-    <button
-      onClick={onClick}
-      style={
-        active
-          ? { backgroundColor: color, borderColor: color, color: "#fff" }
-          : { borderColor: "#c5d5e8", color: "#64748B" }
-      }
-      className="stamp text-xs transition-all hover:opacity-80"
-    >
-      {label}
-    </button>
-  );
+  return <Chip active={active} onClick={onClick}>{TAG_LABELS[tag]}</Chip>;
 }
 
 function GrantTagPill({ tag }: { tag: GrantTag }) {
-  const { label, color } = TAG_META[tag] ?? { label: tag, color: "#64748B" };
-  return (
-    <span
-      className="font-mono text-xs px-2 py-0.5 rounded-full border"
-      style={{ color, borderColor: color, backgroundColor: `${color}15` }}
-    >
-      {label}
-    </span>
-  );
+  return <span className="badge">{TAG_LABELS[tag] ?? tag}</span>;
 }
 
-function grantStatus(grant: Grant): {
-  label: string;
-  bg: string;
-  color: string;
-  dot: string;
-  borderColor: string;
-  pulse?: boolean;
-} {
+function grantStatus(grant: Grant): { label: string; badge: string } {
   const now = Date.now();
   const deadlineMs = grant.deadline ? new Date(grant.deadline).getTime() : null;
   const daysLeft = deadlineMs !== null ? Math.ceil((deadlineMs - now) / 86400000) : null;
 
-  if (!grant.isOpen || (daysLeft !== null && daysLeft < 0)) {
-    return { label: "DEADLINE PASSED", bg: "#F8FAFC", color: "#94A3B8", dot: "#CBD5E1", borderColor: "#E2E8F0" };
-  }
-  if (daysLeft !== null && daysLeft <= 3) {
-    return { label: "CLOSING", bg: "#FEF2F2", color: "#b91c1c", dot: "#b91c1c", borderColor: "#FCA5A5", pulse: true };
-  }
-  if (daysLeft !== null && daysLeft <= 14) {
-    return { label: "CLOSING SOON", bg: "#FFF7ED", color: "#92400e", dot: "#F59E0B", borderColor: "#FCD34D" };
-  }
-  if (deadlineMs === null) {
-    return { label: "OPEN", bg: "#F0FDF4", color: "#15803D", dot: "#86EFAC", borderColor: "#BBF7D0" };
-  }
-  return { label: "OPEN", bg: "#F0FDF4", color: "#15803D", dot: "#22C55E", borderColor: "#86EFAC" };
+  if (!grant.isOpen || (daysLeft !== null && daysLeft < 0)) return { label: "Deadline passed", badge: "" };
+  if (daysLeft !== null && daysLeft <= 3) return { label: "Closing", badge: "badge-danger" };
+  if (daysLeft !== null && daysLeft <= 14) return { label: "Closing soon", badge: "badge-warn" };
+  return { label: "Open", badge: "badge-ok" };
 }
 
 function GrantCard({ grant }: { grant: Grant }) {
@@ -85,24 +49,12 @@ function GrantCard({ grant }: { grant: Grant }) {
   const isPast = daysLeft !== null && daysLeft < 0;
 
   return (
-    <div
-      className="case-card-interactive p-5 flex flex-col gap-3"
-      style={{ borderTop: `3px solid ${sc.borderColor}` }}
-    >
+    <div className="card-interactive flex flex-col gap-3 p-5">
       {/* Header: title + amount */}
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
           {/* Status badge */}
-          <span
-            className="inline-flex items-center gap-1 font-mono text-xs font-semibold px-2 py-0.5 rounded-full tracking-wider mb-1.5"
-            style={{ backgroundColor: sc.bg, color: sc.color }}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full inline-block${sc.pulse ? " animate-pulse" : ""}`}
-              style={{ backgroundColor: sc.dot }}
-            />
-            {sc.label}
-          </span>
+          <span className={`badge mb-1.5 ${sc.badge}`}>{sc.label}</span>
           <Link
             href={grantPath(grant)}
             className="block font-display text-base text-ink hover:text-forest transition-colors line-clamp-2 leading-snug"
@@ -112,7 +64,7 @@ function GrantCard({ grant }: { grant: Grant }) {
           <p className="text-xs text-slate mt-0.5">{grant.provider}</p>
         </div>
         {grant.amount && (
-          <span className="shrink-0 text-sm text-slate border border-rule px-2 py-1 whitespace-nowrap rounded">
+          <span className="badge shrink-0 whitespace-nowrap">
             {grant.amount}
           </span>
         )}
@@ -130,10 +82,7 @@ function GrantCard({ grant }: { grant: Grant }) {
       <div className="flex items-center justify-between pt-2 border-t border-rule">
         <div className="flex flex-col gap-0.5">
           {deadlineDate && !isPast && daysLeft !== null && (
-            <span
-              className="font-mono text-xs font-medium"
-              style={{ color: daysLeft <= 14 ? "#92400e" : "#64748B" }}
-            >
+            <span className={`text-sm font-semibold ${daysLeft <= 14 ? "text-warn" : "text-slate"}`}>
               {daysLeft <= 0
                 ? "Closes today"
                 : daysLeft === 1
@@ -262,7 +211,7 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
       <div className="mb-8">
-        <p className="font-mono text-xs tracking-widest uppercase text-brass mb-2">Live listings</p>
+        <p className="font-mono text-xs tracking-widest uppercase text-warn mb-2">Live listings</p>
         <h1 className="h1">Startup Grants</h1>
         <p className="text-ink-soft text-base max-w-2xl leading-relaxed">
           Grants and funding opportunities for startups working in technology, inclusion, innovation,
@@ -307,7 +256,7 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
         {activeTag && (
           <button
             onClick={() => setActiveTag(null)}
-            className="stamp text-xs text-slate border-rule hover:bg-surface transition-colors"
+            className="btn-ghost btn-sm"
           >
             Clear ×
           </button>
@@ -318,7 +267,7 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
       {!loading && !error && (
         <p className="text-xs text-slate font-mono mb-4">
           {total === 0 ? "No grants found" : `${total} open grant${total !== 1 ? "s" : ""}`}
-          {activeTag ? ` tagged "${TAG_META[activeTag].label}"` : ""}
+          {activeTag ? ` tagged "${TAG_LABELS[activeTag]}"` : ""}
           {debouncedSearch ? ` matching "${debouncedSearch}"` : ""}
         </p>
       )}
@@ -368,13 +317,13 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
       {/* Pagination */}
       {pages > 1 && !loading && !error && (
         <nav aria-label="Pagination" className="flex items-center justify-center gap-3 mt-8">
-          <PagerLink basePath="/grants" target={page - 1} current={page} disabled={page <= 1} onGo={setPage} className="stamp text-sm" rel="prev">
+          <PagerLink basePath="/grants" target={page - 1} current={page} disabled={page <= 1} onGo={setPage} className="btn-secondary btn-sm" rel="prev">
             ← Previous
           </PagerLink>
           <span className="text-sm text-slate">
             Page {page} of {pages}
           </span>
-          <PagerLink basePath="/grants" target={page + 1} current={page} disabled={page >= pages} onGo={setPage} className="stamp text-sm" rel="next">
+          <PagerLink basePath="/grants" target={page + 1} current={page} disabled={page >= pages} onGo={setPage} className="btn-secondary btn-sm" rel="next">
             Next →
           </PagerLink>
         </nav>

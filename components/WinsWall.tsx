@@ -6,13 +6,15 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Celebration } from "@/lib/types";
 import { Trophy } from "lucide-react";
+import { EmptyState, ErrorState } from "@/components/ui/States";
+import { SkeletonGrid } from "@/components/ui/Skeleton";
 
 const AWARD_LABELS: Record<string, string> = {
   scholarship: "Scholarship",
-  study_program: "Study Programme",
+  study_program: "Study programme",
   fellowship: "Fellowship",
   incubator: "Incubator",
-  immigration_pathway: "Visa / Pathway",
+  immigration_pathway: "Visa or pathway",
 };
 
 export default function WinsWall({ initial }: { initial: Celebration[] | null }) {
@@ -21,99 +23,88 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
   const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState<string | null>(null);
 
+  async function load() {
+    setLoading(true);
+    setError(null);
+    try {
+      const { celebrations: data } = await api.get<{ celebrations: Celebration[] }>("/celebrations", { auth: false });
+      setCelebrations(data);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Couldn't load the wins wall.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   useEffect(() => {
     // The server already rendered the wall; only fetch client-side if that failed.
     if (initial) return;
-    async function load() {
-      try {
-        const { celebrations: data } = await api.get<{ celebrations: Celebration[] }>("/celebrations", { auth: false });
-        setCelebrations(data);
-      } catch (err) {
-        setError(err instanceof ApiError ? err.message : "Couldn't load the wins wall.");
-      } finally {
-        setLoading(false);
-      }
-    }
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initial]);
 
   const featured = celebrations.filter((c) => c.isFeatured);
   const regular = celebrations.filter((c) => !c.isFeatured);
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#1a2d45" }}>
-      {/* Hero */}
-      <div className="pt-16 pb-14 px-4 sm:px-6">
-        <div className="relative max-w-2xl mx-auto text-center">
-          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-4">The wins wall</p>
-          <h1 className="font-display text-4xl sm:text-6xl text-white leading-tight">
-            ScolarNav students<br />who made it
+    <div>
+      {/* Hero band */}
+      <section className="bg-navy px-4 pb-14 pt-14 text-center sm:px-6">
+        <div className="mx-auto max-w-2xl">
+          <p className="mb-4 text-xs font-semibold uppercase tracking-widest text-brass">The wins wall</p>
+          <h1 className="font-display text-4xl leading-tight text-white sm:text-6xl">
+            ScolarNav students
+            <br />
+            who made it
           </h1>
-          <p className="text-white/80 mt-5 text-base leading-relaxed max-w-lg mx-auto">
+          <p className="mx-auto mt-5 max-w-lg text-base leading-relaxed text-white/80">
             Real people, real wins. Each of them prepared for this, and now they are in.
           </p>
           {user ? (
-            <Link
-              href="/wins/share"
-              className="inline-flex mt-8 px-6 py-3 bg-brass text-white text-sm font-medium hover:opacity-90 transition-opacity"
-            >
-              Share your win →
+            <Link href="/wins/share" className="btn-primary mt-8 !bg-brass !text-navy hover:!bg-brass-light">
+              Share your win
             </Link>
           ) : (
-            <Link
-              href="/register"
-              className="inline-flex mt-8 px-6 py-3 bg-white text-navy text-sm font-medium hover:bg-surface transition-colors"
-            >
-              Join ScolarNav, it's free
+            <Link href="/register" className="btn-primary mt-8 !bg-white !text-navy hover:!bg-surface-2">
+              Join ScolarNav, it is free
             </Link>
           )}
         </div>
-      </div>
+      </section>
 
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 pb-20">
-        {loading && (
-          <div className="flex justify-center py-20">
-            <p className="font-mono text-xs text-white/40 uppercase tracking-widest">Loading…</p>
-          </div>
-        )}
-        {error && <p className="text-alert text-sm text-center py-10">{error}</p>}
+      <div className="page">
+        {loading && <SkeletonGrid count={6} />}
+        {error && !loading && <ErrorState title="Could not load the wins wall" message={error} onRetry={load} />}
 
-        {!loading && celebrations.length === 0 && (
-          <div className="text-center py-20">
-            <Trophy size={40} className="mx-auto mb-4 text-brass" aria-hidden="true" />
-            <p className="text-white/60 text-base">No wins shared yet, be the first.</p>
-            {user && (
-              <Link href="/wins/share" className="inline-flex mt-6 px-5 py-2.5 bg-brass text-white text-sm hover:opacity-90 transition-opacity">
-                Share your win
-              </Link>
-            )}
-          </div>
+        {!loading && !error && celebrations.length === 0 && (
+          <EmptyState
+            icon={Trophy}
+            title="No wins shared yet"
+            description="Be the first to share your story and show the next student what is possible."
+            action={user ? <Link href="/wins/share" className="btn-primary">Share your win</Link> : undefined}
+          />
         )}
 
-        {/* Featured wins */}
         {featured.length > 0 && (
-          <div className="mb-10">
-            <p className="font-mono text-xs text-brass uppercase tracking-widest mb-4">Featured</p>
-            <div className="grid sm:grid-cols-2 gap-4">
+          <section className="mb-12" aria-labelledby="featured-heading">
+            <h2 id="featured-heading" className="h2 mb-5">Featured</h2>
+            <div className="grid gap-4 sm:grid-cols-2">
               {featured.map((c) => (
                 <CelebrationCard key={c._id} c={c} featured />
               ))}
             </div>
-          </div>
+          </section>
         )}
 
-        {/* All wins */}
         {regular.length > 0 && (
-          <div>
-            {featured.length > 0 && (
-              <p className="font-mono text-xs text-white/40 uppercase tracking-widest mb-4">All wins</p>
-            )}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <section aria-labelledby="all-heading">
+            {featured.length > 0 && <h2 id="all-heading" className="h2 mb-5">All wins</h2>}
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {regular.map((c) => (
                 <CelebrationCard key={c._id} c={c} />
               ))}
             </div>
-          </div>
+          </section>
         )}
       </div>
     </div>
@@ -122,51 +113,36 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
 
 function CelebrationCard({ c, featured = false }: { c: Celebration; featured?: boolean }) {
   return (
-    <div className={`rounded-xl p-5 sm:p-6 flex flex-col gap-3 ${featured ? "sm:p-8 bg-navy-raised" : "bg-navy-soft"}`}>
-      {/* Award type badge */}
-      <span className="text-xs font-semibold text-brass uppercase tracking-widest self-start">
+    <article className={`flex flex-col gap-3 rounded-xl p-5 sm:p-6 ${featured ? "bg-navy text-white" : "bg-white"}`}>
+      <span className={`badge self-start ${featured ? "!bg-white/15 !text-white" : "badge-brand"}`}>
         {AWARD_LABELS[c.awardType] ?? c.awardType}
       </span>
 
-      {/* Scholarship name */}
-      <p className={`font-display text-white leading-snug ${featured ? "text-xl sm:text-2xl" : "text-lg"}`}>
+      <h3 className={`font-display leading-snug ${featured ? "text-xl text-white sm:text-2xl" : "text-lg text-ink"}`}>
         {c.opportunityTitle}
-      </p>
-      {c.opportunityProvider && (
-        <p className="text-white/70 text-sm">{c.opportunityProvider}</p>
-      )}
+      </h3>
+      {c.opportunityProvider && <p className={`text-sm ${featured ? "text-white/80" : "text-slate"}`}>{c.opportunityProvider}</p>}
 
-      {/* Message */}
-      <p className="text-white/85 text-base leading-relaxed flex-1">
+      <blockquote className={`flex-1 text-base leading-relaxed ${featured ? "text-white/90" : "text-ink-soft"}`}>
         &ldquo;{c.message}&rdquo;
-      </p>
+      </blockquote>
 
-      {/* Person */}
-      <div className="flex items-center gap-2 pt-3 border-t border-white/10">
+      <div className={`flex items-center gap-2.5 border-t pt-3 ${featured ? "border-white/15" : "border-rule"}`}>
         {c.photoUrl ? (
-          <img
-            src={c.photoUrl}
-            alt={`Photo of ${c.displayName}`}
-            width={32}
-            height={32}
-            loading="lazy"
-            className="w-8 h-8 rounded-full object-cover shrink-0 ring-1 ring-brass/30"
-          />
+          <img src={c.photoUrl} alt={`Photo of ${c.displayName}`} width={32} height={32} loading="lazy" className="h-8 w-8 shrink-0 rounded-full object-cover" />
         ) : (
-          <div className="w-8 h-8 rounded-full bg-brass/20 flex items-center justify-center shrink-0">
-            <span className="text-xs font-medium text-brass">{c.displayName.charAt(0).toUpperCase()}</span>
-          </div>
+          <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${featured ? "bg-white/15 text-white" : "bg-forest-soft text-forest"}`}>
+            {c.displayName.charAt(0).toUpperCase()}
+          </span>
         )}
-        <div>
-          <p className="text-white text-sm font-medium leading-none">{c.displayName}</p>
-          {c.country && (
-            <p className="text-white/40 text-xs font-mono mt-0.5">{c.country}</p>
-          )}
+        <div className="min-w-0">
+          <p className={`text-sm font-semibold leading-none ${featured ? "text-white" : "text-ink"}`}>{c.displayName}</p>
+          {c.country && <p className={`mt-1 text-sm ${featured ? "text-white/70" : "text-slate"}`}>{c.country}</p>}
         </div>
-        <p className="ml-auto text-white/30 text-xs font-mono">
+        <p className={`ml-auto shrink-0 text-sm ${featured ? "text-white/70" : "text-slate"}`}>
           {new Date(c.createdAt).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
         </p>
       </div>
-    </div>
+    </article>
   );
 }

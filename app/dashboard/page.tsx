@@ -261,7 +261,7 @@ function DashboardContent() {
 
         {/* Pipeline and deadlines */}
         {total > 0 && (
-          <section className="grid gap-4 md:grid-cols-2">
+          <section className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="card card-pad">
               <h2 className="h3">Application pipeline</h2>
               <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-surface-2" role="img" aria-label="Share of saved opportunities by stage">
@@ -346,7 +346,7 @@ function DashboardContent() {
 
         {/* Saved opportunities */}
         <section aria-labelledby="saved-heading">
-          <div className="mb-4 flex items-center justify-between">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
             <h2 id="saved-heading" className="h2">Saved opportunities</h2>
             <Link href="/deadlines" className="text-sm font-semibold text-forest hover:underline">View deadlines</Link>
           </div>
