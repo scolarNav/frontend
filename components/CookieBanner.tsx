@@ -11,49 +11,43 @@ export default function CookieBanner() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    if (!stored) setVisible(true);
+    try {
+      if (!localStorage.getItem(STORAGE_KEY)) setVisible(true);
+    } catch {
+      setVisible(true);
+    }
   }, []);
 
   function accept(level: ConsentValue) {
-    localStorage.setItem(STORAGE_KEY, level);
+    try {
+      localStorage.setItem(STORAGE_KEY, level);
+    } catch {
+      /* storage blocked: the choice just applies to this visit */
+    }
     setVisible(false);
   }
 
   if (!visible) return null;
 
   return (
-    <div
-      className="fixed bottom-0 left-0 right-0 z-50 px-4 pb-4 sm:px-6 sm:pb-6"
-      role="dialog"
-      aria-label="Cookie consent"
-      aria-live="polite"
-    >
-      <div className="max-w-3xl mx-auto case-card p-5 shadow-lg flex flex-col sm:flex-row gap-4 sm:items-center">
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-ink">We use cookies</p>
-          <p className="text-xs text-ink-soft mt-1 leading-relaxed">
-            We use essential cookies to keep you logged in and make the platform work.
-            With your consent, we also use optional cookies to improve your experience.
-            See our{" "}
-            <Link href="/privacy" className="text-forest hover:underline">
+    <div className="fixed inset-x-0 bottom-0 z-40 px-4 pb-4 sm:px-6 sm:pb-6" role="region" aria-label="Cookie consent">
+      <div className="mx-auto flex max-w-3xl animate-rise-in flex-col gap-4 rounded-xl bg-white p-5 shadow-raised sm:flex-row sm:items-center">
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-ink">We use cookies</p>
+          <p className="mt-1 text-sm leading-relaxed text-ink-soft">
+            Essential cookies keep you signed in and make the site work. With your consent we also use optional cookies to improve your experience. See our{" "}
+            <Link href="/privacy" className="font-semibold text-forest hover:underline">
               Privacy Policy
-            </Link>{" "}
-            for details.
+            </Link>
+            .
           </p>
         </div>
 
-        <div className="flex gap-2 shrink-0">
-          <button
-            onClick={() => accept("essential")}
-            className="btn-secondary text-xs py-2 px-4 whitespace-nowrap"
-          >
+        <div className="flex shrink-0 gap-2">
+          <button type="button" onClick={() => accept("essential")} className="btn-secondary btn-sm min-h-touch">
             Essential only
           </button>
-          <button
-            onClick={() => accept("all")}
-            className="btn-primary text-xs py-2 px-4 whitespace-nowrap"
-          >
+          <button type="button" onClick={() => accept("all")} className="btn-primary btn-sm min-h-touch">
             Accept all
           </button>
         </div>

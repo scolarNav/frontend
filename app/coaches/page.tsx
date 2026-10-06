@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { Check } from "lucide-react";
 
 
 const HOW_IT_WORKS = [
   {
     step: "01",
     title: "Apply",
-    body: "Submit your credentials — scholarship year, institution, and a short note on what you bring. Takes about 10 minutes.",
+    body: "Submit your credentials, scholarship year, institution, and a short note on what you bring. Takes about 10 minutes.",
   },
   {
     step: "02",
@@ -18,7 +19,7 @@ const HOW_IT_WORKS = [
   {
     step: "03",
     title: "Go live",
-    body: "Your profile appears on the relevant scholarship pages. Students can book directly — no chasing, no invoicing.",
+    body: "Your profile appears on the relevant scholarship pages. Students can book directly, no chasing, no invoicing.",
   },
   {
     step: "04",
@@ -30,7 +31,7 @@ const HOW_IT_WORKS = [
 const WHO_QUALIFIES = [
   {
     label: "Scholarship alumni",
-    desc: "You were awarded the scholarship you want to coach for — any year, any institution.",
+    desc: "You were awarded the scholarship you want to coach for, any year, any institution.",
   },
   {
     label: "Selection panel members",
@@ -54,128 +55,119 @@ export default function CoachLandingPage() {
   const applyHref = user ? "/coaches/apply" : "/register?next=/coaches/apply";
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-12 sm:py-20">
-
+    <div className="page">
       {/* Hero */}
-      <div className="max-w-2xl">
-        <p className="font-mono text-xs tracking-widest uppercase mb-4" style={{ color: "#b8501f" }}>
-          Coach on ScolarNav
-        </p>
-        <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight">
-          You got the scholarship.<br />
-          <span style={{ color: "#3d7a5a" }}>Help the next person get it too.</span>
+      <section className="max-w-2xl">
+        <p className="eyebrow mb-4 text-forest">Coach on ScolarNav</p>
+        <h1 className="h1">
+          You got the scholarship.
+          <br />
+          <span className="text-forest">Help the next person get it too.</span>
         </h1>
-        <p className="text-ink-soft mt-5 text-lg leading-relaxed">
-          ScolarNav connects scholarship alumni and panel members with serious applicants who need real guidance — not generic advice. You set your rate, choose your availability, and we handle the rest.
+        <p className="lead mt-5">
+          ScolarNav connects scholarship alumni and panel members with serious applicants who need real guidance, not generic advice. You set your rate, choose your availability, and we handle the rest.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href={applyHref} className="btn-primary">
-            Apply to coach →
+            Apply to coach
           </Link>
           <a href="#how-it-works" className="btn-secondary">
             How it works
           </a>
         </div>
-      </div>
+      </section>
 
       {/* Trust bar */}
-      <div className="mt-14 grid sm:grid-cols-3 gap-4">
+      <ul className="mt-14 grid gap-4 sm:grid-cols-3">
         {[
           { value: "Verified only", label: "Every coach is a genuine alumnus or panel member" },
-          { value: "You set the rate", label: "Charge what your time is worth — from $50 upward" },
-          { value: "Zero admin", label: "Bookings, reminders, and payment handled by the platform" },
+          { value: "You set the rate", label: "Charge what your time is worth, from $50 upward" },
+          { value: "Zero admin", label: "Bookings, reminders and payment handled by the platform" },
         ].map(({ value, label }) => (
-          <div key={value} className="case-card px-5 py-4">
+          <li key={value} className="card card-pad">
             <p className="font-display text-lg text-ink">{value}</p>
-            <p className="text-sm text-slate mt-1 leading-relaxed">{label}</p>
-          </div>
+            <p className="mt-1 text-sm leading-relaxed text-slate">{label}</p>
+          </li>
         ))}
-      </div>
+      </ul>
 
       {/* Who qualifies */}
-      <section className="mt-16">
-        <p className="font-mono text-xs tracking-widest uppercase text-slate mb-5">Who can apply</p>
-        <div className="grid sm:grid-cols-2 gap-4">
+      <section className="mt-16" aria-labelledby="who-heading">
+        <h2 id="who-heading" className="h2 mb-5">Who can apply</h2>
+        <ul className="grid gap-4 sm:grid-cols-2">
           {WHO_QUALIFIES.map(({ label, desc }) => (
-            <div key={label} className="case-card p-6 flex gap-4">
-              <span className="mt-0.5 shrink-0 text-forest text-lg">✓</span>
+            <li key={label} className="card card-pad flex gap-4">
+              <Check size={20} className="mt-0.5 shrink-0 text-ok" aria-hidden="true" />
               <div>
-                <p className="font-medium text-ink">{label}</p>
-                <p className="text-sm text-slate mt-1 leading-relaxed">{desc}</p>
+                <p className="font-semibold text-ink">{label}</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate">{desc}</p>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
-        <p className="text-xs text-slate font-mono mt-4">
-          We verify credentials before your profile goes live. Self-reported awards are not accepted.
-        </p>
+        </ul>
+        <p className="help">We verify credentials before your profile goes live. Self-reported awards are not accepted.</p>
       </section>
 
       {/* What coaches do */}
-      <section className="mt-16">
-        <p className="font-mono text-xs tracking-widest uppercase text-slate mb-5">What sessions look like</p>
-        <div className="grid sm:grid-cols-2 gap-4">
+      <section className="mt-16" aria-labelledby="sessions-heading">
+        <h2 id="sessions-heading" className="h2 mb-5">What sessions look like</h2>
+        <ul className="grid gap-4 sm:grid-cols-2">
           {WHAT_YOU_DO.map(({ title, desc }) => (
-            <div key={title} className="case-card p-6">
-              <p className="font-medium text-ink mb-1">{title}</p>
-              <p className="text-sm text-slate leading-relaxed">{desc}</p>
-            </div>
+            <li key={title} className="card card-pad">
+              <p className="mb-1 font-semibold text-ink">{title}</p>
+              <p className="text-sm leading-relaxed text-slate">{desc}</p>
+            </li>
           ))}
-        </div>
+        </ul>
       </section>
 
       {/* How it works */}
-      <section className="mt-16" id="how-it-works">
-        <p className="font-mono text-xs tracking-widest uppercase text-slate mb-8">How it works</p>
-        <div className="grid sm:grid-cols-2 gap-6">
+      <section className="mt-16" id="how-it-works" aria-labelledby="how-heading">
+        <h2 id="how-heading" className="h2 mb-8">How it works</h2>
+        <ol className="grid gap-8 sm:grid-cols-2">
           {HOW_IT_WORKS.map(({ step, title, body }) => (
-            <div key={step} className="flex gap-5">
-              <span
-                className="shrink-0 font-mono text-xs tracking-widest pt-0.5"
-                style={{ color: "#b8501f" }}
-              >
+            <li key={step} className="flex gap-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-soft text-sm font-semibold text-forest">
                 {step}
               </span>
               <div>
-                <p className="font-medium text-ink">{title}</p>
-                <p className="text-sm text-slate mt-1 leading-relaxed">{body}</p>
+                <p className="font-semibold text-ink">{title}</p>
+                <p className="mt-1 text-sm leading-relaxed text-slate">{body}</p>
               </div>
-            </div>
+            </li>
           ))}
-        </div>
+        </ol>
       </section>
 
       {/* Revenue model */}
-      <section className="mt-16 case-card p-7">
-        <p className="font-mono text-xs tracking-widest uppercase text-slate mb-4">Your earnings</p>
-        <p className="text-ink leading-relaxed">
-          You set your session fee in USD. ScolarNav adds a platform fee (currently 20%) on top — so if you charge{" "}
-          <span className="font-medium text-ink">$150</span>, the student pays{" "}
-          <span className="font-medium text-ink">$180</span> and you receive{" "}
-          <span className="font-medium text-ink">$150</span> in full. Your rate is never discounted.
+      <section className="card card-pad mt-16 sm:p-8" aria-labelledby="earn-heading">
+        <h2 id="earn-heading" className="h3 mb-3">Your earnings</h2>
+        <p className="max-w-prose leading-relaxed text-ink-soft">
+          You set your session fee in USD. ScolarNav adds a platform fee (currently 20%) on top, so if you charge{" "}
+          <span className="font-semibold text-ink">$150</span>, the student pays <span className="font-semibold text-ink">$180</span> and you
+          receive <span className="font-semibold text-ink">$150</span> in full. Your rate is never discounted.
         </p>
-        <p className="text-sm text-slate mt-4 font-mono border-t border-rule pt-4">
-          Payment is released once you mark a session as completed. We support international payouts — details confirmed during onboarding.
+        <p className="mt-4 border-t border-rule pt-4 text-sm text-slate">
+          Payment is released once you mark a session as completed. We support international payouts, with details confirmed during onboarding.
         </p>
       </section>
 
       {/* CTA */}
       <section className="mt-16 text-center">
-        <h2 className="font-display text-3xl text-ink">Ready to coach?</h2>
-        <p className="text-ink-soft mt-3 leading-relaxed max-w-md mx-auto">
-          The application takes about 10 minutes. You'll need your scholarship year, the name of your scholarship, and a short note on what you bring to applicants.
+        <h2 className="h2">Ready to coach?</h2>
+        <p className="mx-auto mt-3 max-w-md leading-relaxed text-ink-soft">
+          The application takes about 10 minutes. You will need your scholarship year, the name of your scholarship, and a short note on what you bring to applicants.
         </p>
-        <Link href={applyHref} className="btn-primary inline-flex mt-7">
-          Start your application →
+        <Link href={applyHref} className="btn-primary mt-7">
+          Start your application
         </Link>
-        <p className="text-xs text-slate font-mono mt-4">
+        <p className="mt-4 text-sm text-slate">
           Questions? Email us at{" "}
-          <a href="mailto:coaches@scolarnav.com" className="text-forest underline">
+          <a href="mailto:coaches@scolarnav.com" className="font-medium text-forest underline">
             coaches@scolarnav.com
           </a>
         </p>
       </section>
-
     </div>
   );
 }

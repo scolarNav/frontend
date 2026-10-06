@@ -6,15 +6,16 @@ import { JsonLd, breadcrumbJsonLd, type Crumb } from "@/lib/jsonld";
 import { fetchCountryGuide } from "@/lib/opportunities";
 import { pageMetadata } from "@/lib/seo";
 import { countryByValue } from "@/lib/taxonomy";
+import { Check, GraduationCap, Minus, Plus } from "lucide-react";
 
 export const revalidate = 3600;
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="py-8 border-b border-rule last:border-0">
-      <h2 className="font-display text-2xl text-ink mb-4">{title}</h2>
+    <section>
+      <h2 className="h2 mb-4">{title}</h2>
       {children}
-    </div>
+    </section>
   );
 }
 
@@ -42,129 +43,137 @@ export default async function CountryDetailPage({ params }: { params: { code: st
 
   return (
     <>
-    <JsonLd data={breadcrumbJsonLd(crumbs)} />
-    <div className="max-w-3xl mx-auto px-6 py-14">
-      <Breadcrumbs crumbs={crumbs} />
+      <JsonLd data={breadcrumbJsonLd(crumbs)} />
+      <div className="page-narrow">
+        <Breadcrumbs crumbs={crumbs} />
 
-      <div className="flex items-center gap-4 mb-2">
-        <span className="text-5xl">{guide.flag}</span>
-        <div>
-          <p className="font-mono text-xs tracking-widest uppercase text-slate">{guide.applicationLanguage}</p>
-          <h1 className="font-display text-4xl text-ink">{guide.name}</h1>
-        </div>
-      </div>
-      <p className="text-ink-soft mt-2 mb-10 text-lg">{guide.tagline}</p>
-
-      {/* Quick stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-10">
-        <div className="case-card p-4 text-center">
-          <p className="font-display text-2xl text-ink">${guide.avgMonthlyExpensesUSD.toLocaleString()}</p>
-          <p className="text-xs text-slate font-mono mt-1">Avg/month (USD)</p>
-        </div>
-        <div className="case-card p-4 text-center">
-          <p className="font-display text-2xl text-ink">{guide.requiresLanguageTest ? "Yes" : "No"}</p>
-          <p className="text-xs text-slate font-mono mt-1">Language test req.</p>
-        </div>
-        <div className="case-card p-4 text-center">
-          <p className="font-display text-2xl text-ink">{guide.intakeMonths.length}</p>
-          <p className="text-xs text-slate font-mono mt-1">Annual intakes</p>
-        </div>
-        <div className="case-card p-4 text-center">
-          <p className="font-display text-xl text-ink leading-tight">{guide.intakeMonths.join(" / ")}</p>
-          <p className="text-xs text-slate font-mono mt-1">Intake months</p>
-        </div>
-      </div>
-
-      <Section title="Overview">
-        <p className="text-ink-soft leading-relaxed">{guide.overview}</p>
-      </Section>
-
-      <Section title="Scholarship culture">
-        <p className="text-ink-soft leading-relaxed">{guide.scholarshipCulture}</p>
-        {guide.popularScholarships.length > 0 && (
-          <div className="mt-4">
-            <p className="text-xs font-mono text-slate uppercase tracking-widest mb-2">Key scholarships</p>
-            <div className="flex flex-wrap gap-2">
-              {guide.popularScholarships.map((s) => (
-                <span key={s} className="text-sm border border-rule px-3 py-1 text-ink-soft">{s}</span>
-              ))}
+        <header className="mb-10">
+          <div className="flex items-center gap-4">
+            <span className="text-5xl" aria-hidden="true">{guide.flag}</span>
+            <div>
+              <p className="eyebrow">Applications in {guide.applicationLanguage}</p>
+              <h1 className="h1">{guide.name}</h1>
             </div>
           </div>
-        )}
-      </Section>
+          <p className="lead mt-4">{guide.tagline}</p>
+        </header>
 
-      <Section title="Cost of living">
-        <p className="text-ink-soft leading-relaxed">{guide.livingCosts}</p>
-      </Section>
+        {/* Quick facts */}
+        <dl className="mb-10 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <div className="card p-4 text-center">
+            <dd className="font-display text-2xl text-ink">${guide.avgMonthlyExpensesUSD.toLocaleString()}</dd>
+            <dt className="mt-1 text-sm text-slate">Average per month</dt>
+          </div>
+          <div className="card p-4 text-center">
+            <dd className="font-display text-2xl text-ink">{guide.requiresLanguageTest ? "Yes" : "No"}</dd>
+            <dt className="mt-1 text-sm text-slate">Language test required</dt>
+          </div>
+          <div className="card p-4 text-center">
+            <dd className="font-display text-2xl text-ink">{guide.intakeMonths.length}</dd>
+            <dt className="mt-1 text-sm text-slate">Intakes a year</dt>
+          </div>
+          <div className="card p-4 text-center">
+            <dd className="font-display text-lg leading-tight text-ink">{guide.intakeMonths.join(", ")}</dd>
+            <dt className="mt-1 text-sm text-slate">Intake months</dt>
+          </div>
+        </dl>
 
-      <Section title="Visa process">
-        <p className="text-ink-soft leading-relaxed">{guide.visaProcess}</p>
-        {guide.requiresLanguageTest && (
-          <div className="mt-4 case-card p-4">
-            <p className="text-xs font-mono text-slate uppercase tracking-widest mb-2">Required language tests</p>
-            <ul className="space-y-1">
-              {guide.commonLanguageTests.map((t) => (
-                <li key={t} className="text-sm text-ink-soft flex gap-2">
-                  <span className="text-forest shrink-0">✓</span> {t}
+        <div className="space-y-10">
+          <Section title="Overview">
+            <p className="max-w-prose leading-relaxed text-ink-soft">{guide.overview}</p>
+          </Section>
+
+          <Section title="Scholarship culture">
+            <p className="max-w-prose leading-relaxed text-ink-soft">{guide.scholarshipCulture}</p>
+            {guide.popularScholarships.length > 0 && (
+              <div className="mt-4">
+                <h3 className="mb-2 text-sm font-semibold text-ink">Key scholarships</h3>
+                <ul className="flex flex-wrap gap-2">
+                  {guide.popularScholarships.map((s) => (
+                    <li key={s} className="badge text-sm">{s}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Cost of living">
+            <p className="max-w-prose leading-relaxed text-ink-soft">{guide.livingCosts}</p>
+          </Section>
+
+          <Section title="Visa process">
+            <p className="max-w-prose leading-relaxed text-ink-soft">{guide.visaProcess}</p>
+            {guide.requiresLanguageTest && (
+              <div className="card card-pad mt-4">
+                <h3 className="mb-2 text-sm font-semibold text-ink">Required language tests</h3>
+                <ul className="space-y-1.5">
+                  {guide.commonLanguageTests.map((t) => (
+                    <li key={t} className="flex gap-2 text-sm text-ink-soft">
+                      <Check size={16} className="mt-0.5 shrink-0 text-ok" aria-hidden="true" />
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Top universities">
+            <ul className="grid gap-2 sm:grid-cols-2">
+              {guide.topUniversities.map((u) => (
+                <li key={u} className="flex gap-2 text-sm text-ink-soft">
+                  <GraduationCap size={16} className="mt-0.5 shrink-0 text-forest" aria-hidden="true" />
+                  {u}
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-      </Section>
+          </Section>
 
-      <Section title="Top universities">
-        <ul className="space-y-1.5">
-          {guide.topUniversities.map((u) => (
-            <li key={u} className="text-ink-soft text-sm flex gap-2">
-              <span className="text-forest shrink-0 mt-0.5">→</span> {u}
-            </li>
-          ))}
-        </ul>
-      </Section>
+          <Section title="Best for">
+            <ul className="flex flex-wrap gap-2">
+              {guide.bestFor.map((b) => (
+                <li key={b} className="badge text-sm">{b}</li>
+              ))}
+            </ul>
+          </Section>
 
-      <Section title="Best for">
-        <div className="flex flex-wrap gap-2">
-          {guide.bestFor.map((b) => (
-            <span key={b} className="border border-rule text-ink-soft text-sm px-3 py-1">{b}</span>
-          ))}
+          <Section title="Honest assessment">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="card card-pad">
+                <h3 className="mb-3 text-sm font-semibold text-ok">Why students choose {guide.name}</h3>
+                <ul className="space-y-2">
+                  {guide.pros.map((p) => (
+                    <li key={p} className="flex gap-2 text-sm text-ink-soft">
+                      <Plus size={16} className="mt-0.5 shrink-0 text-ok" aria-hidden="true" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="card card-pad">
+                <h3 className="mb-3 text-sm font-semibold text-danger">What to prepare for</h3>
+                <ul className="space-y-2">
+                  {guide.cons.map((c) => (
+                    <li key={c} className="flex gap-2 text-sm text-ink-soft">
+                      <Minus size={16} className="mt-0.5 shrink-0 text-danger" aria-hidden="true" />
+                      {c}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </Section>
         </div>
-      </Section>
 
-      <Section title="Honest assessment">
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div>
-            <p className="text-xs font-mono text-forest uppercase tracking-widest mb-3">Why students choose {guide.name}</p>
-            <ul className="space-y-2">
-              {guide.pros.map((p) => (
-                <li key={p} className="text-sm text-ink-soft flex gap-2">
-                  <span className="text-forest shrink-0 mt-0.5">+</span> {p}
-                </li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <p className="text-xs font-mono text-alert uppercase tracking-widest mb-3">What to prepare for</p>
-            <ul className="space-y-2">
-              {guide.cons.map((c) => (
-                <li key={c} className="text-sm text-ink-soft flex gap-2">
-                  <span className="text-alert shrink-0 mt-0.5">−</span> {c}
-                </li>
-              ))}
-            </ul>
-          </div>
+        <div className="mt-10 flex flex-wrap gap-3">
+          <Link href={browseHref} className="btn-primary">
+            Browse {guide.name} scholarships
+          </Link>
+          <Link href="/mentor" className="btn-secondary">
+            Ask your mentor about {guide.name}
+          </Link>
         </div>
-      </Section>
-
-      <div className="mt-8 flex flex-wrap gap-3">
-        <Link href={browseHref} className="bg-forest text-white px-5 py-2.5 text-sm hover:bg-forest-light transition-colors" style={{ borderRadius: "4px" }}>
-          Browse {guide.name} scholarships →
-        </Link>
-        <Link href="/mentor" className="border border-forest text-forest px-5 py-2.5 text-sm hover:bg-forest hover:text-white transition-colors" style={{ borderRadius: "4px" }}>
-          Ask your mentor about {guide.name}
-        </Link>
       </div>
-    </div>
     </>
   );
 }

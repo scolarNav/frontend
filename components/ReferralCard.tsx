@@ -1,8 +1,22 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Check, Copy } from "lucide-react";
 import { api } from "@/lib/api";
 import { ReferralStats } from "@/lib/types";
+import { Skeleton } from "@/components/ui/Skeleton";
+
+function CopyRow({ value, label, copied, onCopy }: { value: string; label: string; copied: boolean; onCopy: () => void }) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg bg-surface px-3 py-1.5">
+      <span className="min-w-0 flex-1 truncate text-sm text-ink">{value}</span>
+      <button type="button" onClick={onCopy} className="btn-ghost btn-sm shrink-0 text-forest hover:text-forest-light">
+        {copied ? <Check size={14} aria-hidden="true" /> : <Copy size={14} aria-hidden="true" />}
+        {copied ? "Copied" : label}
+      </button>
+    </div>
+  );
+}
 
 export default function ReferralCard() {
   const [data, setData] = useState<ReferralStats | null>(null);
@@ -26,12 +40,12 @@ export default function ReferralCard() {
 
   if (loading) {
     return (
-      <div className="case-card p-6 animate-pulse">
-        <div className="h-3 w-24 bg-rule rounded mb-3" />
-        <div className="h-4 w-56 bg-rule rounded mb-5" />
+      <div className="card card-pad" role="status" aria-label="Loading referral details">
+        <Skeleton className="mb-3 h-3 w-24" />
+        <Skeleton className="mb-5 h-4 w-56" />
         <div className="space-y-2.5">
-          <div className="h-10 bg-rule rounded-lg" />
-          <div className="h-10 bg-rule rounded-lg" />
+          <Skeleton className="h-11" />
+          <Skeleton className="h-11" />
         </div>
       </div>
     );
@@ -42,61 +56,43 @@ export default function ReferralCard() {
   const { referralCode, referralLink, stats } = data;
 
   return (
-    <div className="case-card p-6">
-      <div className="flex items-start justify-between gap-4 mb-4">
+    <section className="card card-pad" aria-labelledby="referral-heading">
+      <div className="mb-4 flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs font-mono text-slate uppercase tracking-widest">Refer a friend</p>
-          <p className="text-sm text-ink-soft mt-1 leading-snug">
-            When a friend you invite subscribes, you both get a free month.
-          </p>
+          <h2 id="referral-heading" className="h3">Refer a friend</h2>
+          <p className="mt-1 text-sm text-slate">When a friend you invite subscribes, you both get a free month.</p>
         </div>
         {stats.freeMonthsEarned > 0 && (
           <div className="shrink-0 text-right">
             <p className="font-display text-2xl text-ink">{stats.freeMonthsEarned}</p>
-            <p className="text-xs font-mono text-slate -mt-0.5">free month{stats.freeMonthsEarned !== 1 ? "s" : ""} earned</p>
+            <p className="text-sm text-slate">free month{stats.freeMonthsEarned !== 1 ? "s" : ""} earned</p>
           </div>
         )}
       </div>
 
       <div className="space-y-2.5">
-        <div className="flex items-center gap-2 border border-rule rounded-lg px-3 py-2.5 bg-surface">
-          <span className="font-mono text-sm text-ink tracking-widest flex-1">{referralCode}</span>
-          <button
-            onClick={() => copy(referralCode, "code")}
-            className="text-xs font-mono text-forest hover:underline shrink-0"
-          >
-            {copied === "code" ? "Copied!" : "Copy code"}
-          </button>
-        </div>
-        <div className="flex items-center gap-2 border border-rule rounded-lg px-3 py-2.5 bg-surface">
-          <span className="font-mono text-xs text-slate truncate flex-1">{referralLink}</span>
-          <button
-            onClick={() => copy(referralLink, "link")}
-            className="text-xs font-mono text-forest hover:underline shrink-0"
-          >
-            {copied === "link" ? "Copied!" : "Copy link"}
-          </button>
-        </div>
+        <CopyRow value={referralCode} label="Copy code" copied={copied === "code"} onCopy={() => copy(referralCode, "code")} />
+        <CopyRow value={referralLink} label="Copy link" copied={copied === "link"} onCopy={() => copy(referralLink, "link")} />
       </div>
 
       {stats.total > 0 && (
-        <div className="mt-4 flex gap-5 pt-4 border-t border-rule">
+        <dl className="mt-4 flex gap-6 border-t border-rule pt-4">
           <div>
-            <p className="font-display text-xl text-ink">{stats.total}</p>
-            <p className="text-xs font-mono text-slate">invited</p>
+            <dd className="font-display text-xl text-ink">{stats.total}</dd>
+            <dt className="text-sm text-slate">invited</dt>
           </div>
           <div>
-            <p className="font-display text-xl text-ink">{stats.rewarded}</p>
-            <p className="text-xs font-mono text-slate">subscribed</p>
+            <dd className="font-display text-xl text-ink">{stats.rewarded}</dd>
+            <dt className="text-sm text-slate">subscribed</dt>
           </div>
           {stats.pending > 0 && (
             <div>
-              <p className="font-display text-xl text-ink">{stats.pending}</p>
-              <p className="text-xs font-mono text-slate">pending</p>
+              <dd className="font-display text-xl text-ink">{stats.pending}</dd>
+              <dt className="text-sm text-slate">pending</dt>
             </div>
           )}
-        </div>
+        </dl>
       )}
-    </div>
+    </section>
   );
 }

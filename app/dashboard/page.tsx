@@ -3,12 +3,16 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { CalendarDays, Globe, Map, MessageSquare, Mic, Trophy } from "lucide-react";
+import { Bookmark, CalendarDays, Compass, Globe, Map, MessageSquare, Mic, Trophy } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Opportunity, SavedOpportunity, ReadinessScore } from "@/lib/types";
+import { opportunityPath } from "@/lib/paths";
 import ReadinessScoreCard from "@/components/ReadinessScoreCard";
 import ReferralCard from "@/components/ReferralCard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Alert, EmptyState } from "@/components/ui/States";
+import { Skeleton, SkeletonHeader, SkeletonList } from "@/components/ui/Skeleton";
 
 const STATUS_LABELS: Record<string, string> = {
   interested: "Interested",
@@ -21,11 +25,36 @@ const STATUS_LABELS: Record<string, string> = {
 
 const FEATURE_CARDS = [
   { href: "/mentor", Icon: MessageSquare, label: "Mentor", desc: "Ask anything, get a specific answer", pro: false },
-  { href: "/roadmap", Icon: Map, label: "My Roadmap", desc: "Your week-by-week scholarship plan", pro: true },
+  { href: "/roadmap", Icon: Map, label: "My roadmap", desc: "Your week-by-week scholarship plan", pro: true },
+  { href: "/interview", Icon: Mic, label: "Mock interview", desc: "Practice with detailed feedback", pro: true },
   { href: "/deadlines", Icon: CalendarDays, label: "Deadlines", desc: "All your upcoming submission dates", pro: false },
-  { href: "/countries", Icon: Globe, label: "Country Guides", desc: "Sweden, UK, Germany and more", pro: false },
-  { href: "/interview", Icon: Mic, label: "Mock Interview", desc: "Practice with detailed feedback", pro: true },
+  { href: "/countries", Icon: Globe, label: "Country guides", desc: "Sweden, UK, Germany and more", pro: false },
 ];
+
+// Pipeline stages and the token classes that colour them.
+const PIPELINE = [
+  { key: "interested", label: "Saved", bar: "bg-control" },
+  { key: "in_progress", label: "In progress", bar: "bg-info" },
+  { key: "submitted", label: "Submitted", bar: "bg-forest" },
+  { key: "awarded", label: "Won", bar: "bg-ok" },
+];
+
+function DashboardSkeleton() {
+  return (
+    <div className="page" role="status" aria-label="Loading your dashboard">
+      <SkeletonHeader withAction />
+      <div className="mb-8 grid grid-cols-3 gap-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} aria-hidden="true" className="card card-pad space-y-3">
+            <Skeleton className="h-9 w-12" />
+            <Skeleton className="h-3 w-20" />
+          </div>
+        ))}
+      </div>
+      <SkeletonList rows={3} />
+    </div>
+  );
+}
 
 function DashboardContent() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -115,9 +144,7 @@ function DashboardContent() {
     }
   }
 
-  if (authLoading || loading) {
-    return <p className="max-w-5xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading your dashboard…</p>;
-  }
+  if (authLoading || loading) return <DashboardSkeleton />;
 
   if (!user) return null;
 
@@ -139,298 +166,273 @@ function DashboardContent() {
 
   const awardedOpps = user.savedOpportunities.filter((s) => s.status === "awarded");
 
+  const statusCounts: Record<string, number> = {};
+  for (const s of user.savedOpportunities) statusCounts[s.status] = (statusCounts[s.status] ?? 0) + 1;
+  const total = user.savedOpportunities.length;
+  const pipeline = PIPELINE.filter(({ key }) => statusCounts[key]);
+
+  const urgentDeadlines = user.savedOpportunities
+    .map((s) => {
+      const opp = details[s.opportunity];
+      if (!opp?.deadline) return null;
+      const days = Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000);
+      if (days < 0 || days > 60) return null;
+      return { s, opp, days };
+    })
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.days - b.days)
+    .slice(0, 3) as { s: SavedOpportunity; opp: Opportunity; days: number }[];
+
+  const gaps: { label: string; href: string; cta: string }[] = [];
+  if (!user.cvData) gaps.push({ label: "Upload your CV to unlock personalised matching, readiness scoring and tailored coaching.", href: "/cv", cta: "Upload CV" });
+  if (!user.profile?.targetCountries?.length) gaps.push({ label: "Add target countries so we can show scholarships from where you want to study first.", href: "/profile", cta: "Set countries" });
+  if (!user.profile?.targetFields?.length) gaps.push({ label: "Add your fields of study so recommendations match what you want to pursue.", href: "/profile", cta: "Add fields" });
+
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
-      {/* Trial countdown banner */}
-      {isTrialing && trialDaysLeft !== null && (
-        <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-5 py-4 border border-rule bg-white rounded-lg">
-          <div>
-            <p className="text-sm font-medium text-ink" style={{ color: trialDaysLeft <= 2 ? "#b8501f" : undefined }}>
-              {trialDaysLeft === 0
-                ? "Your free trial ends today"
-                : trialDaysLeft === 1
-                  ? "1 day left on your free trial"
-                  : `${trialDaysLeft} days left on your free trial`}
-            </p>
-            <p className="text-xs text-slate mt-0.5">
-              After the trial, you'll be charged {user.subscription.gateway === "paystack" ? "via Paystack" : "$7/month or $55/year"} — or you can cancel anytime before it ends.
-            </p>
-          </div>
-          <a href="/pricing" className="shrink-0 text-xs font-mono text-ink-soft border border-rule px-4 py-2 hover:border-ink transition-colors whitespace-nowrap">
-            Manage subscription →
-          </a>
-        </div>
-      )}
-
-      {coachingPaid && (
-        <div className="mb-6 p-4 rounded-xl border border-green-200 bg-green-50 flex items-start gap-3">
-          <span className="text-green-600 text-lg shrink-0">✓</span>
-          <div>
-            <p className="font-medium text-green-800">Payment confirmed — coaching session booked.</p>
-            <p className="text-sm text-green-700 mt-0.5">
-              Your coach will review your request and accept shortly. You'll receive an email once confirmed.
-            </p>
-          </div>
-        </div>
-      )}
-
-      <div className="mb-10">
-        <h1 className="font-display text-3xl sm:text-4xl text-ink">
-          Welcome back, {user.fullName.split(" ")[0]}
-        </h1>
-      </div>
-
-      {/* Profile completion nudges */}
-      {(() => {
-        const gaps: { label: string; href: string; cta: string }[] = [];
-        if (!user.cvData) gaps.push({ label: "Upload your CV to unlock personalised matching, readiness scoring, and tailored coaching.", href: "/cv", cta: "Upload CV →" });
-        if (!user.profile?.targetCountries?.length) gaps.push({ label: "Add target countries so we can prioritise scholarships from where you want to study.", href: "/profile", cta: "Set countries →" });
-        if (!user.profile?.targetFields?.length) gaps.push({ label: "Add your fields of study so recommendations match what you actually want to pursue.", href: "/profile", cta: "Add fields →" });
-        if (gaps.length === 0) return null;
-        return (
-          <div className="mb-8 space-y-2">
-            {gaps.map((g) => (
-              <div key={g.href} className="flex items-center justify-between gap-4 px-5 py-3 border border-rule rounded-lg bg-white">
-                <p className="text-sm text-ink-soft leading-snug">{g.label}</p>
-                <Link href={g.href} className="shrink-0 font-mono text-xs text-forest hover:underline whitespace-nowrap">{g.cta}</Link>
-              </div>
-            ))}
-          </div>
-        );
-      })()}
-
-      {/* Stats — minimal, no card border needed; numerals do the work */}
-      <div className="grid grid-cols-3 divide-x divide-rule mb-12 border border-rule rounded-lg overflow-hidden">
-        {[
-          { label: "Active", value: activeApps },
-          { label: "Submitted", value: submitted },
-          { label: "Won", value: won },
-        ].map(({ label, value }) => (
-          <div key={label} className="px-3 sm:px-6 py-4 sm:py-5 bg-white">
-            <p className="font-display text-2xl sm:text-4xl text-ink">{value}</p>
-            <p className="text-xs text-slate font-mono mt-1.5 uppercase tracking-widest">{label}</p>
-          </div>
-        ))}
-
-
-      {/* Analytics pipeline */}
-      {user.savedOpportunities.length > 0 && (() => {
-        const statusCounts: Record<string, number> = {};
-        for (const s of user.savedOpportunities) {
-          statusCounts[s.status] = (statusCounts[s.status] ?? 0) + 1;
+    <div className="page">
+      <PageHeader
+        eyebrow="Dashboard"
+        title={`Welcome back, ${user.fullName.split(" ")[0]}`}
+        actions={
+          <Link href="/" className="btn-primary">
+            <Compass size={18} aria-hidden="true" />
+            Find opportunities
+          </Link>
         }
-        const total = user.savedOpportunities.length;
-        const pipeline = [
-          { key: "interested", label: "Saved", color: "#94a3b8" },
-          { key: "in_progress", label: "In progress", color: "#6d8ec5" },
-          { key: "submitted", label: "Submitted", color: "#b8501f" },
-          { key: "awarded", label: "Won", color: "#3d7a5a" },
-        ].filter(({ key }) => statusCounts[key]);
-        const urgentDeadlines = user.savedOpportunities
-          .map((s) => {
-            const opp = details[s.opportunity];
-            if (!opp?.deadline) return null;
-            const days = Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000);
-            if (days < 0 || days > 60) return null;
-            return { s, opp, days };
-          })
-          .filter(Boolean)
-          .sort((a: any, b: any) => a.days - b.days)
-          .slice(0, 3) as { s: SavedOpportunity; opp: Opportunity; days: number }[];
-        return (
-          <div className="mb-10 grid sm:grid-cols-2 gap-4">
-            <div className="case-card p-5">
-              <p className="text-xs font-mono text-slate uppercase tracking-widest mb-3">Application pipeline</p>
-              <div className="flex rounded-full overflow-hidden h-2.5 mb-4">
-                {pipeline.map(({ key, color }) => (
-                  <div key={key} style={{ width: `${((statusCounts[key] ?? 0) / total) * 100}%`, background: color }} title={`${key}: ${statusCounts[key]}`} />
-                ))}
+      />
+
+      <div className="space-y-6">
+        {isTrialing && trialDaysLeft !== null && (
+          <Alert variant="warn">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold">
+                  {trialDaysLeft === 0
+                    ? "Your free trial ends today"
+                    : trialDaysLeft === 1
+                      ? "1 day left on your free trial"
+                      : `${trialDaysLeft} days left on your free trial`}
+                </p>
+                <p className="mt-0.5">
+                  After the trial you will be charged {user.subscription.gateway === "paystack" ? "through Paystack" : "$7 a month or $55 a year"}. You can cancel any time before it ends.
+                </p>
               </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-                {pipeline.map(({ key, label, color }) => (
-                  <div key={key} className="flex items-center gap-1.5">
-                    <span className="w-2 h-2 rounded-full shrink-0" style={{ background: color }} />
-                    <span className="text-xs text-ink-soft">{label}</span>
-                    <span className="text-xs font-mono text-slate ml-0.5">{statusCounts[key]}</span>
-                  </div>
-                ))}
-              </div>
+              <Link href="/pricing" className="btn-secondary btn-sm shrink-0">
+                Manage subscription
+              </Link>
             </div>
-            <div className="case-card p-5">
-              <p className="text-xs font-mono text-slate uppercase tracking-widest mb-3">Upcoming deadlines</p>
-              {urgentDeadlines.length === 0 ? (
-                <p className="text-xs text-slate">No deadlines in the next 60 days.</p>
-              ) : (
-                <div className="space-y-2.5">
-                  {urgentDeadlines.map(({ s, opp, days }) => (
-                    <div key={s.opportunity} className="flex items-center justify-between gap-3">
-                      <p className="text-sm text-ink truncate">{opp.title}</p>
-                      <span className="text-xs font-mono shrink-0 px-2 py-0.5 rounded" style={{ background: days <= 7 ? "#fef2f2" : days <= 14 ? "#fff7ed" : "#f8fafc", color: days <= 7 ? "#dc2626" : days <= 14 ? "#b8501f" : "#64748b" }}>
-                        {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days}d`}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              <Link href="/deadlines" className="text-xs text-forest font-mono mt-3 block hover:underline">View all deadlines &rarr;</Link>
-            </div>
-          </div>
-        );
-      })()}
-</div>
-
-      {/* Feature shortcuts — bento: [8][4] | [4][4][4] on 12-col */}
-      <div className="grid grid-cols-12 gap-2 sm:gap-3 mb-10 sm:mb-12">
-        {FEATURE_CARDS.map(({ href, Icon, label, desc, pro }, i) => (
-          <Link
-            key={href}
-            href={href}
-            className={`case-card-interactive flex flex-col gap-3 ${i === 0 ? "col-span-12 sm:col-span-8 p-5 sm:p-7" :
-              i === 1 ? "col-span-12 sm:col-span-4 p-5" :
-                "col-span-12 sm:col-span-4 p-5"
-              }`}
-          >
-            <div className="flex items-start justify-between">
-              <Icon size={i === 0 ? 32 : 28} className="text-forest" aria-hidden="true" />
-              {pro && !isPro && (
-                <span className="font-mono text-xs text-slate border border-rule px-1.5 py-0.5 rounded">Pro</span>
-              )}
-            </div>
-            <div>
-              <p className={`font-display text-ink ${i === 0 ? "text-xl" : "text-base"}`}>{label}</p>
-              <p className="text-xs text-slate mt-1 leading-snug">{desc}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      {/* Referral */}
-      <div className="mb-10">
-        <ReferralCard />
-      </div>
-
-      {/* Readiness Score */}
-      <div className="mb-10">
-        {!user.cvData ? (
-          <div className="case-card p-6">
-            <p className="font-mono text-xs tracking-widest uppercase text-slate mb-2">Scholarship Readiness</p>
-            <p className="text-ink font-display text-xl">Upload your CV to unlock your readiness score</p>
-            <p className="text-ink-soft text-sm mt-2">
-              Your score tells you exactly where you stand and what to fix before applying.
-            </p>
-            <Link href="/cv" className="btn-primary inline-flex mt-4">
-              Upload CV →
-            </Link>
-          </div>
-        ) : readiness ? (
-          <ReadinessScoreCard readiness={readiness} onRefresh={refreshReadiness} refreshing={readinessLoading} />
-        ) : (
-          <div className="case-card p-6">
-            <p className="font-mono text-xs tracking-widest uppercase text-slate mb-2">Scholarship Readiness</p>
-            <p className="text-ink-soft text-sm mb-4">Generate your personalised readiness score to see exactly where you stand and what to improve.</p>
-            {readinessError && <p className="text-alert text-sm mb-3">{readinessError}</p>}
-            <button
-              onClick={loadReadiness}
-              disabled={readinessLoading}
-              className="btn-primary"
-            >
-              {readinessLoading ? "Calculating…" : "Calculate my score"}
-            </button>
-          </div>
+          </Alert>
         )}
-      </div>
 
-      {/* Share your win */}
-      {awardedOpps.length > 0 && (
-        <div className="mb-10 case-card p-6" style={{ background: "#6d8ec5", border: "none" }}>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div className="flex-1">
-              <Trophy size={28} className="mb-1 text-brass" aria-hidden="true" />
-              <p className="font-display text-xl text-white">
-                You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won — celebrate it
-              </p>
-              <p className="text-white/60 text-sm mt-1 leading-relaxed">
-                Share your story on the ScolarNav wins wall. Other students preparing their applications will see it — and it might be the thing that keeps someone going.
-              </p>
+        {coachingPaid && (
+          <Alert variant="ok">
+            <p className="font-semibold">Payment confirmed. Your coaching session is booked.</p>
+            <p className="mt-0.5">Your coach will review your request and accept shortly. You will get an email once it is confirmed.</p>
+          </Alert>
+        )}
+
+        {gaps.length > 0 && (
+          <section aria-labelledby="setup-heading" className="card card-pad">
+            <h2 id="setup-heading" className="h3">Finish setting up</h2>
+            <ul className="mt-3 divide-y divide-rule">
+              {gaps.map((g) => (
+                <li key={g.label} className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <p className="text-sm leading-snug text-ink-soft">{g.label}</p>
+                  <Link href={g.href} className="btn-secondary btn-sm shrink-0 self-start sm:self-auto">{g.cta}</Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
+        {/* Headline numbers */}
+        <section aria-label="Your applications at a glance" className="grid grid-cols-3 gap-3 sm:gap-4">
+          {[
+            { label: "Active", value: activeApps },
+            { label: "Submitted", value: submitted },
+            { label: "Won", value: won },
+          ].map(({ label, value }) => (
+            <div key={label} className="card card-pad">
+              <p className="font-display text-3xl text-ink sm:text-4xl">{value}</p>
+              <p className="mt-1 text-sm text-slate">{label}</p>
             </div>
-            <a
-              href="/wins/share"
-              className="shrink-0 inline-flex items-center gap-2 px-5 py-2.5 text-sm font-medium text-navy bg-white hover:bg-surface transition-colors"
-            >
-              Share my win →
-            </a>
+          ))}
+        </section>
+
+        {/* Pipeline and deadlines */}
+        {total > 0 && (
+          <section className="grid gap-4 md:grid-cols-2">
+            <div className="card card-pad">
+              <h2 className="h3">Application pipeline</h2>
+              <div className="mt-4 flex h-3 overflow-hidden rounded-full bg-surface-2" role="img" aria-label="Share of saved opportunities by stage">
+                {pipeline.map(({ key, bar }) => (
+                  <div key={key} className={bar} style={{ width: `${((statusCounts[key] ?? 0) / total) * 100}%` }} />
+                ))}
+              </div>
+              <ul className="mt-4 flex flex-wrap gap-x-5 gap-y-2">
+                {pipeline.map(({ key, label, bar }) => (
+                  <li key={key} className="flex items-center gap-2 text-sm text-ink-soft">
+                    <span className={`h-2.5 w-2.5 rounded-full ${bar}`} aria-hidden="true" />
+                    {label}
+                    <span className="font-semibold text-ink">{statusCounts[key]}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="card card-pad">
+              <h2 className="h3">Upcoming deadlines</h2>
+              {urgentDeadlines.length === 0 ? (
+                <p className="mt-4 text-sm text-slate">No deadlines in the next 60 days.</p>
+              ) : (
+                <ul className="mt-4 space-y-3">
+                  {urgentDeadlines.map(({ s, opp, days }) => (
+                    <li key={s.opportunity} className="flex items-center justify-between gap-3">
+                      <Link href={opportunityPath(opp)} className="min-w-0 truncate text-sm font-medium text-ink hover:text-forest">{opp.title}</Link>
+                      <span className={`badge shrink-0 ${days <= 7 ? "badge-danger" : days <= 14 ? "badge-warn" : ""}`}>
+                        {days === 0 ? "Today" : days === 1 ? "Tomorrow" : `${days} days`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link href="/deadlines" className="mt-4 inline-block text-sm font-semibold text-forest hover:underline">View all deadlines</Link>
+            </div>
+          </section>
+        )}
+
+        {/* Readiness */}
+        <section aria-label="Scholarship readiness">
+          {!user.cvData ? (
+            <div className="card card-pad">
+              <p className="eyebrow">Scholarship readiness</p>
+              <h2 className="mt-2 h3">Upload your CV to unlock your readiness score</h2>
+              <p className="mt-2 text-sm text-slate">Your score shows where you stand and what to fix before you apply.</p>
+              <Link href="/cv" className="btn-primary mt-4">Upload CV</Link>
+            </div>
+          ) : readiness ? (
+            <ReadinessScoreCard readiness={readiness} onRefresh={refreshReadiness} refreshing={readinessLoading} />
+          ) : (
+            <div className="card card-pad">
+              <p className="eyebrow">Scholarship readiness</p>
+              <p className="mb-4 mt-2 text-sm text-ink-soft">Generate your personalised readiness score to see where you stand and what to improve.</p>
+              {readinessError && <Alert variant="danger" className="mb-3">{readinessError}</Alert>}
+              <button type="button" onClick={loadReadiness} disabled={readinessLoading} aria-busy={readinessLoading} className="btn-primary">
+                {readinessLoading ? "Calculating" : "Calculate my score"}
+              </button>
+            </div>
+          )}
+        </section>
+
+        {/* Win banner */}
+        {awardedOpps.length > 0 && (
+          <section className="rounded-xl bg-navy p-6 text-white">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex-1">
+                <Trophy size={28} className="mb-2 text-brass" aria-hidden="true" />
+                <h2 className="font-display text-xl">
+                  You marked {awardedOpps.length === 1 ? "a scholarship" : `${awardedOpps.length} scholarships`} as won
+                </h2>
+                <p className="mt-1 text-sm leading-relaxed text-white/80">
+                  Share your story on the wins wall. Other students preparing their applications will see it.
+                </p>
+              </div>
+              <Link href="/wins/share" className="inline-flex min-h-touch shrink-0 items-center justify-center rounded-md bg-white px-5 text-sm font-semibold text-navy transition-colors hover:bg-surface-2">
+                Share my win
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {/* Saved opportunities */}
+        <section aria-labelledby="saved-heading">
+          <div className="mb-4 flex items-center justify-between">
+            <h2 id="saved-heading" className="h2">Saved opportunities</h2>
+            <Link href="/deadlines" className="text-sm font-semibold text-forest hover:underline">View deadlines</Link>
           </div>
-        </div>
-      )}
 
-      {/* Case Files */}
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="font-display text-2xl text-ink">Case Files</h2>
-          <Link href="/deadlines" className="text-sm text-forest font-mono hover:underline">
-            View deadlines →
-          </Link>
-        </div>
+          {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
-        {error && <p className="text-alert text-sm mb-4">{error}</p>}
-
-        {user.savedOpportunities.length === 0 ? (
-          <div className="case-card p-8 text-center">
-            <p className="text-ink-soft">You haven't saved any opportunities yet.</p>
-            <Link href="/" className="inline-block mt-3 text-forest underline text-sm">
-              Browse the catalogue →
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {user.savedOpportunities.map((s: SavedOpportunity) => {
-              const opp = details[s.opportunity];
-              return (
-                <div key={s.opportunity} className="case-card p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="flex-1">
-                    <Link href={`/opportunities/${s.opportunity}`} className="font-display text-lg text-ink hover:text-forest transition-colors">
-                      {opp?.title || "Loading…"}
-                    </Link>
-                    <p className="text-sm text-slate mt-0.5">{opp?.provider}</p>
-                    {opp?.deadline && (() => {
-                      const ms = new Date(opp.deadline).getTime() - Date.now();
-                      const days = Math.ceil(ms / 86400000);
-                      const urgent = days >= 0 && days <= 14;
-                      return (
-                        <p className="font-mono text-xs mt-1" style={{ color: urgent ? "#b8501f" : "#94a3b8" }}>
+          {user.savedOpportunities.length === 0 ? (
+            <EmptyState
+              icon={Bookmark}
+              title="Nothing saved yet"
+              description="Save opportunities you like and they will appear here with their deadlines and status."
+              action={<Link href="/" className="btn-primary">Browse opportunities</Link>}
+            />
+          ) : (
+            <ul className="space-y-3">
+              {user.savedOpportunities.map((s: SavedOpportunity) => {
+                const opp = details[s.opportunity];
+                const days = opp?.deadline ? Math.ceil((new Date(opp.deadline).getTime() - Date.now()) / 86400000) : null;
+                const urgent = days !== null && days >= 0 && days <= 14;
+                return (
+                  <li key={s.opportunity} className="card card-pad flex flex-col gap-4 sm:flex-row sm:items-center">
+                    <div className="min-w-0 flex-1">
+                      {opp ? (
+                        <Link href={opportunityPath(opp)} className="font-display text-lg text-ink transition-colors hover:text-forest">
+                          {opp.title}
+                        </Link>
+                      ) : (
+                        <Skeleton className="h-6 w-56 max-w-full" />
+                      )}
+                      {opp?.provider && <p className="mt-0.5 text-sm text-slate">{opp.provider}</p>}
+                      {opp?.deadline && days !== null && (
+                        <p className={`mt-1 text-sm ${urgent ? "font-semibold text-warn" : "text-slate"}`}>
                           {urgent && days <= 3
-                            ? days === 0 ? "Closes today" : `${days}d left`
+                            ? days === 0 ? "Closes today" : `${days} days left`
                             : `Due ${new Date(opp.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`}
                         </p>
-                      );
-                    })()}
-                  </div>
+                      )}
+                    </div>
 
-                  <div className="flex items-center gap-3 flex-wrap">
-                    <select
-                      value={s.status}
-                      onChange={(e) => updateStatus(s.opportunity, e.target.value)}
-                      className="input w-auto text-sm py-1.5"
-                    >
-                      {Object.entries(STATUS_LABELS).map(([value, label]) => (
-                        <option key={value} value={value}>{label}</option>
-                      ))}
-                    </select>
-                    <Link href={`/applications/${s.opportunity}`} className="text-sm text-forest underline whitespace-nowrap">
-                      Open coaching
-                    </Link>
-                    <Link href={`/interview?opportunity=${s.opportunity}`} className="text-sm text-slate hover:text-ink whitespace-nowrap">
-                      Practice interview
-                    </Link>
-                    <button onClick={() => removeSaved(s.opportunity)} className="text-sm text-alert whitespace-nowrap">
-                      Remove
-                    </button>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <label className="sr-only" htmlFor={`status-${s.opportunity}`}>Status</label>
+                      <select
+                        id={`status-${s.opportunity}`}
+                        value={s.status}
+                        onChange={(e) => updateStatus(s.opportunity, e.target.value)}
+                        className="input w-auto"
+                      >
+                        {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                          <option key={value} value={value}>{label}</option>
+                        ))}
+                      </select>
+                      <Link href={`/applications/${s.opportunity}`} className="btn-secondary btn-sm">Open coaching</Link>
+                      <Link href={`/interview?opportunity=${s.opportunity}`} className="btn-ghost btn-sm">Practice interview</Link>
+                      <button type="button" onClick={() => removeSaved(s.opportunity)} className="btn-ghost btn-sm text-danger hover:text-danger">
+                        Remove
+                      </button>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </section>
+
+        {/* Tools */}
+        <section aria-labelledby="tools-heading">
+          <h2 id="tools-heading" className="h2 mb-4">Your tools</h2>
+          <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {FEATURE_CARDS.map(({ href, Icon, label, desc, pro }) => (
+              <li key={href}>
+                <Link href={href} className="card-interactive flex h-full flex-col gap-3 p-5">
+                  <div className="flex items-start justify-between">
+                    <Icon size={24} className="text-forest" aria-hidden="true" />
+                    {pro && !isPro && <span className="badge badge-brand">Pro</span>}
                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  <div>
+                    <p className="font-display text-lg text-ink">{label}</p>
+                    <p className="mt-1 text-sm text-slate">{desc}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <ReferralCard />
       </div>
     </div>
   );
@@ -438,7 +440,7 @@ function DashboardContent() {
 
 export default function DashboardPage() {
   return (
-    <Suspense>
+    <Suspense fallback={<DashboardSkeleton />}>
       <DashboardContent />
     </Suspense>
   );

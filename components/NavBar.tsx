@@ -1,32 +1,27 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ChevronDown, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import Wordmark from "./Wordmark";
 import { SHOW_GRANTS } from "@/lib/site";
 
-const TOOLS = [
-  { href: "/mentor", label: "Mentor", pro: false },
-  { href: "/roadmap", label: "My Roadmap", pro: true },
-  { href: "/interview", label: "Mock Interview", pro: true },
-  { href: "/deadlines", label: "Deadlines", pro: false },
-  { href: "/cv", label: "My CV", pro: false },
-  { href: "/submit-scholarship", label: "Submit a Scholarship", pro: false },
+const PUBLIC_LINKS = [
+  { href: "/", label: "Discover" },
+  ...(SHOW_GRANTS ? [{ href: "/grants", label: "Grants" }] : []),
+  { href: "/countries", label: "Country guides" },
+  { href: "/wins", label: "Wins" },
 ];
 
+/** Top bar for public pages. Signed-in working screens use AppShell instead. */
 export default function NavBar() {
   const { user, logout, loading } = useAuth();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [toolsOpen, setToolsOpen] = useState(false);
   const [userOpen, setUserOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
-
-  const toolsRef = useRef<HTMLDivElement>(null);
   const userRef = useRef<HTMLDivElement>(null);
-  const mobileRef = useRef<HTMLDivElement>(null);
 
   const isPro =
     user?.subscription?.plan === "pro" &&
@@ -34,308 +29,170 @@ export default function NavBar() {
 
   useEffect(() => {
     setMobileOpen(false);
-    setToolsOpen(false);
     setUserOpen(false);
   }, [pathname]);
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (toolsRef.current && !toolsRef.current.contains(e.target as Node)) setToolsOpen(false);
+    function onClick(e: MouseEvent) {
       if (userRef.current && !userRef.current.contains(e.target as Node)) setUserOpen(false);
-      if (mobileRef.current && !mobileRef.current.contains(e.target as Node)) setMobileOpen(false);
     }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setUserOpen(false);
+        setMobileOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
   }, []);
 
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  const linkClass = (href: string) =>
-    `text-sm transition-colors px-3 py-1.5 rounded ${
-      pathname === href
-        ? "bg-white/[0.09] text-white"
-        : "text-white/50 hover:text-white/90"
+  const isCurrent = (href: string) => (href === "/" ? pathname === "/" : pathname === href || !!pathname?.startsWith(`${href}/`));
+  const desktopLink = (href: string) =>
+    `inline-flex min-h-touch items-center rounded-md px-3 text-sm font-medium transition-colors ${
+      isCurrent(href) ? "bg-white/15 text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
     }`;
+  const menuItem = "flex min-h-touch w-full items-center px-4 text-left text-sm text-ink-soft transition-colors hover:bg-surface hover:text-ink";
 
   return (
-    <header
-      className="sticky top-0 z-30 transition-shadow duration-200"
-      style={{
-        backgroundColor: "#1a2d45",
-        boxShadow: scrolled ? "0 1px 2px rgba(15,23,42,0.25)" : "none",
-      }}
-    >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-6">
-
-        {/* Logo */}
+    <header className="sticky top-0 z-30 bg-navy">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-6 px-4 sm:px-6">
         <Link href="/" className="shrink-0" aria-label="ScolarNav home">
           <Wordmark onDark />
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden lg:flex items-center gap-0.5 text-sm flex-1">
-          <Link href="/" className={linkClass("/")}>Discover</Link>
-          {SHOW_GRANTS && <Link href="/grants" className={linkClass("/grants")}>Grants</Link>}
-          <Link href="/countries" className={linkClass("/countries")}>Countries</Link>
-          <Link href="/wins" className={linkClass("/wins")}>Wins</Link>
-
-          {!loading && user && (
-            <>
-              {/* Tools dropdown */}
-              <div className="relative" ref={toolsRef}>
-                <button
-                  onClick={() => setToolsOpen((o) => !o)}
-                  className={`text-sm transition-colors px-3 py-1.5 rounded flex items-center gap-1.5 ${
-                    toolsOpen ? "bg-white/[0.09] text-white" : "text-white/50 hover:text-white/90"
-                  }`}
-                >
-                  Tools
-                  <svg
-                    width="9" height="5" viewBox="0 0 9 5" fill="none"
-                    className={`transition-transform duration-150 ${toolsOpen ? "rotate-180" : ""}`}
-                  >
-                    <path d="M0.5 0.5L4.5 4.5L8.5 0.5" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-
-                {toolsOpen && (
-                  <div className="absolute top-full left-0 mt-2 w-52 bg-white border border-rule rounded-xl py-1.5 z-50 shadow-lg shadow-black/10">
-                    {TOOLS.map(({ href, label, pro }) => (
-                      <Link
-                        key={href}
-                        href={href}
-                        className="flex items-center justify-between px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors"
-                      >
-                        <span>{label}</span>
-                        {pro && !isPro && (
-                          <span className="font-mono text-xs tracking-wider px-1.5 py-0.5 rounded-sm border"
-                            style={{ color: "#b8501f", borderColor: "rgba(211,98,44,0.3)" }}>
-                            PRO
-                          </span>
-                        )}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Link href="/dashboard" className={linkClass("/dashboard")}>Dashboard</Link>
-
-              {user.isAdmin && (
-                <Link
-                  href="/admin"
-                  className="ml-1 font-mono text-xs uppercase tracking-widest transition-colors px-2 py-1"
-                  style={{ color: "rgba(240,200,69,0.6)" }}
-                  onMouseEnter={e => (e.currentTarget.style.color = "#f0c845")}
-                  onMouseLeave={e => (e.currentTarget.style.color = "rgba(240,200,69,0.6)")}
-                >
-                  Admin
-                </Link>
-              )}
-            </>
-          )}
-
+        {/* Desktop navigation */}
+        <nav aria-label="Main" className="hidden flex-1 items-center gap-1 lg:flex">
+          {PUBLIC_LINKS.map(({ href, label }) => (
+            <Link key={href} href={href} aria-current={isCurrent(href) ? "page" : undefined} className={desktopLink(href)}>
+              {label}
+            </Link>
+          ))}
           {!loading && !user && (
-            <Link href="/pricing" className={linkClass("/pricing")}>Pricing</Link>
+            <Link href="/pricing" aria-current={isCurrent("/pricing") ? "page" : undefined} className={desktopLink("/pricing")}>
+              Pricing
+            </Link>
           )}
         </nav>
 
-        {/* Desktop right actions */}
-        <div className="hidden lg:flex items-center gap-3">
+        {/* Desktop actions */}
+        <div className="hidden items-center gap-2 lg:flex">
+          {loading && <div aria-hidden="true" className="h-9 w-24 animate-soft-pulse rounded-md bg-white/15" />}
+
           {!loading && !user && (
             <>
-              <Link href="/login" className="text-sm text-white/50 hover:text-white/90 transition-colors">
+              <Link href="/login" className="inline-flex min-h-touch items-center px-3 text-sm font-medium text-white/80 transition-colors hover:text-white">
                 Sign in
               </Link>
-              <Link
-                href="/register"
-                className="text-sm font-medium text-white px-4 py-2 rounded-md transition-colors"
-                style={{ backgroundColor: "#b8501f" }}
-                onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#c05520")}
-                onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#b8501f")}
-              >
+              <Link href="/register" className="btn-primary">
                 Get started
               </Link>
             </>
           )}
 
           {!loading && user && (
-            <div className="relative" ref={userRef}>
-              <button
-                onClick={() => setUserOpen((o) => !o)}
-                className="w-8 h-8 rounded text-xs font-semibold flex items-center justify-center hover:opacity-85 transition-opacity"
-                style={{ backgroundColor: "#f0c845", color: "#1a2d45" }}
-                aria-label="Account menu"
-              >
-                {user.fullName.charAt(0).toUpperCase()}
-              </button>
-
-              {userOpen && (
-                <div className="absolute top-full right-0 mt-2 w-52 bg-white border border-rule rounded-xl py-1.5 z-50 shadow-lg shadow-black/10">
-                  <div className="px-4 py-2.5 border-b border-rule mb-1">
-                    <p className="text-xs font-semibold text-ink truncate">{user.fullName}</p>
-                    <p className="text-xs text-slate truncate mt-0.5">
-                      {isPro
-                        ? <span style={{ color: "#b8501f" }} className="font-medium">Pro</span>
-                        : "Free plan"
-                      }
-                    </p>
-                  </div>
-                  <Link href="/profile" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
-                    Profile
-                  </Link>
-                  <Link href="/bookings" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
-                    My Sessions
-                  </Link>
-                  {user.isCoach && (
-                    <Link href="/coaches/dashboard" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
-                      Coach Portal
-                    </Link>
-                  )}
-                  {!isPro && (
-                    <Link
-                      href="/pricing"
-                      className="block px-4 py-2.5 text-sm font-medium transition-colors hover:bg-surface"
-                      style={{ color: "#b8501f" }}
-                    >
-                      Upgrade to Pro →
-                    </Link>
-                  )}
-                  {isPro && (
-                    <Link href="/pricing" className="block px-4 py-2.5 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">
-                      Billing
-                    </Link>
-                  )}
-                  <div className="border-t border-rule mt-1 pt-1">
-                    <button
-                      onClick={logout}
-                      className="block w-full text-left px-4 py-2.5 text-sm text-alert hover:bg-red-50 transition-colors"
-                    >
-                      Sign out
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Mobile */}
-        <div className="flex lg:hidden items-center gap-3" ref={mobileRef}>
-          {!loading && !user && (
-            <Link
-              href="/register"
-              className="text-xs font-medium text-white px-3.5 py-1.5 rounded-md transition-colors"
-              style={{ backgroundColor: "#b8501f" }}
-            >
-              Get started
-            </Link>
-          )}
-          {!loading && user && !isPro && (
-            <Link
-              href="/pricing"
-              className="font-mono text-xs tracking-wider px-2.5 py-1 rounded-sm uppercase transition-colors"
-              style={{ color: "#b8501f", border: "1px solid rgba(211,98,44,0.35)" }}
-            >
-              Upgrade
-            </Link>
-          )}
-          <button
-            onClick={() => setMobileOpen((o) => !o)}
-            aria-label="Toggle menu"
-            className="flex flex-col gap-1.5 p-2.5 -mr-1.5 rounded-md hover:bg-white/10 transition-colors"
-          >
-            <span className={`block h-px w-5 bg-white transition-transform duration-200 origin-center ${mobileOpen ? "rotate-45 translate-y-[7px]" : ""}`} />
-            <span className={`block h-px w-5 bg-white transition-opacity duration-200 ${mobileOpen ? "opacity-0" : ""}`} />
-            <span className={`block h-px w-5 bg-white transition-transform duration-200 origin-center ${mobileOpen ? "-rotate-45 -translate-y-[7px]" : ""}`} />
-          </button>
-
-          {mobileOpen && (
-            <div className="absolute top-full left-0 right-0 bg-white border-b border-rule z-40 shadow-md">
-              <div className="py-2">
-                {[
-                  { href: "/", label: "Discover" },
-                  ...(SHOW_GRANTS ? [{ href: "/grants", label: "Grants" }] : []),
-                  { href: "/countries", label: "Country Guides" },
-                  { href: "/wins", label: "Wins" },
-                ].map(({ href, label }) => (
-                  <Link
-                    key={href}
-                    href={href}
-                    className={`block px-5 py-3 text-sm transition-colors ${
-                      pathname === href
-                        ? "font-medium"
-                        : "text-ink-soft hover:text-ink hover:bg-surface"
-                    }`}
-                    style={pathname === href ? { color: "#b8501f" } : undefined}
-                  >
-                    {label}
-                  </Link>
-                ))}
-
-                {!loading && user && (
-                  <>
-                    <div className="border-t border-rule mt-1 pt-1">
-                      <p className="px-5 py-2 text-xs font-mono text-slate/50 uppercase tracking-widest">
-                        Tools
-                      </p>
-                      {TOOLS.map(({ href, label, pro }) => (
-                        <Link
-                          key={href}
-                          href={href}
-                          className="flex items-center justify-between px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors"
-                        >
-                          <span>{label}</span>
-                          {pro && !isPro && (
-                            <span
-                              className="font-mono text-xs tracking-wider px-1.5 py-0.5 rounded-sm border"
-                              style={{ color: "#b8501f", borderColor: "rgba(211,98,44,0.3)" }}
-                            >
-                              PRO
-                            </span>
-                          )}
-                        </Link>
-                      ))}
+            <>
+              <Link href="/dashboard" className="btn-primary">
+                Dashboard
+              </Link>
+              <div className="relative" ref={userRef}>
+                <button
+                  type="button"
+                  onClick={() => setUserOpen((o) => !o)}
+                  aria-expanded={userOpen}
+                  aria-haspopup="menu"
+                  aria-label="Account menu"
+                  className="flex min-h-touch items-center gap-2 rounded-md px-2 text-white transition-colors hover:bg-white/10"
+                >
+                  <span className="flex h-8 w-8 items-center justify-center rounded-full bg-brass text-sm font-semibold text-navy">
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </span>
+                  <ChevronDown size={16} aria-hidden="true" className={`transition-transform duration-150 ${userOpen ? "rotate-180" : ""}`} />
+                </button>
+                {userOpen && (
+                  <div role="menu" className="absolute right-0 top-full z-50 mt-2 w-56 animate-fade-in rounded-xl bg-white py-1.5 shadow-raised">
+                    <div className="mb-1 border-b border-rule px-4 py-2.5">
+                      <p className="truncate text-sm font-semibold text-ink">{user.fullName}</p>
+                      <p className="mt-0.5 text-xs text-slate">{isPro ? "Pro plan" : "Free plan"}</p>
                     </div>
-                    <div className="border-t border-rule mt-1 pt-1">
-                      <Link href="/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Dashboard</Link>
-                      <Link href="/profile" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Profile</Link>
-                      <Link href="/bookings" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">My Sessions</Link>
-                      {user.isCoach && (
-                        <Link href="/coaches/dashboard" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Coach Portal</Link>
-                      )}
-                      {user.isAdmin && (
-                        <Link href="/admin" className="block px-5 py-3 text-xs font-mono uppercase tracking-widest" style={{ color: "#f0c845" }}>
-                          Admin
-                        </Link>
-                      )}
-                    </div>
-                    <div className="border-t border-rule mt-1 pt-1">
-                      <button
-                        onClick={() => { logout(); setMobileOpen(false); }}
-                        className="block w-full text-left px-5 py-3 text-sm text-alert hover:bg-red-50 transition-colors"
-                      >
+                    <Link role="menuitem" href="/profile" className={menuItem}>Profile</Link>
+                    <Link role="menuitem" href="/bookings" className={menuItem}>My sessions</Link>
+                    {user.isCoach && <Link role="menuitem" href="/coaches/dashboard" className={menuItem}>Coach portal</Link>}
+                    <Link role="menuitem" href="/pricing" className={`${menuItem} ${isPro ? "" : "font-semibold !text-forest"}`}>
+                      {isPro ? "Plan and billing" : "Upgrade to Pro"}
+                    </Link>
+                    {user.isAdmin && <Link role="menuitem" href="/admin" className={menuItem}>Admin</Link>}
+                    <div className="mt-1 border-t border-rule pt-1">
+                      <button type="button" role="menuitem" onClick={logout} className={`${menuItem} gap-2 !text-danger`}>
+                        <LogOut size={16} aria-hidden="true" />
                         Sign out
                       </button>
                     </div>
-                  </>
-                )}
-
-                {!loading && !user && (
-                  <>
-                    <Link href="/pricing" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Pricing</Link>
-                    <Link href="/login" className="block px-5 py-3 text-sm text-ink-soft hover:text-ink hover:bg-surface transition-colors">Sign in</Link>
-                  </>
+                  </div>
                 )}
               </div>
-            </div>
+            </>
           )}
         </div>
+
+        {/* Mobile actions */}
+        <div className="flex items-center gap-2 lg:hidden">
+          {!loading && !user && (
+            <Link href="/register" className="btn-primary btn-sm">
+              Get started
+            </Link>
+          )}
+          <button
+            type="button"
+            onClick={() => setMobileOpen((o) => !o)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+            className="flex h-11 w-11 items-center justify-center rounded-md text-white transition-colors hover:bg-white/10"
+          >
+            {mobileOpen ? <X size={22} aria-hidden="true" /> : <Menu size={22} aria-hidden="true" />}
+          </button>
+        </div>
       </div>
+
+      {/* Mobile menu */}
+      {mobileOpen && (
+        <div className="animate-fade-in border-t border-white/10 bg-white shadow-raised lg:hidden">
+          <nav aria-label="Mobile" className="mx-auto max-w-6xl py-2">
+            {PUBLIC_LINKS.map(({ href, label }) => (
+              <Link
+                key={href}
+                href={href}
+                aria-current={isCurrent(href) ? "page" : undefined}
+                className={`${menuItem} px-5 ${isCurrent(href) ? "font-semibold !text-forest" : ""}`}
+              >
+                {label}
+              </Link>
+            ))}
+            {!loading && !user && (
+              <>
+                <Link href="/pricing" className={`${menuItem} px-5`}>Pricing</Link>
+                <Link href="/login" className={`${menuItem} px-5`}>Sign in</Link>
+              </>
+            )}
+            {!loading && user && (
+              <div className="mt-1 border-t border-rule pt-1">
+                <Link href="/dashboard" className={`${menuItem} px-5 font-semibold !text-forest`}>Dashboard</Link>
+                <Link href="/profile" className={`${menuItem} px-5`}>Profile</Link>
+                <Link href="/bookings" className={`${menuItem} px-5`}>My sessions</Link>
+                {user.isCoach && <Link href="/coaches/dashboard" className={`${menuItem} px-5`}>Coach portal</Link>}
+                {user.isAdmin && <Link href="/admin" className={`${menuItem} px-5`}>Admin</Link>}
+                <button type="button" onClick={() => { logout(); setMobileOpen(false); }} className={`${menuItem} gap-2 px-5 !text-danger`}>
+                  <LogOut size={16} aria-hidden="true" />
+                  Sign out
+                </button>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

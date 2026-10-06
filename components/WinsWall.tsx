@@ -64,7 +64,7 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
               href="/register"
               className="inline-flex mt-8 px-6 py-3 bg-white text-navy text-sm font-medium hover:bg-surface transition-colors"
             >
-              Join ScolarNav — it's free
+              Join ScolarNav, it's free
             </Link>
           )}
         </div>
@@ -81,7 +81,7 @@ export default function WinsWall({ initial }: { initial: Celebration[] | null })
         {!loading && celebrations.length === 0 && (
           <div className="text-center py-20">
             <Trophy size={40} className="mx-auto mb-4 text-brass" aria-hidden="true" />
-            <p className="text-white/60 text-base">No wins shared yet — be the first.</p>
+            <p className="text-white/60 text-base">No wins shared yet, be the first.</p>
             {user && (
               <Link href="/wins/share" className="inline-flex mt-6 px-5 py-2.5 bg-brass text-white text-sm hover:opacity-90 transition-opacity">
                 Share your win

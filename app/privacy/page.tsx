@@ -12,10 +12,10 @@ const LAST_UPDATED = "4 September 2026";
 
 export default function PrivacyPage() {
   return (
-    <div className="max-w-3xl mx-auto px-6 py-14 sm:py-20">
-      <p className="font-mono text-xs tracking-widest uppercase text-brass mb-2">Legal</p>
-      <h1 className="font-display text-4xl sm:text-5xl text-ink leading-tight">Privacy Policy</h1>
-      <p className="text-slate text-sm font-mono mt-3">Last updated: {LAST_UPDATED}</p>
+    <div className="page-narrow">
+      <p className="eyebrow mb-2">Legal</p>
+      <h1 className="h1">Privacy Policy</h1>
+      <p className="caption mt-3">Last updated: {LAST_UPDATED}</p>
 
       <div className="mt-6 case-card p-5">
         <p className="text-sm text-ink-soft leading-relaxed">
@@ -28,7 +28,7 @@ export default function PrivacyPage() {
       <div className="mt-10 space-y-10 text-ink-soft leading-relaxed">
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">1. Who We Are</h2>
+          <h2 className="h3 mb-3">1. Who We Are</h2>
           <p>
             ScolarNav is operated by ScolarNav ("we", "us", "our"), a company focused on
             helping African students access global scholarship and education opportunities. This policy
@@ -46,37 +46,37 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">2. Data We Collect</h2>
+          <h2 className="h3 mb-3">2. Data We Collect</h2>
 
-          <h3 className="font-medium text-ink mt-4 mb-2">2.1 Account information</h3>
+          <h3 className="mt-4 mb-2 font-semibold text-ink">2.1 Account information</h3>
           <p>
             When you register, we collect your full name, email address, country, and a hashed password
             (we never store your password in plain text). If you sign up via Google, we receive your name,
-            email, and profile picture from Google — no password is stored.
+            email, and profile picture from Google, no password is stored.
           </p>
 
-          <h3 className="font-medium text-ink mt-4 mb-2">2.2 CV and profile data</h3>
+          <h3 className="mt-4 mb-2 font-semibold text-ink">2.2 CV and profile data</h3>
           <p>
-            If you upload a CV, we parse and store its contents — including education history, work
-            experience, skills, languages, and certifications — to power our personalised matching and
+            If you upload a CV, we parse and store its contents, including education history, work
+            experience, skills, languages, and certifications, to power our personalised matching and
             coaching features. You can delete your CV at any time from your profile.
           </p>
 
-          <h3 className="font-medium text-ink mt-4 mb-2">2.3 Usage data</h3>
+          <h3 className="mt-4 mb-2 font-semibold text-ink">2.3 Usage data</h3>
           <p>
             We record which opportunities you save, your application status updates, coaching sessions,
             interview practice sessions, and readiness scores. This data is used to personalise your
             experience and is not shared with scholarship providers.
           </p>
 
-          <h3 className="font-medium text-ink mt-4 mb-2">2.4 Payment data</h3>
+          <h3 className="mt-4 mb-2 font-semibold text-ink">2.4 Payment data</h3>
           <p>
             Payments are processed by Stripe (international) or Paystack (African users). We do not store
-            your card details — those are held securely by the payment processor. We do store a record of
+            your card details, those are held securely by the payment processor. We do store a record of
             your subscription status, plan, and payment history.
           </p>
 
-          <h3 className="font-medium text-ink mt-4 mb-2">2.5 Technical data</h3>
+          <h3 className="mt-4 mb-2 font-semibold text-ink">2.5 Technical data</h3>
           <p>
             We collect standard server logs including IP address, browser type, and pages visited, for
             security monitoring and debugging. These are not linked to your personal profile.
@@ -84,14 +84,14 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">3. How We Use Your Data</h2>
+          <h2 className="h3 mb-3">3. How We Use Your Data</h2>
           <ul className="space-y-2 list-disc list-inside">
             <li>To create and manage your account.</li>
             <li>To match you with relevant scholarship and funding opportunities.</li>
             <li>To provide AI-powered coaching, interview practice, roadmaps, and readiness scores.</li>
             <li>To process payments and manage your subscription.</li>
             <li>To send transactional emails (account verification, password reset, subscription receipts).</li>
-            <li>To send product updates and relevant opportunities — you can opt out at any time.</li>
+            <li>To send product updates and relevant opportunities, you can opt out at any time.</li>
             <li>To detect and prevent fraud, abuse, and security incidents.</li>
             <li>To comply with legal obligations.</li>
           </ul>
@@ -101,22 +101,22 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">4. Legal Basis for Processing</h2>
+          <h2 className="h3 mb-3">4. Legal Basis for Processing</h2>
           <p>We process your data on the following legal bases:</p>
           <ul className="mt-3 space-y-2 list-disc list-inside">
             <li><strong className="text-ink">Contract:</strong> Processing necessary to deliver the services you signed up for.</li>
             <li><strong className="text-ink">Legitimate interests:</strong> Security, fraud prevention, and improving the platform.</li>
-            <li><strong className="text-ink">Consent:</strong> Marketing emails — you can withdraw consent at any time.</li>
+            <li><strong className="text-ink">Consent:</strong> Marketing emails, you can withdraw consent at any time.</li>
             <li><strong className="text-ink">Legal obligation:</strong> Where we are required to retain data by law.</li>
           </ul>
-          <p className="mt-3 text-xs font-mono text-slate">
+          <p className="mt-3 text-sm text-slate">
             This policy is compliant with the Nigeria Data Protection Act 2023 (NDPA) and, where applicable,
             the EU General Data Protection Regulation (GDPR).
           </p>
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">5. AI Processing</h2>
+          <h2 className="h3 mb-3">5. AI Processing</h2>
           <p>
             ScolarNav uses Claude (by Anthropic) to power its coaching, mentor, interview, and roadmap
             features. When you use these features, relevant parts of your profile and CV are sent to
@@ -130,7 +130,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">6. Who We Share Data With</h2>
+          <h2 className="h3 mb-3">6. Who We Share Data With</h2>
           <p>We share your data only with the following parties, and only as needed to deliver the service:</p>
           <div className="mt-4 space-y-4">
             {[
@@ -187,7 +187,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">7. Data Retention</h2>
+          <h2 className="h3 mb-3">7. Data Retention</h2>
           <p>
             We retain your account data for as long as your account is active. If you delete your account,
             we permanently delete your profile, CV, coaching history, and personal data within 30 days —
@@ -200,7 +200,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">8. Your Rights</h2>
+          <h2 className="h3 mb-3">8. Your Rights</h2>
           <p>Under applicable data protection law, you have the right to:</p>
           <ul className="mt-3 space-y-2 list-disc list-inside">
             <li><strong className="text-ink">Access:</strong> Request a copy of the personal data we hold about you.</li>
@@ -220,9 +220,9 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">9. Security</h2>
+          <h2 className="h3 mb-3">9. Security</h2>
           <p>
-            We take security seriously. Passwords are hashed using bcrypt before storage — we never see your
+            We take security seriously. Passwords are hashed using bcrypt before storage, we never see your
             plain-text password. Data in transit is encrypted via TLS. Access to production systems is
             restricted to authorised team members only.
           </p>
@@ -237,7 +237,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">10. Cookies & Local Storage</h2>
+          <h2 className="h3 mb-3">10. Cookies & Local Storage</h2>
           <p>
             When you first visit ScolarNav, we display a cookie consent banner. You can choose to accept all
             cookies or essential cookies only. Your preference is stored in your browser so we don't ask again.
@@ -266,7 +266,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">11. Children's Privacy</h2>
+          <h2 className="h3 mb-3">11. Children's Privacy</h2>
           <p>
             ScolarNav is not intended for children under 16. We do not knowingly collect personal data from
             anyone under 16. If you believe a child has provided us with personal data, please contact us
@@ -275,9 +275,9 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">12. International Transfers</h2>
+          <h2 className="h3 mb-3">12. International Transfers</h2>
           <p>
-            Your data may be processed outside Nigeria or your home country — for example, on servers
+            Your data may be processed outside Nigeria or your home country, for example, on servers
             operated by MongoDB Atlas, Anthropic, or Stripe. Where this occurs, we ensure that appropriate
             safeguards are in place (such as standard contractual clauses or the recipient's certification
             under an equivalent framework).
@@ -285,7 +285,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">13. Changes to This Policy</h2>
+          <h2 className="h3 mb-3">13. Changes to This Policy</h2>
           <p>
             We may update this Privacy Policy from time to time. When we make material changes, we will
             notify you by email or in-app notice. The "last updated" date at the top of this page reflects
@@ -294,7 +294,7 @@ export default function PrivacyPage() {
         </section>
 
         <section>
-          <h2 className="font-display text-xl text-ink mb-3">14. Contact & Complaints</h2>
+          <h2 className="h3 mb-3">14. Contact & Complaints</h2>
           <p>
             For privacy-related questions or to exercise your rights, contact us at{" "}
             <a href="mailto:mail@ScolarNav.com" className="text-forest hover:underline">
@@ -320,7 +320,7 @@ export default function PrivacyPage() {
       </div>
 
       <div className="mt-14 pt-8 border-t border-rule flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-        <p className="text-xs font-mono text-slate">© 2026 ScolarNav. All rights reserved.</p>
+        <p className="text-sm text-slate">© 2026 ScolarNav. All rights reserved.</p>
         <Link href="/terms" className="text-sm text-forest font-medium hover:underline">
           Terms of Service →
         </Link>

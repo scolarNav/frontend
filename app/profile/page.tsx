@@ -8,6 +8,11 @@ import { useAuth } from "@/lib/auth-context";
 import { COUNTRIES } from "@/lib/countries";
 import { User, UserProfile } from "@/lib/types";
 import PhotoUpload from "@/components/PhotoUpload";
+import { Alert } from "@/components/ui/States";
+import { CircleCheck, Circle } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { Chip } from "@/components/ui/Chip";
 
 const STUDY_DESTINATIONS = [
   "United Kingdom", "Germany", "Canada", "Sweden", "Netherlands",
@@ -142,14 +147,7 @@ export default function ProfilePage() {
   }
 
   function msgBox(msg: { type: "ok" | "err"; text: string }) {
-    return (
-      <p
-        className={`text-sm font-mono ${msg.type === "ok" ? "text-slate" : "text-alert"
-          }`}
-      >
-        {msg.text}
-      </p>
-    );
+    return <Alert variant={msg.type === "ok" ? "ok" : "danger"}>{msg.text}</Alert>;
   }
 
   async function handleSaveProfile(e: React.FormEvent) {
@@ -248,7 +246,7 @@ export default function ProfilePage() {
     }
   }
 
-  if (authLoading) return <p className="max-w-2xl mx-auto px-4 py-20 text-slate font-mono text-sm">Loading…</p>;
+  if (authLoading) return <SkeletonPage variant="form" />;
   if (!user) return null;
 
   const isPro = user.subscription?.plan === "pro" && user.subscription?.status === "active";
@@ -266,351 +264,297 @@ export default function ProfilePage() {
     }
   }
 
+  const scoreFields = [
+    { key: "ielts", label: "IELTS", val: ielts, set: setIelts, placeholder: "e.g. 7.0", step: "0.5", min: "0", max: "9" },
+    { key: "toefl", label: "TOEFL iBT", val: toefl, set: setToefl, placeholder: "e.g. 100", step: "1", min: "0", max: "120" },
+    { key: "gre", label: "GRE", val: gre, set: setGre, placeholder: "e.g. 320", step: "1", min: "260", max: "340" },
+    { key: "gmat", label: "GMAT", val: gmat, set: setGmat, placeholder: "e.g. 650", step: "10", min: "200", max: "800" },
+    { key: "sat", label: "SAT", val: sat, set: setSat, placeholder: "e.g. 1300", step: "10", min: "400", max: "1600" },
+    { key: "duolingo", label: "Duolingo English", val: duolingo, set: setDuolingo, placeholder: "e.g. 120", step: "5", min: "10", max: "160" },
+  ];
+
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-10 sm:py-16">
-      <div className="flex items-center gap-5 mb-6">
-        <PhotoUpload
-          currentUrl={user.photoUrl}
-          onChange={handlePhotoChange}
-          size={80}
-        />
-        <div>
-          <h1 className="font-display text-3xl text-ink">{user.fullName}</h1>
-          <p className="text-ink-soft mt-0.5 text-sm">
-            A complete profile means more tailored results across every feature.
-          </p>
-        </div>
-      </div>
+    <div className="page-narrow">
+      <PageHeader
+        eyebrow="Account"
+        title="Profile"
+        description="A complete profile means more tailored results across every feature."
+      />
 
-      {/* Completion meter */}
-      <div className="case-card p-5 mt-6">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-sm font-medium text-ink">Profile completeness</p>
-          <span className="font-mono text-sm text-forest">{completionPct}%</span>
-        </div>
-        <div className="h-2 bg-rule rounded-full overflow-hidden mb-4">
-          <div
-            className="h-full bg-forest rounded-full transition-all duration-500"
-            style={{ width: `${completionPct}%` }}
-          />
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-          {steps.map(({ label, done }) => (
-            <div key={label} className="flex items-center gap-2 text-xs">
-              <span className={done ? "text-forest" : "text-rule-strong"}>
-                {done ? "✓" : "○"}
-              </span>
-              <span className={done ? "text-ink-soft" : "text-slate"}>{label}</span>
+      <div className="space-y-6">
+        {/* Identity and completeness */}
+        <section className="card card-pad">
+          <div className="flex items-center gap-5">
+            <PhotoUpload currentUrl={user.photoUrl} onChange={handlePhotoChange} size={80} />
+            <div className="min-w-0">
+              <p className="h3 truncate">{user.fullName}</p>
+              <p className="truncate text-sm text-slate">{user.email}</p>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
 
-      {/* Plan */}
-      <div className="case-card p-5 mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div>
-          <p className="text-xs font-mono uppercase text-slate tracking-widest">Plan</p>
-          <p className="font-medium text-ink mt-1">
-            {isPro ? "Pro" : "Free"}
-            {isPro && user.subscription.currentPeriodEnd && (
-              <span className="text-xs text-slate font-mono ml-2 font-normal">
-                renews {new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}
-              </span>
+          <div className="mt-6">
+            <div className="mb-2 flex items-center justify-between">
+              <p className="text-sm font-semibold text-ink">Profile completeness</p>
+              <span className="text-sm font-semibold text-forest">{completionPct}%</span>
+            </div>
+            <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={completionPct} aria-valuemin={0} aria-valuemax={100} aria-label="Profile completeness">
+              <div className="h-full rounded-full bg-forest transition-all duration-500" style={{ width: `${completionPct}%` }} />
+            </div>
+            <ul className="mt-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+              {steps.map(({ label, done }) => (
+                <li key={label} className="flex items-center gap-2 text-sm">
+                  {done ? (
+                    <CircleCheck size={16} className="shrink-0 text-ok" aria-hidden="true" />
+                  ) : (
+                    <Circle size={16} className="shrink-0 text-control" aria-hidden="true" />
+                  )}
+                  <span className={done ? "text-ink-soft" : "text-slate"}>
+                    {label}
+                    <span className="sr-only">{done ? " (done)" : " (not done)"}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
+
+        {/* Plan */}
+        <section className="card card-pad flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <p className="eyebrow">Plan</p>
+            <p className="mt-1 font-semibold text-ink">
+              {isPro ? "Pro" : "Free"}
+              {isPro && user.subscription.currentPeriodEnd && (
+                <span className="ml-2 text-sm font-normal text-slate">
+                  renews {new Date(user.subscription.currentPeriodEnd).toLocaleDateString()}
+                </span>
+              )}
+            </p>
+          </div>
+          {isPro ? (
+            <Link href="/pricing" className="btn-secondary">Manage billing</Link>
+          ) : (
+            <Link href="/pricing" className="btn-primary">Upgrade to Pro</Link>
+          )}
+        </section>
+
+        {/* Personal details */}
+        <form onSubmit={handleSaveProfile} className="card card-pad space-y-5">
+          <h2 className="h3">Personal details</h2>
+
+          <div>
+            <label htmlFor="p-name" className="label">Full name</label>
+            <input id="p-name" required autoComplete="name" value={fullName} onChange={(e) => setFullName(e.target.value)} className="input" />
+          </div>
+          <div>
+            <label htmlFor="p-email" className="label">Email</label>
+            <input id="p-email" value={user.email} disabled className="input" />
+            <p className="help">Email cannot be changed.</p>
+          </div>
+          <div>
+            <label htmlFor="p-country" className="label">Home country</label>
+            <select id="p-country" required value={country} onChange={(e) => setCountry(e.target.value)} className="input">
+              <option value="">Select your country</option>
+              {COUNTRIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.name}</option>
+              ))}
+            </select>
+            {countryName && (
+              <p className="help">
+                Payment: {user.subscription?.gateway === "paystack" ? "Paystack" : country ? "Stripe" : "not set"} · {countryName}
+              </p>
             )}
-          </p>
-        </div>
-        {isPro ? (
-          <Link href="/pricing" className="text-sm text-forest hover:underline">Manage billing →</Link>
-        ) : (
-          <Link href="/pricing" className="btn-primary text-sm px-4 py-2">Upgrade to Pro</Link>
-        )}
-      </div>
-
-      {/* Personal details */}
-      <form onSubmit={handleSaveProfile} className="mt-10 space-y-5">
-        <h2 className="font-display text-xl text-ink border-b border-rule pb-3">Personal details</h2>
-
-        <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">Full name</label>
-          <input required value={fullName} onChange={(e) => setFullName(e.target.value)} className="input" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">Email</label>
-          <input value={user.email} disabled className="input" />
-          <p className="text-xs text-slate mt-1.5">Email cannot be changed.</p>
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">Home country</label>
-          <select required value={country} onChange={(e) => setCountry(e.target.value)} className="input">
-            <option value="">Select…</option>
-            {COUNTRIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.name}</option>
-            ))}
-          </select>
-          {countryName && (
-            <p className="text-xs text-slate mt-1.5">
-              Payment: {user.subscription?.gateway === "paystack" ? "Paystack" : country ? "Stripe" : "—"} · {countryName}
-            </p>
-          )}
-        </div>
-        {profileMsg && msgBox(profileMsg)}
-        <button type="submit" disabled={savingProfile} className="btn-primary">
-          {savingProfile ? "Saving…" : "Save details"}
-        </button>
-      </form>
-
-      {/* Study goals */}
-      <form onSubmit={handleSaveGoals} className="mt-10 space-y-6">
-        <div className="border-b border-rule pb-3">
-          <h2 className="font-display text-xl text-ink">Study goals</h2>
-          <p className="text-xs text-slate mt-1">
-            Used to tailor your Roadmap, Readiness Score, and mentor answers.
-          </p>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-ink mb-3">
-            Where do you want to study?{" "}
-            <span className="text-slate font-normal">(select all that apply)</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {STUDY_DESTINATIONS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => toggleCountry(c)}
-                className={`text-sm px-3 py-1.5 border rounded-md transition-colors ${targetCountries.includes(c)
-                    ? "bg-forest text-white border-forest"
-                    : "border-rule text-ink-soft hover:border-forest hover:text-forest"
-                  }`}
-              >
-                {c}
-              </button>
-            ))}
           </div>
-        </div>
-
-        <div>
-          <label className="block text-sm font-medium text-ink mb-3">
-            What do you want to study?{" "}
-            <span className="text-slate font-normal">(select all that apply)</span>
-          </label>
-          <div className="flex flex-wrap gap-2">
-            {STUDY_FIELDS.map((f) => (
-              <button
-                key={f}
-                type="button"
-                onClick={() => toggleField(f)}
-                className={`text-sm px-3 py-1.5 border rounded-md transition-colors ${targetFields.includes(f)
-                    ? "bg-forest text-white border-forest"
-                    : "border-rule text-ink-soft hover:border-forest hover:text-forest"
-                  }`}
-              >
-                {f}
-              </button>
-            ))}
-          </div>
-          {targetFields.length === 0 && (
-            <p className="text-xs text-slate mt-2">Select your field to unlock field-matched scholarship recommendations.</p>
-          )}
-        </div>
-
-        <div className="grid sm:grid-cols-2 gap-5">
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Target degree level</label>
-            <select
-              value={targetDegreeLevel}
-              onChange={(e) => setTargetDegreeLevel(e.target.value)}
-              className="input"
-            >
-              <option value="">Select…</option>
-              {DEGREE_LEVELS.map((d) => <option key={d} value={d}>{d}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Target start date</label>
-            <select
-              value={targetStartDate}
-              onChange={(e) => setTargetStartDate(e.target.value)}
-              className="input"
-            >
-              <option value="">Select…</option>
-              {MONTH_YEARS.map((m) => <option key={m} value={m}>{m}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Annual budget (USD)</label>
-            <input
-              type="number"
-              min={0}
-              value={annualBudgetUSD}
-              onChange={(e) => setAnnualBudgetUSD(e.target.value)}
-              placeholder="e.g. 15000"
-              className="input"
-            />
-            <p className="text-xs text-slate mt-1.5">How much can you spend per year? Helps filter opportunities.</p>
-          </div>
-        </div>
-
-        {goalsMsg && msgBox(goalsMsg)}
-        <button type="submit" disabled={savingGoals} className="btn-primary">
-          {savingGoals ? "Saving…" : "Save study goals"}
-        </button>
-      </form>
-
-      {/* Test scores */}
-      <form onSubmit={handleSaveScores} className="mt-10 space-y-5">
-        <div className="border-b border-rule pb-3">
-          <h2 className="font-display text-xl text-ink">Test scores</h2>
-          <p className="text-xs text-slate mt-1">
-            Leave blank if you haven't taken a test yet. Used to calculate your Readiness Score and tailor mentor advice.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-          {[
-            { key: "ielts", label: "IELTS", val: ielts, set: setIelts, placeholder: "e.g. 7.0", step: "0.5", min: "0", max: "9" },
-            { key: "toefl", label: "TOEFL iBT", val: toefl, set: setToefl, placeholder: "e.g. 100", step: "1", min: "0", max: "120" },
-            { key: "gre", label: "GRE", val: gre, set: setGre, placeholder: "e.g. 320", step: "1", min: "260", max: "340" },
-            { key: "gmat", label: "GMAT", val: gmat, set: setGmat, placeholder: "e.g. 650", step: "10", min: "200", max: "800" },
-            { key: "sat", label: "SAT", val: sat, set: setSat, placeholder: "e.g. 1300", step: "10", min: "400", max: "1600" },
-            { key: "duolingo", label: "Duolingo English", val: duolingo, set: setDuolingo, placeholder: "e.g. 120", step: "5", min: "10", max: "160" },
-          ].map(({ key, label, val, set, placeholder, step, min, max }) => (
-            <div key={key}>
-              <label className="block text-xs font-mono text-slate uppercase tracking-wider mb-1.5">{label}</label>
-              <input
-                type="number"
-                value={val}
-                onChange={(e) => set(e.target.value)}
-                placeholder={placeholder}
-                step={step}
-                min={min}
-                max={max}
-                className="input"
-              />
-            </div>
-          ))}
-        </div>
-
-        {scoresMsg && msgBox(scoresMsg)}
-        <button type="submit" disabled={savingScores} className="btn-primary">
-          {savingScores ? "Saving…" : "Save test scores"}
-        </button>
-      </form>
-
-      {/* CV section */}
-      <div className="mt-10 case-card p-5">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h2 className="font-display text-xl text-ink">Your CV</h2>
-            <p className="text-xs text-slate mt-1">
-              Your CV provides the richest context — education, experience, skills, and languages — used across all features.
-            </p>
-          </div>
-          <Link href="/cv" className="btn-secondary text-sm shrink-0">
-            {user.cvData ? "Update CV" : "Upload CV"} →
-          </Link>
-        </div>
-        {user.cvData ? (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="text-forest text-sm">✓</span>
-            <span className="text-sm text-ink-soft">
-              CV parsed ·{" "}
-              {user.cvData.parsedAt
-                ? new Date(user.cvData.parsedAt).toLocaleDateString()
-                : "date unknown"}
-            </span>
-          </div>
-        ) : (
-          <p className="mt-3 text-sm text-brass">No CV uploaded yet — this is the single biggest thing you can do to improve your experience.</p>
-        )}
-      </div>
-
-      {/* Security */}
-      <form onSubmit={handleChangePassword} className="mt-10 space-y-5">
-        <h2 className="font-display text-xl text-ink border-b border-rule pb-3">Change Password</h2>
-        <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">Current Password</label>
-          <input type="password" required value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="input" placeholder="••••••••" />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-ink mb-1.5">New Password</label>
-          <input type="password" required minLength={8} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="input" placeholder="At least 8 characters" />
-        </div>
-        {passwordMsg && msgBox(passwordMsg)}
-        <button type="submit" disabled={savingPassword} className="btn-primary">
-          {savingPassword ? "Updating…" : "Update Password"}
-        </button>
-      </form>
-
-      {/* Danger zone */}
-      <div className="mt-14 border-t border-rule pt-8">
-        <h2 className="font-display text-xl text-alert mb-1">Danger zone</h2>
-        <p className="text-sm text-slate mb-5">
-          Deleting your account permanently removes your profile, CV, applications, and all associated data. This cannot be undone.
-        </p>
-
-        {!showDeleteZone ? (
-          <button
-            onClick={() => setShowDeleteZone(true)}
-            className="text-sm font-medium text-alert border border-alert/30 hover:border-alert hover:bg-red-50 transition-colors px-4 py-2 rounded-lg"
-          >
-            Delete my account
+          {profileMsg && msgBox(profileMsg)}
+          <button type="submit" disabled={savingProfile} aria-busy={savingProfile} className="btn-primary">
+            {savingProfile ? "Saving" : "Save details"}
           </button>
-        ) : (
-          <form onSubmit={handleDeleteAccount} className="case-card border-alert/30 p-6 space-y-5">
-            <p className="text-sm font-medium text-ink">Confirm account deletion</p>
+        </form>
 
+        {/* Study goals */}
+        <form onSubmit={handleSaveGoals} className="card card-pad space-y-6">
+          <div>
+            <h2 className="h3">Study goals</h2>
+            <p className="help">Used to tailor your roadmap, readiness score and mentor answers.</p>
+          </div>
+
+          <fieldset>
+            <legend className="label">
+              Where do you want to study? <span className="font-normal text-slate">(select all that apply)</span>
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {STUDY_DESTINATIONS.map((c) => (
+                <Chip key={c} active={targetCountries.includes(c)} onClick={() => toggleCountry(c)}>{c}</Chip>
+              ))}
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend className="label">
+              What do you want to study? <span className="font-normal text-slate">(select all that apply)</span>
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {STUDY_FIELDS.map((f) => (
+                <Chip key={f} active={targetFields.includes(f)} onClick={() => toggleField(f)}>{f}</Chip>
+              ))}
+            </div>
+            {targetFields.length === 0 && <p className="help">Select your field to unlock field-matched recommendations.</p>}
+          </fieldset>
+
+          <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">
-                Password <span className="text-slate font-normal">(leave blank if you signed in with Google)</span>
-              </label>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                className="input"
-                placeholder="••••••••"
-                autoComplete="current-password"
-              />
+              <label htmlFor="p-level" className="label">Target degree level</label>
+              <select id="p-level" value={targetDegreeLevel} onChange={(e) => setTargetDegreeLevel(e.target.value)} className="input">
+                <option value="">Select a level</option>
+                {DEGREE_LEVELS.map((d) => <option key={d} value={d}>{d}</option>)}
+              </select>
             </div>
-
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">
-                Type <span className="font-mono text-alert">DELETE</span> to confirm
-              </label>
+              <label htmlFor="p-start" className="label">Target start date</label>
+              <select id="p-start" value={targetStartDate} onChange={(e) => setTargetStartDate(e.target.value)} className="input">
+                <option value="">Select a month</option>
+                {MONTH_YEARS.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="p-budget" className="label">Annual budget (USD)</label>
               <input
-                type="text"
-                value={deleteConfirm}
-                onChange={(e) => setDeleteConfirm(e.target.value)}
+                id="p-budget"
+                type="number"
+                inputMode="numeric"
+                min={0}
+                value={annualBudgetUSD}
+                onChange={(e) => setAnnualBudgetUSD(e.target.value)}
+                placeholder="e.g. 15000"
                 className="input"
-                placeholder="DELETE"
-                autoComplete="off"
               />
+              <p className="help">How much can you spend per year? Helps filter opportunities.</p>
             </div>
+          </div>
 
-            {deleteError && (
-              <p className="text-alert text-sm">{deleteError}</p>
-            )}
+          {goalsMsg && msgBox(goalsMsg)}
+          <button type="submit" disabled={savingGoals} aria-busy={savingGoals} className="btn-primary">
+            {savingGoals ? "Saving" : "Save study goals"}
+          </button>
+        </form>
 
-            <div className="flex items-center gap-3 pt-1">
-              <button
-                type="submit"
-                disabled={deleting || deleteConfirm !== "DELETE"}
-                className="text-sm font-medium text-white bg-alert hover:bg-red-700 disabled:opacity-40 transition-colors px-5 py-2.5 rounded-lg"
-              >
-                {deleting ? "Deleting…" : "Permanently delete account"}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setShowDeleteZone(false); setDeletePassword(""); setDeleteConfirm(""); setDeleteError(null); }}
-                className="text-sm text-slate hover:text-ink transition-colors"
-              >
-                Cancel
-              </button>
+        {/* Test scores */}
+        <form onSubmit={handleSaveScores} className="card card-pad space-y-5">
+          <div>
+            <h2 className="h3">Test scores</h2>
+            <p className="help">Leave blank if you have not taken a test yet. Used for your readiness score and mentor advice.</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+            {scoreFields.map(({ key, label, val, set, placeholder, step, min, max }) => (
+              <div key={key}>
+                <label htmlFor={`score-${key}`} className="label">{label}</label>
+                <input
+                  id={`score-${key}`}
+                  type="number"
+                  inputMode="decimal"
+                  value={val}
+                  onChange={(e) => set(e.target.value)}
+                  placeholder={placeholder}
+                  step={step}
+                  min={min}
+                  max={max}
+                  className="input"
+                />
+              </div>
+            ))}
+          </div>
+
+          {scoresMsg && msgBox(scoresMsg)}
+          <button type="submit" disabled={savingScores} aria-busy={savingScores} className="btn-primary">
+            {savingScores ? "Saving" : "Save test scores"}
+          </button>
+        </form>
+
+        {/* CV */}
+        <section className="card card-pad">
+          <div className="flex flex-col items-start justify-between gap-4 sm:flex-row">
+            <div>
+              <h2 className="h3">Your CV</h2>
+              <p className="help">Your CV gives the richest context: education, experience, skills and languages. It is used across all features.</p>
             </div>
-          </form>
-        )}
+            <Link href="/cv" className="btn-secondary shrink-0">
+              {user.cvData ? "Update CV" : "Upload CV"}
+            </Link>
+          </div>
+          {user.cvData ? (
+            <p className="mt-4 flex items-center gap-2 text-sm text-ink-soft">
+              <CircleCheck size={16} className="text-ok" aria-hidden="true" />
+              CV parsed on {user.cvData.parsedAt ? new Date(user.cvData.parsedAt).toLocaleDateString() : "an unknown date"}
+            </p>
+          ) : (
+            <Alert variant="warn" className="mt-4">No CV uploaded yet. It is the single biggest thing you can do to improve your results.</Alert>
+          )}
+        </section>
+
+        {/* Security */}
+        <form onSubmit={handleChangePassword} className="card card-pad space-y-5">
+          <h2 className="h3">Change password</h2>
+          <div>
+            <label htmlFor="pw-current" className="label">Current password</label>
+            <input id="pw-current" type="password" required autoComplete="current-password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} className="input" />
+          </div>
+          <div>
+            <label htmlFor="pw-new" className="label">New password</label>
+            <input id="pw-new" type="password" required minLength={8} autoComplete="new-password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} className="input" placeholder="At least 8 characters" />
+          </div>
+          {passwordMsg && msgBox(passwordMsg)}
+          <button type="submit" disabled={savingPassword} aria-busy={savingPassword} className="btn-primary">
+            {savingPassword ? "Updating" : "Update password"}
+          </button>
+        </form>
+
+        {/* Danger zone */}
+        <section className="card card-pad">
+          <h2 className="h3 text-danger">Delete account</h2>
+          <p className="help max-w-prose">
+            Deleting your account permanently removes your profile, CV, applications and all associated data. This cannot be undone.
+          </p>
+
+          {!showDeleteZone ? (
+            <button type="button" onClick={() => setShowDeleteZone(true)} className="btn-secondary mt-4 text-danger">
+              Delete my account
+            </button>
+          ) : (
+            <form onSubmit={handleDeleteAccount} className="mt-5 space-y-5 rounded-lg bg-danger-soft p-5">
+              <p className="text-sm font-semibold text-ink">Confirm account deletion</p>
+
+              <div>
+                <label htmlFor="del-pw" className="label">
+                  Password <span className="font-normal text-slate">(leave blank if you signed in with Google)</span>
+                </label>
+                <input id="del-pw" type="password" value={deletePassword} onChange={(e) => setDeletePassword(e.target.value)} className="input" autoComplete="current-password" />
+              </div>
+
+              <div>
+                <label htmlFor="del-confirm" className="label">
+                  Type <span className="font-semibold text-danger">DELETE</span> to confirm
+                </label>
+                <input id="del-confirm" type="text" value={deleteConfirm} onChange={(e) => setDeleteConfirm(e.target.value)} className="input" placeholder="DELETE" autoComplete="off" />
+              </div>
+
+              {deleteError && <Alert variant="danger">{deleteError}</Alert>}
+
+              <div className="flex flex-wrap items-center gap-3">
+                <button type="submit" disabled={deleting || deleteConfirm !== "DELETE"} aria-busy={deleting} className="btn-danger">
+                  {deleting ? "Deleting" : "Permanently delete account"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowDeleteZone(false); setDeletePassword(""); setDeleteConfirm(""); setDeleteError(null); }}
+                  className="btn-ghost"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+        </section>
       </div>
     </div>
   );

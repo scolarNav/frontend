@@ -6,6 +6,7 @@ import Link from "next/link";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
+import { Alert } from "@/components/ui/States";
 
 function LoginContent() {
   const { login, googleLogin } = useAuth();
@@ -46,36 +47,36 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl text-ink">Welcome back</h1>
-        <p className="text-ink-soft mt-1.5 text-sm">Sign in to your ScolarNav account.</p>
+    <div className="page-form">
+      <div className="card card-pad sm:p-8">
+        <h1 className="h2">Welcome back</h1>
+        <p className="mt-1.5 text-sm text-slate">Sign in to your ScolarNav account.</p>
 
-        <div className="mt-8">
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError("Google sign-in failed. Please try again.")}
-              theme="outline"
-              size="large"
-              width="360"
-              text="signin_with"
-            />
-          </div>
-
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 border-t border-rule" />
-            <span className="text-xs text-slate">or continue with email</span>
-            <div className="flex-1 border-t border-rule" />
-          </div>
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google sign-in failed. Please try again.")}
+            theme="outline"
+            size="large"
+            width="320"
+            text="signin_with"
+          />
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="my-6 flex items-center gap-3">
+          <div className="divider flex-1" />
+          <span className="text-xs text-slate">or continue with email</span>
+          <div className="divider flex-1" />
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4" noValidate={false}>
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Email</label>
+            <label htmlFor="login-email" className="label">Email</label>
             <input
+              id="login-email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input"
@@ -83,35 +84,33 @@ function LoginContent() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Password</label>
+            <label htmlFor="login-password" className="label">Password</label>
             <input
+              id="login-password"
               type="password"
               required
+              autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
-              placeholder="••••••••"
+              placeholder="Your password"
             />
           </div>
 
-          {error && (
-            <p className="text-alert text-sm">
-              {error}
-            </p>
-          )}
+          {error && <Alert variant="danger">{error}</Alert>}
 
-          <button type="submit" disabled={submitting} className="btn-primary w-full mt-2">
-            {submitting ? "Signing in…" : "Sign in"}
+          <button type="submit" disabled={submitting} aria-busy={submitting} className="btn-primary btn-block">
+            {submitting ? "Signing in" : "Sign in"}
           </button>
         </form>
-
-        <p className="text-sm text-slate mt-6 text-center">
-          New here?{" "}
-          <Link href={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="text-forest font-medium hover:underline">
-            Create an account
-          </Link>
-        </p>
       </div>
+
+      <p className="mt-6 text-center text-sm text-slate">
+        New here?{" "}
+        <Link href={next ? `/register?next=${encodeURIComponent(next)}` : "/register"} className="font-semibold text-forest hover:underline">
+          Create an account
+        </Link>
+      </p>
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError, api } from "@/lib/api";
 import { COUNTRIES } from "@/lib/countries";
+import { Alert } from "@/components/ui/States";
 
 function RegisterContent() {
   const { register, googleLogin } = useAuth();
@@ -67,47 +68,44 @@ function RegisterContent() {
   }
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center px-6 py-16">
-      <div className="w-full max-w-sm">
-        <h1 className="font-display text-3xl text-ink">Create your account</h1>
-        <p className="text-ink-soft mt-1.5 text-sm">
-          Free to start. Upload your CV to unlock personalized matches.
-        </p>
+    <div className="page-form">
+      <div className="card card-pad sm:p-8">
+        <h1 className="h2">Create your account</h1>
+        <p className="mt-1.5 text-sm text-slate">Free to start. Upload your CV to unlock personalized matches.</p>
 
-        {/* Referral banner */}
         {referrerName && (
-          <div className="mt-4 px-4 py-3 rounded-lg border border-rule bg-surface flex items-center gap-2.5">
-            <Gift size={18} className="shrink-0 text-forest" aria-hidden="true" />
-            <p className="text-sm text-ink-soft">
-              <span className="font-medium text-ink">{referrerName}</span> invited you. When you subscribe, you both get a free month.
+          <div className="alert alert-info mt-4">
+            <Gift size={18} className="mt-0.5 shrink-0" aria-hidden="true" />
+            <p>
+              <span className="font-semibold">{referrerName}</span> invited you. When you subscribe, you both get a free month.
             </p>
           </div>
         )}
 
-        <div className="mt-8">
-          <div className="flex justify-center">
-            <GoogleLogin
-              onSuccess={handleGoogleSuccess}
-              onError={() => setError("Google sign-up failed. Please try again.")}
-              theme="outline"
-              size="large"
-              width="360"
-              text="signup_with"
-            />
-          </div>
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError("Google sign-up failed. Please try again.")}
+            theme="outline"
+            size="large"
+            width="320"
+            text="signup_with"
+          />
+        </div>
 
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 border-t border-rule" />
-            <span className="text-xs text-slate">or sign up with email</span>
-            <div className="flex-1 border-t border-rule" />
-          </div>
+        <div className="my-6 flex items-center gap-3">
+          <div className="divider flex-1" />
+          <span className="text-xs text-slate">or sign up with email</span>
+          <div className="divider flex-1" />
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Full name</label>
+            <label htmlFor="reg-name" className="label">Full name</label>
             <input
+              id="reg-name"
               required
+              autoComplete="name"
               value={fullName}
               onChange={(e) => setFullName(e.target.value)}
               className="input"
@@ -115,10 +113,12 @@ function RegisterContent() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Email</label>
+            <label htmlFor="reg-email" className="label">Email</label>
             <input
+              id="reg-email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               className="input"
@@ -126,11 +126,13 @@ function RegisterContent() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Password</label>
+            <label htmlFor="reg-password" className="label">Password</label>
             <input
+              id="reg-password"
               type="password"
               required
               minLength={8}
+              autoComplete="new-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="input"
@@ -138,66 +140,64 @@ function RegisterContent() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-ink mb-1.5">Country</label>
+            <label htmlFor="reg-country" className="label">Country</label>
             <select
+              id="reg-country"
               required
+              autoComplete="country"
               value={country}
               onChange={(e) => setCountry(e.target.value)}
               className="input"
             >
-              <option value="">Select your country…</option>
+              <option value="">Select your country</option>
               {COUNTRIES.map((c) => (
                 <option key={c.code} value={c.code}>
                   {c.name}
                 </option>
               ))}
             </select>
-            <p className="text-xs text-slate mt-1.5">Used to tailor payment options and local context.</p>
+            <p className="help">Used to tailor payment options and local context.</p>
           </div>
 
-          {/* Referral code */}
           {!showRefInput ? (
             <button
               type="button"
               onClick={() => setShowRefInput(true)}
-              className="text-xs text-slate hover:text-ink underline text-left"
+              className="min-h-touch text-left text-sm font-medium text-slate underline hover:text-ink"
             >
               Have a referral code?
             </button>
           ) : (
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Referral code <span className="text-slate font-normal">(optional)</span></label>
+              <label htmlFor="reg-ref" className="label">
+                Referral code <span className="font-normal text-slate">(optional)</span>
+              </label>
               <input
+                id="reg-ref"
                 value={manualRef}
                 onChange={(e) => setManualRef(e.target.value.toUpperCase().trim())}
-                className="input font-mono tracking-widest"
+                className="input tracking-widest"
                 placeholder="e.g. ABC12345"
                 maxLength={12}
               />
-              {referrerName && (
-                <p className="text-xs text-forest mt-1.5">Referred by {referrerName} — you both get a free month when you subscribe.</p>
-              )}
+              {referrerName && <p className="mt-1.5 text-sm text-forest">Referred by {referrerName}. You both get a free month when you subscribe.</p>}
             </div>
           )}
 
-          {error && (
-            <p className="text-alert text-sm">
-              {error}
-            </p>
-          )}
+          {error && <Alert variant="danger">{error}</Alert>}
 
-          <button type="submit" disabled={submitting} className="btn-primary w-full mt-2">
-            {submitting ? "Creating account…" : "Create account"}
+          <button type="submit" disabled={submitting} aria-busy={submitting} className="btn-primary btn-block">
+            {submitting ? "Creating account" : "Create account"}
           </button>
         </form>
-
-        <p className="text-sm text-slate mt-6 text-center">
-          Already have an account?{" "}
-          <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="text-forest font-medium hover:underline">
-            Sign in
-          </Link>
-        </p>
       </div>
+
+      <p className="mt-6 text-center text-sm text-slate">
+        Already have an account?{" "}
+        <Link href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"} className="font-semibold text-forest hover:underline">
+          Sign in
+        </Link>
+      </p>
     </div>
   );
 }

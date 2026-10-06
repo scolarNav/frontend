@@ -4,6 +4,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { Alert, EmptyState } from "@/components/ui/States";
+import { CircleCheck } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
 
 const TYPES = ["scholarship", "study_program", "immigration_pathway", "incubator", "fellowship"] as const;
 const DEGREE_LEVELS = ["undergraduate", "masters", "phd", "postdoc", "professional", "none"] as const;
@@ -67,40 +71,40 @@ export default function SubmitScholarshipPage() {
     }
   }
 
-  if (authLoading) {
-    return <p className="max-w-2xl mx-auto px-4 py-20 text-slate font-mono text-sm">Loading…</p>;
-  }
+  if (authLoading) return <SkeletonPage variant="form" />;
 
   if (!user) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20 text-center">
-        <p className="text-ink-soft mb-4">You need to be logged in to submit a scholarship.</p>
-        <button onClick={() => router.push("/login")} className="btn-primary">Log in</button>
+      <div className="page-narrow">
+        <EmptyState
+          title="Sign in to submit a scholarship"
+          description="You need an account so we can credit your approved submissions."
+          action={<button type="button" onClick={() => router.push("/login")} className="btn-primary">Sign in</button>}
+        />
       </div>
     );
   }
 
   if (success) {
     return (
-      <div className="max-w-2xl mx-auto px-4 py-20">
-        <div className="case-card p-8 text-center space-y-4">
-          <div className="w-12 h-12 rounded-full bg-forest/10 flex items-center justify-center mx-auto">
-            <svg className="w-6 h-6 text-forest" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          </div>
-          <h2 className="font-display text-2xl text-ink">Submission received</h2>
-          <p className="text-ink-soft leading-relaxed">
-            Thank you — our team will review your submission. Once approved it goes live on the platform and you'll earn a free AI analysis credit.
+      <div className="page-narrow">
+        <div className="card card-pad space-y-4 py-10 text-center">
+          <span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-ok-soft text-ok">
+            <CircleCheck size={24} aria-hidden="true" />
+          </span>
+          <h1 className="h2">Submission received</h1>
+          <p className="mx-auto max-w-md leading-relaxed text-ink-soft">
+            Thank you. Our team will review your submission. Once approved it goes live on the platform and you earn a free AI analysis credit.
           </p>
-          <div className="flex gap-3 justify-center pt-2">
+          <div className="flex flex-wrap justify-center gap-3 pt-2">
             <button
+              type="button"
               onClick={() => { setSuccess(false); setForm({ title: "", provider: "", type: "scholarship", country: "", region: "", fieldsOfStudy: "", degreeLevel: "masters", deadline: "", applicationOpens: "", fundingCoverage: "", objectives: "", eligibilitySummary: "", officialUrl: "", notes: "" }); }}
-              className="border border-rule text-ink-soft px-4 py-2 text-sm hover:border-forest hover:text-forest transition-colors"
+              className="btn-secondary"
             >
               Submit another
             </button>
-            <button onClick={() => router.push("/opportunities")} className="bg-forest text-paper px-4 py-2 text-sm hover:bg-forest-light transition-colors">
+            <button type="button" onClick={() => router.push("/opportunities")} className="btn-primary">
               Browse scholarships
             </button>
           </div>
@@ -110,79 +114,52 @@ export default function SubmitScholarshipPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
-      <p className="font-mono text-xs tracking-widest uppercase text-brass">Community</p>
-      <h1 className="font-display text-2xl sm:text-4xl text-ink mt-2">Submit a scholarship</h1>
-      <p className="text-ink-soft mt-3 leading-relaxed">
-        Know of a scholarship we're missing? Submit it here — our team reviews every submission and approved ones go live on the platform. You'll earn a free AI analysis credit for each approved submission.
-      </p>
+    <div className="page-narrow">
+      <PageHeader
+        eyebrow="Community"
+        title="Submit a scholarship"
+        description="Know of a scholarship we are missing? Submit it here. Our team reviews every submission, and approved ones go live on the platform. You earn a free AI analysis credit for each approved submission."
+      />
 
       {error && (
-        <div className="mt-5 border border-alert bg-alert/5 px-4 py-3 flex items-start justify-between gap-3">
-          <p className="text-alert text-sm">{error}</p>
-          <button onClick={() => setError(null)} className="text-alert text-xs shrink-0">✕</button>
+        <div className="mb-5">
+          <Alert variant="danger">{error}</Alert>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-6">
-        {/* Core info */}
-        <div className="space-y-4">
-          <h2 className="font-display text-lg text-ink border-b border-rule pb-2">Basic information</h2>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <fieldset className="card card-pad space-y-4">
+          <legend className="sr-only">Basic information</legend>
+          <h2 className="h3">Basic information</h2>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Scholarship / opportunity title *</label>
-            <input
-              required
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              placeholder="e.g. Chevening Scholarship"
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-            />
+            <label htmlFor="s-title" className="label">Scholarship or opportunity title</label>
+            <input id="s-title" required value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="e.g. Chevening Scholarship" className="input" />
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-mono uppercase text-slate block mb-1">Provider / organization *</label>
-              <input
-                required
-                value={form.provider}
-                onChange={(e) => set("provider", e.target.value)}
-                placeholder="e.g. UK Foreign Office"
-                className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-              />
+              <label htmlFor="s-provider" className="label">Provider or organization</label>
+              <input id="s-provider" required value={form.provider} onChange={(e) => set("provider", e.target.value)} placeholder="e.g. UK Foreign Office" className="input" />
             </div>
             <div>
-              <label className="text-xs font-mono uppercase text-slate block mb-1">Host country *</label>
-              <input
-                required
-                value={form.country}
-                onChange={(e) => set("country", e.target.value)}
-                placeholder="e.g. United Kingdom"
-                className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-              />
+              <label htmlFor="s-country" className="label">Host country</label>
+              <input id="s-country" required value={form.country} onChange={(e) => set("country", e.target.value)} placeholder="e.g. United Kingdom" className="input" />
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-mono uppercase text-slate block mb-1">Type *</label>
-              <select
-                value={form.type}
-                onChange={(e) => set("type", e.target.value)}
-                className="w-full border border-rule px-3 py-2 text-sm bg-paper focus:border-forest outline-none"
-              >
+              <label htmlFor="s-type" className="label">Type</label>
+              <select id="s-type" value={form.type} onChange={(e) => set("type", e.target.value)} className="input capitalize">
                 {TYPES.map((t) => (
                   <option key={t} value={t}>{t.replace(/_/g, " ")}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label className="text-xs font-mono uppercase text-slate block mb-1">Degree level *</label>
-              <select
-                value={form.degreeLevel}
-                onChange={(e) => set("degreeLevel", e.target.value)}
-                className="w-full border border-rule px-3 py-2 text-sm bg-paper focus:border-forest outline-none"
-              >
+              <label htmlFor="s-level" className="label">Degree level</label>
+              <select id="s-level" value={form.degreeLevel} onChange={(e) => set("degreeLevel", e.target.value)} className="input capitalize">
                 {DEGREE_LEVELS.map((d) => (
                   <option key={d} value={d}>{d}</option>
                 ))}
@@ -191,115 +168,63 @@ export default function SubmitScholarshipPage() {
           </div>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Fields of study * <span className="normal-case text-slate">(comma-separated)</span></label>
-            <input
-              required
-              value={form.fieldsOfStudy}
-              onChange={(e) => set("fieldsOfStudy", e.target.value)}
-              placeholder="e.g. Engineering, Sciences, Social Sciences"
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-            />
+            <label htmlFor="s-fields" className="label">Fields of study</label>
+            <input id="s-fields" required value={form.fieldsOfStudy} onChange={(e) => set("fieldsOfStudy", e.target.value)} placeholder="e.g. Engineering, Sciences, Social Sciences" className="input" />
+            <p className="help">Separate fields with commas.</p>
           </div>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Official URL *</label>
-            <input
-              required
-              type="url"
-              value={form.officialUrl}
-              onChange={(e) => set("officialUrl", e.target.value)}
-              placeholder="https://..."
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-            />
+            <label htmlFor="s-url" className="label">Official URL</label>
+            <input id="s-url" required type="url" inputMode="url" value={form.officialUrl} onChange={(e) => set("officialUrl", e.target.value)} placeholder="https://" className="input" />
           </div>
-        </div>
+        </fieldset>
 
-        {/* Dates & funding */}
-        <div className="space-y-4">
-          <h2 className="font-display text-lg text-ink border-b border-rule pb-2">Dates & funding <span className="text-slate text-sm font-sans">(optional)</span></h2>
+        <fieldset className="card card-pad space-y-4">
+          <legend className="sr-only">Dates and funding</legend>
+          <h2 className="h3">Dates and funding <span className="text-sm font-normal text-slate">(optional)</span></h2>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="text-xs font-mono uppercase text-slate block mb-1">Application opens</label>
-              <input
-                type="date"
-                value={form.applicationOpens}
-                onChange={(e) => set("applicationOpens", e.target.value)}
-                className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-              />
+              <label htmlFor="s-opens" className="label">Application opens</label>
+              <input id="s-opens" type="date" value={form.applicationOpens} onChange={(e) => set("applicationOpens", e.target.value)} className="input" />
             </div>
             <div>
-              <label className="text-xs font-mono uppercase text-slate block mb-1">Deadline</label>
-              <input
-                type="date"
-                value={form.deadline}
-                onChange={(e) => set("deadline", e.target.value)}
-                className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-              />
+              <label htmlFor="s-deadline" className="label">Deadline</label>
+              <input id="s-deadline" type="date" value={form.deadline} onChange={(e) => set("deadline", e.target.value)} className="input" />
             </div>
           </div>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Funding coverage</label>
-            <input
-              value={form.fundingCoverage}
-              onChange={(e) => set("fundingCoverage", e.target.value)}
-              placeholder="e.g. Full tuition + living stipend + flights"
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none"
-            />
+            <label htmlFor="s-funding" className="label">Funding coverage</label>
+            <input id="s-funding" value={form.fundingCoverage} onChange={(e) => set("fundingCoverage", e.target.value)} placeholder="e.g. Full tuition, living stipend and flights" className="input" />
           </div>
-        </div>
+        </fieldset>
 
-        {/* Details */}
-        <div className="space-y-4">
-          <h2 className="font-display text-lg text-ink border-b border-rule pb-2">Details <span className="text-slate text-sm font-sans">(optional but helpful)</span></h2>
+        <fieldset className="card card-pad space-y-4">
+          <legend className="sr-only">Details</legend>
+          <h2 className="h3">Details <span className="text-sm font-normal text-slate">(optional but helpful)</span></h2>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Objectives / about the programme</label>
-            <textarea
-              rows={3}
-              value={form.objectives}
-              onChange={(e) => set("objectives", e.target.value)}
-              placeholder="What is this scholarship for? Who funds it? What's its mission?"
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none resize-none"
-            />
+            <label htmlFor="s-objectives" className="label">About the programme</label>
+            <textarea id="s-objectives" rows={3} value={form.objectives} onChange={(e) => set("objectives", e.target.value)} placeholder="What is this scholarship for? Who funds it? What is its mission?" className="textarea" />
           </div>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Eligibility summary</label>
-            <textarea
-              rows={3}
-              value={form.eligibilitySummary}
-              onChange={(e) => set("eligibilitySummary", e.target.value)}
-              placeholder="Who can apply? Nationality, degree, GPA requirements, etc."
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none resize-none"
-            />
+            <label htmlFor="s-eligibility" className="label">Eligibility summary</label>
+            <textarea id="s-eligibility" rows={3} value={form.eligibilitySummary} onChange={(e) => set("eligibilitySummary", e.target.value)} placeholder="Who can apply? Nationality, degree, GPA requirements and so on." className="textarea" />
           </div>
 
           <div>
-            <label className="text-xs font-mono uppercase text-slate block mb-1">Notes for reviewer</label>
-            <textarea
-              rows={2}
-              value={form.notes}
-              onChange={(e) => set("notes", e.target.value)}
-              placeholder="Anything else our team should know — e.g. how you found it, if it recurs annually, etc."
-              className="w-full border border-rule px-3 py-2 text-sm bg-transparent focus:border-forest outline-none resize-none"
-              maxLength={1000}
-            />
+            <label htmlFor="s-notes" className="label">Notes for the reviewer</label>
+            <textarea id="s-notes" rows={2} maxLength={1000} value={form.notes} onChange={(e) => set("notes", e.target.value)} placeholder="Anything else our team should know, such as how you found it or whether it repeats every year." className="textarea" />
           </div>
-        </div>
+        </fieldset>
 
-        <div className="pt-2">
-          <button
-            type="submit"
-            disabled={submitting}
-            className="bg-forest text-paper px-6 py-3 text-sm hover:bg-forest-light transition-colors disabled:opacity-60 w-full sm:w-auto"
-          >
-            {submitting ? "Submitting…" : "Submit for review"}
+        <div>
+          <button type="submit" disabled={submitting} aria-busy={submitting} className="btn-primary btn-block sm:w-auto">
+            {submitting ? "Submitting" : "Submit for review"}
           </button>
-          <p className="text-xs text-slate mt-3">
-            Submissions are reviewed by our team before going live. You'll earn 1 AI analysis credit for each approved submission.
-          </p>
+          <p className="help">Submissions are reviewed by our team before going live. You earn 1 AI analysis credit for each approved submission.</p>
         </div>
       </form>
     </div>

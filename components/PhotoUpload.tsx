@@ -1,6 +1,8 @@
 ﻿"use client";
 
 import { useRef, useState } from "react";
+import { Camera } from "lucide-react";
+import { Spinner } from "@/components/ui/Spinner";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -64,30 +66,32 @@ export default function PhotoUpload({ currentUrl, onChange, size = 80, dark = fa
     }
   }
 
-  const initials = "?";
-  const ringClass = dark ? "border-white/20" : "border-rule";
-  const textClass = dark ? "text-white/40" : "text-slate";
-  const bgClass = dark ? "bg-white/10" : "bg-canvas";
+  const textClass = dark ? "text-white/70" : "text-slate";
 
   return (
-    <div className="flex flex-col items-start gap-2">
+    <div className="flex items-center gap-4">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className={`relative rounded-full border-2 ${ringClass} overflow-hidden shrink-0 group`}
+        disabled={uploading}
+        aria-label={preview ? "Change photo" : "Upload photo"}
+        className="group relative shrink-0 overflow-hidden rounded-full bg-surface-2"
         style={{ width: size, height: size }}
-        title="Click to upload photo"
       >
         {preview ? (
-          <img src={preview} alt="Profile photo" className="w-full h-full object-cover" />
+          <img src={preview} alt="Your photo" className="h-full w-full object-cover" />
         ) : (
-          <div className={`w-full h-full flex items-center justify-center ${bgClass} ${textClass} font-display`} style={{ fontSize: size * 0.35 }}>
-            {initials}
-          </div>
+          <span className={`flex h-full w-full items-center justify-center ${textClass}`}>
+            <Camera size={Math.round(size * 0.32)} aria-hidden="true" />
+          </span>
         )}
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-          <span className="text-white text-xs font-mono">{uploading ? "…" : "Upload"}</span>
-        </div>
+        <span
+          className={`absolute inset-0 flex items-center justify-center bg-ink/55 text-white transition-opacity ${
+            uploading ? "opacity-100" : "opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100"
+          }`}
+        >
+          {uploading ? <Spinner size="sm" label="Uploading photo" /> : <Camera size={20} aria-hidden="true" />}
+        </span>
       </button>
 
       <input
@@ -95,14 +99,14 @@ export default function PhotoUpload({ currentUrl, onChange, size = 80, dark = fa
         type="file"
         accept="image/jpeg,image/png,image/webp,image/gif"
         className="sr-only"
+        tabIndex={-1}
         onChange={handleFile}
       />
 
-      <p className={`text-xs font-mono ${textClass}`}>
-        {uploading ? "Uploading…" : "JPEG, PNG or WebP · max 512 KB"}
-      </p>
-
-      {error && <p className="text-xs text-alert">{error}</p>}
+      <div className="min-w-0">
+        <p className={`text-sm ${textClass}`}>{uploading ? "Uploading" : "JPEG, PNG or WebP, up to 512 KB"}</p>
+        {error && <p className="mt-1 text-sm text-danger" role="alert">{error}</p>}
+      </div>
     </div>
   );
 }

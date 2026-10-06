@@ -6,6 +6,10 @@ import { Trophy } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import PhotoUpload from "@/components/PhotoUpload";
+import Link from "next/link";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { Alert } from "@/components/ui/States";
 
 const AWARD_TYPES = [
   { value: "scholarship", label: "Scholarship" },
@@ -64,24 +68,20 @@ export default function ShareWinPage() {
     }
   }
 
-  if (authLoading) return null;
+  if (authLoading) return <SkeletonPage variant="form" />;
 
   if (done) {
     return (
-      <div className="min-h-[70vh] flex items-center justify-center px-4" style={{ backgroundColor: "#1a2d45" }}>
-        <div className="text-center max-w-sm">
-          <Trophy size={48} className="mx-auto mb-4 text-brass" aria-hidden="true" />
-          <h1 className="font-display text-3xl text-white">Congratulations!</h1>
-          <p className="text-white/60 mt-3 leading-relaxed">
-            Your win has been shared. It'll show up on the wins wall so other students can see what's possible.
+      <div className="page-narrow">
+        <div className="card card-pad py-12 text-center">
+          <Trophy size={48} className="mx-auto mb-4 text-forest" aria-hidden="true" />
+          <h1 className="h2">Congratulations</h1>
+          <p className="mx-auto mt-3 max-w-sm leading-relaxed text-ink-soft">
+            Your win has been shared. It will show up on the wins wall so other students can see what is possible.
           </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center mt-8">
-            <a href="/wins" className="px-5 py-2.5 bg-brass text-white text-sm font-medium hover:opacity-90 transition-opacity">
-              See the wins wall →
-            </a>
-            <a href="/dashboard" className="px-5 py-2.5 border border-white/20 text-white/70 text-sm hover:border-white/40 hover:text-white transition-colors">
-              Back to dashboard
-            </a>
+          <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link href="/wins" className="btn-primary">See the wins wall</Link>
+            <Link href="/dashboard" className="btn-secondary">Back to dashboard</Link>
           </div>
         </div>
       </div>
@@ -92,127 +92,81 @@ export default function ShareWinPage() {
   const charLimit = 600;
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "#1a2d45" }}>
-      <div className="max-w-xl mx-auto px-4 sm:px-6 pt-14 pb-20">
-        <a href="/wins" className="text-white/40 text-xs font-mono hover:text-white/60 transition-colors">
-          ← Wins wall
-        </a>
+    <div className="page-narrow">
+      <PageHeader
+        back={{ href: "/wins", label: "Wins wall" }}
+        eyebrow="Share your win"
+        title="You made it. Tell your story."
+        description="Your experience is proof to the next person that it is possible. No pressure, just your own words."
+      />
 
-        <div className="mt-6">
-          <p className="font-mono text-xs tracking-widest uppercase text-brass mb-2">Share your win</p>
-          <h1 className="font-display text-3xl sm:text-4xl text-white leading-tight">
-            You made it.<br />Tell your story.
-          </h1>
-          <p className="text-white/50 mt-3 text-sm leading-relaxed">
-            Your experience is proof to the next person that it's possible. No pressure — just your own words.
-          </p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="mt-10 space-y-5">
-          <div>
-            <label className="block text-xs font-mono text-white/40 uppercase tracking-widest mb-3">
-              Your photo <span className="normal-case text-white/25">(optional — shows on the wins wall)</span>
-            </label>
+      <form onSubmit={handleSubmit} className="card card-pad space-y-5">
+        <fieldset>
+          <legend className="label">
+            Your photo <span className="font-normal text-slate">(optional, shows on the wins wall)</span>
+          </legend>
+          <div className="mt-2">
             <PhotoUpload
               currentUrl={form.photoUrl || undefined}
               onChange={(url) => setForm((p) => ({ ...p, photoUrl: url }))}
               size={80}
-              dark
             />
           </div>
+        </fieldset>
 
-          <div>
-            <label className="block text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
-              Your first name (shown publicly)
-            </label>
-            <input
-              required
-              value={form.displayName}
-              onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value }))}
-              placeholder="First name"
-              className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/20 focus:border-brass focus:bg-white/8 outline-none text-sm transition-colors"
-            />
-          </div>
+        <div>
+          <label htmlFor="w-name" className="label">Your first name (shown publicly)</label>
+          <input id="w-name" required autoComplete="given-name" value={form.displayName} onChange={(e) => setForm((p) => ({ ...p, displayName: e.target.value }))} placeholder="First name" className="input" />
+        </div>
 
-          <div>
-            <label className="block text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
-              What type of award?
-            </label>
-            <select
-              value={form.awardType}
-              onChange={(e) => setForm((p) => ({ ...p, awardType: e.target.value }))}
-              className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white focus:border-brass outline-none text-sm transition-colors"
-              style={{ backgroundColor: "rgba(255,255,255,0.05)" }}
-            >
-              {AWARD_TYPES.map((t) => (
-                <option key={t.value} value={t.value} style={{ backgroundColor: "#1a2d45" }}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label htmlFor="w-type" className="label">What type of award?</label>
+          <select id="w-type" value={form.awardType} onChange={(e) => setForm((p) => ({ ...p, awardType: e.target.value }))} className="input">
+            {AWARD_TYPES.map((t) => (
+              <option key={t.value} value={t.value}>{t.label}</option>
+            ))}
+          </select>
+        </div>
 
-          <div>
-            <label className="block text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
-              Name of the scholarship / programme
-            </label>
-            <input
-              required
-              value={form.opportunityTitle}
-              onChange={(e) => setForm((p) => ({ ...p, opportunityTitle: e.target.value }))}
-              placeholder="e.g. Chevening Scholarship 2025"
-              className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/20 focus:border-brass outline-none text-sm transition-colors"
-            />
-          </div>
+        <div>
+          <label htmlFor="w-title" className="label">Name of the scholarship or programme</label>
+          <input id="w-title" required value={form.opportunityTitle} onChange={(e) => setForm((p) => ({ ...p, opportunityTitle: e.target.value }))} placeholder="e.g. Chevening Scholarship 2025" className="input" />
+        </div>
 
-          <div>
-            <label className="block text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
-              Provider (optional)
-            </label>
-            <input
-              value={form.opportunityProvider}
-              onChange={(e) => setForm((p) => ({ ...p, opportunityProvider: e.target.value }))}
-              placeholder="e.g. UK Government / FCDO"
-              className="w-full bg-white/5 border border-white/10 px-4 py-3 text-white placeholder-white/20 focus:border-brass outline-none text-sm transition-colors"
-            />
-          </div>
+        <div>
+          <label htmlFor="w-provider" className="label">
+            Provider <span className="font-normal text-slate">(optional)</span>
+          </label>
+          <input id="w-provider" value={form.opportunityProvider} onChange={(e) => setForm((p) => ({ ...p, opportunityProvider: e.target.value }))} placeholder="e.g. UK Government / FCDO" className="input" />
+        </div>
 
-          <div>
-            <label className="block text-xs font-mono text-white/40 uppercase tracking-widest mb-2">
-              Your message — what would you tell someone still preparing?
-            </label>
-            <textarea
-              required
-              rows={5}
-              value={form.message}
-              onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
-              placeholder="Keep it real. What helped you? What was harder than you expected? What do you wish you'd known?"
-              className={`w-full bg-white/5 border px-4 py-3 text-white placeholder-white/20 outline-none text-sm leading-relaxed transition-colors resize-none ${
-                charCount > charLimit ? "border-alert" : "border-white/10 focus:border-brass"
-              }`}
-            />
-            <p className={`text-xs font-mono mt-1 text-right ${charCount > charLimit ? "text-alert" : "text-white/30"}`}>
-              {charCount}/{charLimit}
-            </p>
-          </div>
-
-          {error && (
-            <p className="text-alert text-sm bg-red-950/40 border border-alert/30 px-4 py-3">{error}</p>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting || charCount > charLimit || charCount < 20}
-            className="w-full bg-brass text-white py-3 text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
-          >
-            {submitting ? "Sharing…" : "Share my win"}
-          </button>
-
-          <p className="text-xs text-white/30 font-mono text-center">
-            Visible to everyone on the wins wall. Your country is shown but not your email or surname.
+        <div>
+          <label htmlFor="w-message" className="label">Your message: what would you tell someone still preparing?</label>
+          <textarea
+            id="w-message"
+            required
+            rows={5}
+            value={form.message}
+            onChange={(e) => setForm((p) => ({ ...p, message: e.target.value }))}
+            placeholder="Keep it real. What helped you? What was harder than you expected? What do you wish you had known?"
+            aria-describedby="w-count"
+            className={`textarea ${charCount > charLimit ? "!border-danger" : ""}`}
+          />
+          <p id="w-count" className={`mt-1.5 text-right text-sm ${charCount > charLimit ? "font-semibold text-danger" : "text-slate"}`}>
+            {charCount}/{charLimit}
+            {charCount < 20 && charCount > 0 ? " (write at least 20 characters)" : ""}
           </p>
-        </form>
-      </div>
+        </div>
+
+        {error && <Alert variant="danger">{error}</Alert>}
+
+        <div>
+          <button type="submit" disabled={submitting || charCount > charLimit || charCount < 20} aria-busy={submitting} className="btn-primary btn-block">
+            {submitting ? "Sharing" : "Share my win"}
+          </button>
+          <p className="help text-center">Visible to everyone on the wins wall. Your country is shown, but not your email or surname.</p>
+        </div>
+      </form>
     </div>
   );
 }

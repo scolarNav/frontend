@@ -2,183 +2,327 @@
 @tailwind components;
 @tailwind utilities;
 
-::selection {
-  background-color: #b8501f;
-  color: #ffffff;
+/* ---------------------------------------------------------------------------
+   ScolarNav design system
+   Tokens live in tailwind.config.ts. This file defines the shared building
+   blocks (layout, type, cards, buttons, forms, badges, alerts, tables, loaders)
+   so every screen is assembled from the same parts.
+   --------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-surface text-ink antialiased;
+  }
+
+  ::selection {
+    @apply bg-forest text-white;
+  }
+
+  /* One visible focus ring for every interactive element. */
+  a:focus-visible,
+  button:focus-visible,
+  select:focus-visible,
+  input:focus-visible,
+  textarea:focus-visible,
+  summary:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline outline-2 outline-offset-2 outline-forest;
+  }
 }
 
-body {
-  background-color: #f8f6f2;
-  color: #0f172a;
+@layer components {
+  /* -- Layout --------------------------------------------------------------- */
+
+  .page {
+    @apply mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 sm:py-12;
+  }
+
+  .page-wide {
+    @apply mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 sm:py-10;
+  }
+
+  .page-narrow {
+    @apply mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12;
+  }
+
+  .page-form {
+    @apply mx-auto w-full max-w-md px-4 py-10 sm:py-16;
+  }
+
+  .page-header {
+    @apply mb-8 flex flex-col gap-4 sm:mb-10 sm:flex-row sm:items-end sm:justify-between;
+  }
+
+  /* Opportunity cards: uniform columns */
+  .card-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  .stack > * + * {
+    @apply mt-6;
+  }
+
+  /* -- Type ----------------------------------------------------------------- */
+
+  .h1 {
+    @apply font-display text-3xl leading-tight text-ink sm:text-4xl;
+  }
+
+  .h2 {
+    @apply font-display text-2xl leading-snug text-ink;
+  }
+
+  .h3 {
+    @apply font-display text-xl leading-snug text-ink;
+  }
+
+  .lead {
+    @apply max-w-2xl text-base leading-relaxed text-ink-soft sm:text-lg;
+  }
+
+  .eyebrow {
+    @apply text-xs font-semibold uppercase tracking-widest text-slate;
+  }
+
+  .caption {
+    @apply text-sm text-slate;
+  }
+
+  .font-mono {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* -- Surfaces ------------------------------------------------------------- */
+
+  .card,
+  .case-card {
+    @apply rounded-xl bg-white;
+  }
+
+  .card-interactive,
+  .case-card-interactive {
+    @apply rounded-xl bg-white transition-colors duration-150 hover:bg-surface-2;
+  }
+
+  .card-pad {
+    @apply p-5 sm:p-6;
+  }
+
+  .divider {
+    @apply border-t border-rule;
+  }
+
+  /* -- Buttons -------------------------------------------------------------- */
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-ghost,
+  .btn-danger {
+    @apply inline-flex min-h-touch items-center justify-center gap-2 rounded-md px-5 py-2.5 text-sm font-semibold
+      transition-colors duration-150 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply bg-forest text-white hover:bg-forest-light active:bg-forest-light;
+  }
+
+  .btn-secondary {
+    @apply border border-control bg-white text-ink hover:bg-surface-2 active:bg-surface-2;
+  }
+
+  .btn-ghost {
+    @apply text-ink-soft hover:bg-surface-2 hover:text-ink;
+  }
+
+  .btn-danger {
+    @apply bg-danger text-white hover:bg-red-800;
+  }
+
+  .btn-sm {
+    @apply min-h-0 px-3 py-1.5 text-sm;
+  }
+
+  .btn-block {
+    @apply w-full;
+  }
+
+  /* Loading state: a spinner in front of the label. Add class "is-loading" or aria-busy="true". */
+  .is-loading,
+  [aria-busy="true"].btn-primary,
+  [aria-busy="true"].btn-secondary,
+  [aria-busy="true"].btn-ghost,
+  [aria-busy="true"].btn-danger {
+    @apply pointer-events-none;
+  }
+
+  .is-loading::before,
+  [aria-busy="true"].btn-primary::before,
+  [aria-busy="true"].btn-secondary::before,
+  [aria-busy="true"].btn-ghost::before,
+  [aria-busy="true"].btn-danger::before {
+    content: "";
+    @apply inline-block h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-current border-r-transparent;
+  }
+
+  /* -- Forms ---------------------------------------------------------------- */
+
+  .label {
+    @apply mb-1.5 block text-sm font-medium text-ink;
+  }
+
+  .help {
+    @apply mt-1.5 text-sm text-slate;
+  }
+
+  .field-error {
+    @apply mt-1.5 text-sm text-danger;
+  }
+
+  .input,
+  .textarea {
+    @apply block min-h-touch w-full rounded-md border border-control bg-white px-3.5 py-2.5 text-base text-ink
+      placeholder:text-slate transition-colors duration-150 focus:border-forest
+      disabled:cursor-not-allowed disabled:bg-surface-2 disabled:opacity-60 sm:text-sm;
+  }
+
+  .textarea {
+    @apply min-h-32 resize-y;
+  }
+
+  select.input {
+    @apply pr-9;
+  }
+
+  /* -- Badges --------------------------------------------------------------- */
+
+  .badge,
+  .stamp {
+    @apply inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-semibold text-ink-soft;
+  }
+
+  .badge-ok {
+    @apply bg-ok-soft text-ok;
+  }
+
+  .badge-warn {
+    @apply bg-warn-soft text-warn;
+  }
+
+  .badge-danger {
+    @apply bg-danger-soft text-danger;
+  }
+
+  .badge-info {
+    @apply bg-info-soft text-info;
+  }
+
+  .badge-brand {
+    @apply bg-forest-soft text-forest;
+  }
+
+  /* -- Alerts --------------------------------------------------------------- */
+
+  .alert {
+    @apply flex items-start gap-3 rounded-lg px-4 py-3 text-sm;
+  }
+
+  .alert-danger {
+    @apply bg-danger-soft text-danger;
+  }
+
+  .alert-ok {
+    @apply bg-ok-soft text-ok;
+  }
+
+  .alert-warn {
+    @apply bg-warn-soft text-warn;
+  }
+
+  .alert-info {
+    @apply bg-info-soft text-info;
+  }
+
+  /* -- Tables --------------------------------------------------------------- */
+
+  .table-wrap {
+    @apply overflow-x-auto rounded-xl bg-white;
+  }
+
+  .table {
+    @apply w-full min-w-table text-left text-sm;
+  }
+
+  .table th {
+    @apply whitespace-nowrap bg-surface-2 px-4 py-3 text-xs font-semibold uppercase tracking-wider text-slate;
+  }
+
+  .table td {
+    @apply border-t border-rule px-4 py-3 align-top text-ink-soft;
+  }
+
+  .table tbody tr:hover td {
+    @apply bg-surface;
+  }
+
+  /* -- Loaders -------------------------------------------------------------- */
+
+  .spinner {
+    @apply inline-block h-6 w-6 shrink-0 animate-spin rounded-full border-2 border-forest border-r-transparent;
+  }
+
+  .spinner-sm {
+    @apply h-4 w-4;
+  }
+
+  .spinner-lg {
+    @apply h-10 w-10 border-4;
+  }
+
+  .skeleton {
+    @apply animate-soft-pulse rounded-md bg-surface-2;
+  }
+
+  .progress-track {
+    @apply relative h-1 w-full overflow-hidden rounded-full bg-surface-2;
+  }
+
+  .progress-bar {
+    @apply absolute inset-y-0 left-0 w-2/5 animate-indeterminate rounded-full bg-forest;
+  }
+
+  /* Page content eases in after navigation. */
+  .page-enter {
+    @apply animate-fade-in;
+  }
 }
 
-/*  Cards  */
-
-.case-card {
-  background: #ffffff;
-  border-radius: 12px;
-}
-
-.case-card-interactive {
-  background: #ffffff;
-  border-radius: 12px;
-  transition: background 0.15s ease;
-}
-
-.case-card-interactive:hover {
-  background: #f1ece3;
-}
-
-/*  Badges / Tags  */
-
-.badge {
-  font-family: var(--font-body);
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  padding: 0.2rem 0.55rem;
-  font-size: 0.75rem;
-  border-radius: 4px;
-  display: inline-block;
-}
-
-.stamp {
-  font-family: var(--font-body);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border: 1px solid currentColor;
-  padding: 0.2rem 0.6rem;
-  font-size: 0.75rem;
-  border-radius: 5px;
-}
-
-/*  Form elements  */
-
-.input {
-  width: 100%;
-  border: 1px solid #c5d5e8;
-  border-radius: 8px;
-  padding: 0.65rem 0.9rem;
-  font-size: 0.875rem;
-  background: #ffffff;
-  color: #0f172a;
-  outline: none;
-  transition: border-color 0.15s ease;
-}
-
-.input:focus {
-  border-color: #6d8ec5;
-}
-
-.input:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  background: #f8f6f2;
-}
-
-/*  Buttons  */
-
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1.25rem;
-  min-height: 44px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 8px;
-  background: #b8501f;
-  color: #ffffff;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s ease, transform 0.1s ease;
-}
-
-.btn-primary:hover {
-  background: #c05520;
-}
-
-.btn-primary:active {
-  transform: scale(0.98);
-}
-
-.btn-primary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.65rem 1.25rem;
-  min-height: 44px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #334155;
-  border: 1px solid #c5d5e8;
-  cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease;
-}
-
-.btn-secondary:hover {
-  background: #f8f6f2;
-  border-color: #a8bfd8;
-}
-
-.btn-secondary:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/*  Motion preference  */
-
+/* Reduced motion: no movement. Spinners fall back to a slow fade so a wait still reads as a wait. */
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-}
 
-/*  Focus visible  */
+  .spinner,
+  .is-loading::before,
+  [aria-busy="true"]::before {
+    animation: soft-pulse 1.6s ease-in-out infinite !important;
+    border-right-color: currentColor !important;
+  }
 
-a:focus-visible,
-button:focus-visible,
-select:focus-visible {
-  outline: 2px solid #b8501f;
-  outline-offset: 2px;
-  border-radius: 4px;
-}
+  .skeleton {
+    animation: soft-pulse 1.8s ease-in-out infinite !important;
+  }
 
-/*  Numerals line up in dates, prices and counts  */
-
-.font-mono {
-  font-variant-numeric: tabular-nums;
-}
-
-/*  Opportunity card grid: uniform columns  */
-
-.card-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1rem;
-}
-
-@media (min-width: 640px) {
-  .card-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-@media (min-width: 1024px) {
-  .card-grid { grid-template-columns: repeat(3, 1fr); }
-}
-
-/*  Inputs: visible focus ring  */
-
-.input:focus-visible {
-  outline: 2px solid #b8501f;
-  outline-offset: 1px;
+  .progress-bar {
+    animation: none !important;
+    width: 100%;
+  }
 }

@@ -6,6 +6,11 @@ import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Opportunity, SavedOpportunity } from "@/lib/types";
+import { Alert, EmptyState } from "@/components/ui/States";
+import { CalendarDays } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { opportunityPath } from "@/lib/paths";
 
 interface DeadlineEntry {
   saved: SavedOpportunity;
@@ -20,9 +25,15 @@ const ALL_STATUSES: SavedOpportunity["status"][] = [
 function urgencyClass(days: number | null): string {
   if (days === null) return "text-slate";
   if (days < 0) return "text-slate line-through";
-  if (days <= 7) return "text-alert font-medium";
-  if (days <= 30) return "text-brass font-medium";
+  if (days <= 7) return "font-semibold text-danger";
+  if (days <= 30) return "font-semibold text-warn";
   return "text-ink-soft";
+}
+
+function urgencyBadge(days: number): string {
+  if (days <= 7) return "badge-danger";
+  if (days <= 30) return "badge-warn";
+  return "";
 }
 
 function urgencyLabel(days: number | null): string {
@@ -114,9 +125,7 @@ export default function DeadlinesPage() {
     }
   }
 
-  if (authLoading || loading) {
-    return <p className="max-w-3xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading deadlines…</p>;
-  }
+  if (authLoading || loading) return <SkeletonPage variant="list" />;
 
   if (!user) return null;
 
@@ -126,24 +135,24 @@ export default function DeadlinesPage() {
   const noDeadline = entries.filter((e) => e.daysUntil === null && e.saved.status !== "submitted");
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-14">
-      <p className="font-mono text-xs tracking-widest uppercase text-slate">Your Calendar</p>
-      <h1 className="font-display text-4xl text-ink mt-1 mb-2">Deadlines</h1>
-      <p className="text-ink-soft mb-10">
-        Every deadline for every opportunity you're tracking, sorted by urgency.
-      </p>
+    <div className="page-narrow">
+      <PageHeader
+        eyebrow="Your calendar"
+        title="Deadlines"
+        description="Every deadline for every opportunity you are tracking, sorted by urgency."
+      />
 
-      {error && <p className="text-alert text-sm mb-6">{error}</p>}
+      {error && <Alert variant="danger" className="mb-6">{error}</Alert>}
 
       {entries.length === 0 ? (
-        <div className="case-card p-8 text-center">
-          <p className="text-ink-soft">No opportunities saved yet.</p>
-          <Link href="/" className="inline-block mt-3 text-forest underline text-sm">
-            Browse the catalogue →
-          </Link>
-        </div>
+        <EmptyState
+          icon={CalendarDays}
+          title="No deadlines to track yet"
+          description="Save an opportunity and its deadline will show up here."
+          action={<Link href="/" className="btn-primary">Browse opportunities</Link>}
+        />
       ) : (
-        <>
+        <div className="space-y-10">
           {upcoming.length > 0 && (
             <Section title="Upcoming" entries={upcoming} showUrgency onUpdateStatus={updateStatus} updatingId={updatingId} />
           )}
@@ -156,7 +165,7 @@ export default function DeadlinesPage() {
           {noDeadline.length > 0 && (
             <Section title="No deadline listed" entries={noDeadline} onUpdateStatus={updateStatus} updatingId={updatingId} />
           )}
-        </>
+        </div>
       )}
     </div>
   );
@@ -176,58 +185,60 @@ function Section({
   updatingId: string | null;
 }) {
   return (
-    <div className="mb-10">
-      <h2 className="font-mono text-xs tracking-widest uppercase text-slate mb-4">{title}</h2>
-      <div className="space-y-3">
+    <section aria-label={title}>
+      <h2 className="h3 mb-4">
+        {title} <span className="text-base font-normal text-slate">({entries.length})</span>
+      </h2>
+      <ul className="space-y-3">
         {entries.map(({ saved, opportunity, daysUntil }) => (
-          <div key={saved.opportunity} className="case-card p-5 flex flex-col gap-3">
-            <div className="flex flex-col sm:flex-row sm:items-start gap-4">
-              <div className="flex-1">
-                <Link href={`/opportunities/${saved.opportunity}`} className="font-display text-lg text-ink hover:text-forest transition-colors">
+          <li key={saved.opportunity} className="card card-pad">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <div className="min-w-0 flex-1">
+                <Link href={opportunityPath(opportunity)} className="font-display text-lg text-ink transition-colors hover:text-forest">
                   {opportunity.title}
                 </Link>
-                <p className="text-sm text-slate mt-0.5">{opportunity.provider} · {opportunity.country}</p>
+                <p className="mt-0.5 text-sm text-slate">{opportunity.provider} · {opportunity.country}</p>
                 {opportunity.deadline && (
-                  <p className="font-mono text-xs mt-1.5">
+                  <p className="mt-2 flex flex-wrap items-center gap-2 text-sm">
                     <span className={urgencyClass(daysUntil)}>
                       {new Date(opportunity.deadline).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
                     </span>
                     {showUrgency && daysUntil !== null && daysUntil >= 0 && (
-                      <span className={`ml-2 ${urgencyClass(daysUntil)}`}>({urgencyLabel(daysUntil)})</span>
+                      <span className={`badge ${urgencyBadge(daysUntil)}`}>{urgencyLabel(daysUntil)}</span>
                     )}
                   </p>
                 )}
               </div>
-              <div className="flex items-center gap-3 shrink-0">
-                <Link href={`/applications/${saved.opportunity}`} className="text-sm text-forest underline whitespace-nowrap">
-                  Coaching
-                </Link>
-                <Link href={`/interview?opportunity=${saved.opportunity}`} className="text-sm text-slate hover:text-ink whitespace-nowrap">
-                  Practice
-                </Link>
+              <div className="flex shrink-0 items-center gap-2">
+                <Link href={`/applications/${saved.opportunity}`} className="btn-secondary btn-sm">Coaching</Link>
+                <Link href={`/interview?opportunity=${saved.opportunity}`} className="btn-ghost btn-sm">Practice</Link>
               </div>
             </div>
-            {/* Inline status updater */}
-            <div className="flex flex-wrap gap-1.5 pt-1 border-t border-rule">
-              {ALL_STATUSES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  disabled={updatingId === saved.opportunity}
-                  onClick={() => onUpdateStatus(saved.opportunity, s)}
-                  className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                    saved.status === s
-                      ? "bg-forest text-white border-forest"
-                      : "border-rule text-slate hover:border-forest hover:text-forest"
-                  }`}
-                >
-                  {STATUS_LABELS[s]}
-                </button>
-              ))}
+
+            <div className="mt-4 border-t border-rule pt-4" role="group" aria-label={`Status of ${opportunity.title}`}>
+              <div className="flex flex-wrap gap-2">
+                {ALL_STATUSES.map((s) => {
+                  const active = saved.status === s;
+                  return (
+                    <button
+                      key={s}
+                      type="button"
+                      disabled={updatingId === saved.opportunity}
+                      onClick={() => onUpdateStatus(saved.opportunity, s)}
+                      aria-pressed={active}
+                      className={`inline-flex min-h-touch items-center rounded-full px-3.5 text-sm font-medium transition-colors disabled:opacity-60 ${
+                        active ? "bg-navy text-white" : "bg-white text-ink-soft ring-1 ring-inset ring-control hover:bg-surface-2"
+                      }`}
+                    >
+                      {STATUS_LABELS[s]}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          </li>
         ))}
-      </div>
-    </div>
+      </ul>
+    </section>
   );
 }

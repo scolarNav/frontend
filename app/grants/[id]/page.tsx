@@ -83,7 +83,7 @@ export default async function GrantDetailPage({ params }: { params: { id: string
         {/* Header */}
         <div className="mb-6">
           <p className="font-mono text-xs tracking-widest uppercase text-brass mb-3">{grant.source}</p>
-          <h1 className="font-display text-2xl sm:text-3xl text-ink leading-snug mb-2">{grant.title}</h1>
+          <h1 className="h1">{grant.title}</h1>
           <p className="text-slate text-sm">by {grant.provider}</p>
         </div>
 
@@ -113,7 +113,7 @@ export default async function GrantDetailPage({ params }: { params: { id: string
           )}
 
           {!grant.isOpen && !deadlineDate && (
-            <span className="font-mono text-xs text-slate bg-surface border border-rule px-2.5 py-1 rounded-full">Closed</span>
+            <span className="text-sm text-slate bg-surface border border-rule px-2.5 py-1 rounded-full">Closed</span>
           )}
         </div>
 
@@ -145,7 +145,7 @@ export default async function GrantDetailPage({ params }: { params: { id: string
               <path d="M2.5 9.5L9.5 2.5M9.5 2.5H5M9.5 2.5V7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           </a>
-          <Link href="/grants" className="font-mono text-xs text-slate hover:text-ink transition-colors">
+          <Link href="/grants" className="text-sm text-slate hover:text-ink transition-colors">
             ← Browse all grants
           </Link>
         </div>
@@ -159,12 +159,12 @@ export default async function GrantDetailPage({ params }: { params: { id: string
 
         {related.length > 0 && (
           <aside aria-label="Open grants" className="mt-10">
-            <h2 className="font-display text-xl text-ink border-b border-rule pb-2 mb-3">More open grants</h2>
+            <h2 className="h3 mb-3">More open grants</h2>
             <ul className="space-y-2">
               {related.map((g) => (
                 <li key={g._id}>
                   <Link href={grantPath(g)} className="text-sm text-forest hover:underline">{g.title}</Link>
-                  <span className="text-xs text-slate"> — {g.provider}</span>
+                  <span className="text-xs text-slate">, {g.provider}</span>
                 </li>
               ))}
             </ul>
@@ -172,8 +172,8 @@ export default async function GrantDetailPage({ params }: { params: { id: string
         )}
 
         {/* Footer note */}
-        <p className="font-mono text-xs text-slate/50 mt-10 pt-6 border-t border-rule">
-          Listed from {grant.source} · Added {formatDate(grant.scrapedAt)} · ScolarNav does not verify individual listings — always check the official source before applying.
+        <p className="text-sm text-slate/50 mt-10 pt-6 border-t border-rule">
+          Listed from {grant.source} · Added {formatDate(grant.scrapedAt)} · ScolarNav does not verify individual listings, always check the official source before applying.
         </p>
       </div>
     </>

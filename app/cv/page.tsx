@@ -5,6 +5,11 @@ import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { CVData } from "@/lib/types";
+import { Alert } from "@/components/ui/States";
+import { FileUp } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { ProgressBar } from "@/components/ui/Spinner";
 
 export default function CvPage() {
   const { user, loading: authLoading, refreshUser } = useAuth();
@@ -57,137 +62,141 @@ export default function CvPage() {
     }
   }
 
-  if (authLoading || loadingCv) {
-    return <p className="max-w-3xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading…</p>;
-  }
+  if (authLoading || loadingCv) return <SkeletonPage variant="form" />;
+
+  const pills = (items: string[]) =>
+    items.length === 0 ? (
+      <p className="mt-2 text-sm text-slate">Nothing extracted.</p>
+    ) : (
+      <ul className="mt-3 flex flex-wrap gap-2">
+        {items.map((s) => (
+          <li key={s} className="badge">{s}</li>
+        ))}
+      </ul>
+    );
 
   return (
-    <div className="max-w-3xl mx-auto px-6 py-14">
-      <p className="font-mono text-xs tracking-widest uppercase text-brass">Your Record</p>
-      <h1 className="font-display text-4xl text-ink mt-2">CV & background</h1>
-      <p className="text-ink-soft mt-3 leading-relaxed">
-        Everything your coaching and essay reviews are built on comes from here. Upload a PDF CV and
-        we'll extract your education, experience, and skills — check it over afterward, since coaching
-        quality depends entirely on this being accurate.
-      </p>
+    <div className="page-narrow">
+      <PageHeader
+        eyebrow="Your record"
+        title="CV and background"
+        description="Everything your coaching and essay reviews are built on comes from here. Upload a PDF CV and we will extract your education, experience and skills. Check the result afterwards, because coaching quality depends on it being accurate."
+      />
 
-      <div className="mt-8 case-card p-6">
-        <label className="block">
-          <span className="stamp text-forest border-forest inline-block mb-3">
-            {cvData ? "Replace CV" : "Upload CV (PDF)"}
+      <section className="card card-pad" aria-labelledby="cv-upload-heading">
+        <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+          <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-forest-soft text-forest">
+            <FileUp size={22} aria-hidden="true" />
           </span>
-          <input
-            ref={fileInput}
-            type="file"
-            accept="application/pdf"
-            onChange={handleFileChange}
-            disabled={uploading}
-            className="block w-full text-sm file:mr-4 file:py-2 file:px-4 file:border file:border-rule file:bg-paper file:text-ink-soft file:text-sm disabled:opacity-50"
-          />
-        </label>
+          <div className="min-w-0 flex-1">
+            <h2 id="cv-upload-heading" className="h3">{cvData ? "Replace your CV" : "Upload your CV"}</h2>
+            <p className="help">PDF only. We read it and fill in your profile.</p>
+          </div>
+          <label
+            className={`btn-primary cursor-pointer focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-forest ${
+              uploading ? "pointer-events-none is-loading" : ""
+            }`}
+          >
+            {uploading ? "Reading your CV" : cvData ? "Choose a new PDF" : "Choose a PDF"}
+            <input
+              ref={fileInput}
+              type="file"
+              accept="application/pdf"
+              onChange={handleFileChange}
+              disabled={uploading}
+              className="sr-only"
+            />
+          </label>
+        </div>
+
         {uploading && (
-          <p className="text-sm text-slate font-mono mt-3">Reading and structuring your CV — this can take a moment…</p>
+          <div className="mt-5">
+            <ProgressBar label="Reading and structuring your CV" />
+            <p className="mt-2 text-sm text-slate">Reading and structuring your CV. This can take a moment.</p>
+          </div>
         )}
-        {error && <p className="text-alert text-sm mt-3">{error}</p>}
+        {error && <Alert variant="danger" className="mt-4">{error}</Alert>}
         {uploadDone && !uploading && (
-          <p className="text-sm text-forest font-mono mt-3">CV parsed — your profile is updated. The data appears below.</p>
+          <Alert variant="ok" className="mt-4">CV parsed and your profile is updated. The data appears below.</Alert>
         )}
         {cvData && !uploading && (
-          <p className="text-xs text-slate font-mono mt-3">
-            Last parsed: {new Date(cvData.parsedAt).toLocaleString()} · {cvData.sourceFileName}
+          <p className="mt-4 text-sm text-slate">
+            Last parsed {new Date(cvData.parsedAt).toLocaleString()} · {cvData.sourceFileName}
           </p>
         )}
-      </div>
+      </section>
 
       {cvData && (
-        <div ref={parsedRef} className="mt-10 space-y-8">
+        <div ref={parsedRef} className="mt-10 space-y-10">
           <section>
-            <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Summary</h2>
-            <p className="text-ink-soft mt-3 leading-relaxed">{cvData.summary || "No summary extracted."}</p>
+            <h2 className="h2">Summary</h2>
+            <p className="mt-3 max-w-prose leading-relaxed text-ink-soft">{cvData.summary || "No summary extracted."}</p>
           </section>
 
           <section>
-            <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Education</h2>
-            <div className="mt-3 space-y-3">
-              {cvData.education.length === 0 && <p className="text-slate text-sm">Nothing extracted.</p>}
+            <h2 className="h2">Education</h2>
+            <ul className="mt-3 space-y-3">
+              {cvData.education.length === 0 && <li className="text-sm text-slate">Nothing extracted.</li>}
               {cvData.education.map((e, i) => (
-                <div key={i} className="case-card p-4">
-                  <p className="font-medium text-ink">
-                    {e.degree} — {e.fieldOfStudy}
+                <li key={i} className="card p-4">
+                  <p className="font-semibold text-ink">
+                    {e.degree}, {e.fieldOfStudy}
                   </p>
                   <p className="text-sm text-slate">
                     {e.institution}
-                    {e.startYear || e.endYear ? ` · ${e.startYear ?? "?"}–${e.endYear ?? "present"}` : ""}
+                    {e.startYear || e.endYear ? ` · ${e.startYear ?? "?"}-${e.endYear ?? "present"}` : ""}
                     {e.gpa ? ` · ${e.gpa}` : ""}
                   </p>
-                </div>
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
 
           <section>
-            <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Work Experience</h2>
-            <div className="mt-3 space-y-3">
-              {cvData.experience.length === 0 && <p className="text-slate text-sm">Nothing extracted.</p>}
+            <h2 className="h2">Work experience</h2>
+            <ul className="mt-3 space-y-3">
+              {cvData.experience.length === 0 && <li className="text-sm text-slate">Nothing extracted.</li>}
               {cvData.experience.map((e, i) => (
-                <div key={i} className="case-card p-4">
-                  <p className="font-medium text-ink">{e.role} — {e.organization}</p>
+                <li key={i} className="card p-4">
+                  <p className="font-semibold text-ink">{e.role}, {e.organization}</p>
                   <p className="text-sm text-slate">
-                    {e.startDate ?? "?"} – {e.isCurrent ? "present" : e.endDate ?? "?"}
+                    {e.startDate ?? "?"} to {e.isCurrent ? "present" : e.endDate ?? "?"}
                   </p>
-                  {e.description && <p className="text-sm text-ink-soft mt-1.5">{e.description}</p>}
-                </div>
+                  {e.description && <p className="mt-1.5 text-sm text-ink-soft">{e.description}</p>}
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
 
           {(cvData.volunteerExperience?.length ?? 0) > 0 && (
             <section>
-              <h2 className="font-display text-2xl text-ink border-b border-rule pb-2">Volunteer & Community</h2>
-              <div className="mt-3 space-y-3">
+              <h2 className="h2">Volunteer and community</h2>
+              <ul className="mt-3 space-y-3">
                 {cvData.volunteerExperience.map((e, i) => (
-                  <div key={i} className="case-card p-4">
-                    <p className="font-medium text-ink">{e.role} — {e.organization}</p>
+                  <li key={i} className="card p-4">
+                    <p className="font-semibold text-ink">{e.role}, {e.organization}</p>
                     <p className="text-sm text-slate">
-                      {e.startDate ?? "?"} – {e.isCurrent ? "present" : e.endDate ?? "?"}
+                      {e.startDate ?? "?"} to {e.isCurrent ? "present" : e.endDate ?? "?"}
                     </p>
-                    {e.description && <p className="text-sm text-ink-soft mt-1.5">{e.description}</p>}
-                  </div>
+                    {e.description && <p className="mt-1.5 text-sm text-ink-soft">{e.description}</p>}
+                  </li>
                 ))}
-              </div>
+              </ul>
             </section>
           )}
 
-          <section className="grid sm:grid-cols-3 gap-6">
+          <section className="grid gap-8 sm:grid-cols-3">
             <div>
-              <h3 className="font-display text-lg text-ink">Skills</h3>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {cvData.skills.map((s) => (
-                  <span key={s} className="text-xs border border-rule px-2 py-0.5">
-                    {s}
-                  </span>
-                ))}
-              </div>
+              <h2 className="h3">Skills</h2>
+              {pills(cvData.skills)}
             </div>
             <div>
-              <h3 className="font-display text-lg text-ink">Certifications</h3>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {cvData.certifications.map((s) => (
-                  <span key={s} className="text-xs border border-rule px-2 py-0.5">
-                    {s}
-                  </span>
-                ))}
-              </div>
+              <h2 className="h3">Certifications</h2>
+              {pills(cvData.certifications)}
             </div>
             <div>
-              <h3 className="font-display text-lg text-ink">Languages</h3>
-              <div className="flex flex-wrap gap-1.5 mt-2">
-                {cvData.languages.map((s) => (
-                  <span key={s} className="text-xs border border-rule px-2 py-0.5">
-                    {s}
-                  </span>
-                ))}
-              </div>
+              <h2 className="h3">Languages</h2>
+              {pills(cvData.languages)}
             </div>
           </section>
         </div>

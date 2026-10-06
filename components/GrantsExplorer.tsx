@@ -6,6 +6,7 @@ import { api, ApiError } from "@/lib/api";
 import type { Grant, GrantTag, GrantsResponse } from "@/lib/types";
 import { grantPath } from "@/lib/paths";
 import PagerLink from "@/components/PagerLink";
+import { Alert } from "@/components/ui/States";
 
 const TAG_META: Record<GrantTag, { label: string; color: string }> = {
   africa: { label: "Africa", color: "#92400e" },
@@ -111,7 +112,7 @@ function GrantCard({ grant }: { grant: Grant }) {
           <p className="text-xs text-slate mt-0.5">{grant.provider}</p>
         </div>
         {grant.amount && (
-          <span className="shrink-0 font-mono text-xs text-slate border border-rule px-2 py-1 whitespace-nowrap rounded">
+          <span className="shrink-0 text-sm text-slate border border-rule px-2 py-1 whitespace-nowrap rounded">
             {grant.amount}
           </span>
         )}
@@ -141,13 +142,13 @@ function GrantCard({ grant }: { grant: Grant }) {
             </span>
           )}
           {deadlineDate && (
-            <span className={`font-mono text-xs text-slate${isPast ? " line-through" : ""}`}>
+            <span className={`text-sm text-slate${isPast ? " line-through" : ""}`}>
               {isPast ? "Closed " : "Closes "}
               {deadlineDate.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
             </span>
           )}
           {!deadlineDate && grant.isOpen && (
-            <span className="font-mono text-xs text-slate">Deadline not listed</span>
+            <span className="text-sm text-slate">Deadline not listed</span>
           )}
         </div>
 
@@ -262,10 +263,10 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
     <div className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
       <div className="mb-8">
         <p className="font-mono text-xs tracking-widest uppercase text-brass mb-2">Live listings</p>
-        <h1 className="font-display text-3xl sm:text-4xl text-ink mb-3">Startup Grants</h1>
+        <h1 className="h1">Startup Grants</h1>
         <p className="text-ink-soft text-base max-w-2xl leading-relaxed">
           Grants and funding opportunities for startups working in technology, inclusion, innovation,
-          talent development, and African markets — refreshed automatically every 8 hours.
+          talent development, and African markets, refreshed automatically every 8 hours.
         </p>
         {timeSince && (
           <p className="text-xs text-slate mt-2 font-mono">Last refreshed {timeSince}</p>
@@ -325,7 +326,7 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
       {/* Error */}
       {error && (
         <div className="case-card p-6 text-center">
-          <p className="text-alert text-sm mb-3">{error}</p>
+          <Alert variant="danger" className="mb-3">{error}</Alert>
           <button onClick={load} className="btn-primary text-sm">
             Try again
           </button>
@@ -370,7 +371,7 @@ export default function GrantsExplorer({ initial }: { initial: GrantsResponse | 
           <PagerLink basePath="/grants" target={page - 1} current={page} disabled={page <= 1} onGo={setPage} className="stamp text-sm" rel="prev">
             ← Previous
           </PagerLink>
-          <span className="font-mono text-xs text-slate">
+          <span className="text-sm text-slate">
             Page {page} of {pages}
           </span>
           <PagerLink basePath="/grants" target={page + 1} current={page} disabled={page >= pages} onGo={setPage} className="stamp text-sm" rel="next">

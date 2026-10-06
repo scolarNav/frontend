@@ -6,6 +6,12 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Roadmap, UserProfile } from "@/lib/types";
 import UpgradePrompt from "@/components/UpgradePrompt";
+import { Alert } from "@/components/ui/States";
+import { Check } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { ProgressBar } from "@/components/ui/Spinner";
+import { Chip } from "@/components/ui/Chip";
 
 const DEGREE_LEVELS = ["Undergraduate", "Master's", "PhD", "Postdoc", "Professional", "Not sure yet"];
 const COUNTRIES = [
@@ -165,9 +171,7 @@ export default function RoadmapPage() {
     }
   }
 
-  if (authLoading || loading) {
-    return <p className="max-w-3xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading your roadmap…</p>;
-  }
+  if (authLoading || loading) return <SkeletonPage variant="list" />;
   if (!user) return null;
 
   const isPro = user.subscription?.plan === "pro" &&
@@ -175,9 +179,8 @@ export default function RoadmapPage() {
 
   if (!isPro) {
     return (
-      <div className="max-w-2xl mx-auto px-6 py-16">
-        <h1 className="font-display text-4xl text-ink">My Roadmap</h1>
-        <p className="text-ink-soft mt-2 text-lg">Your week-by-week plan to get scholarship-ready.</p>
+      <div className="page-narrow">
+        <PageHeader eyebrow="Pro" title="My roadmap" description="Your week-by-week plan to get scholarship-ready." />
         <UpgradePrompt feature="roadmap" />
       </div>
     );
@@ -185,88 +188,71 @@ export default function RoadmapPage() {
 
   if (showForm) {
     return (
-      <div className="max-w-2xl mx-auto px-6 py-14">
-        <h1 className="font-display text-4xl text-ink mb-3">Build your plan</h1>
-        <p className="text-ink-soft mb-10">
-          Answer a few questions and we'll generate a week-by-week scholarship roadmap built around your goals, timeline, and target countries.
-        </p>
+      <div className="page-narrow">
+        <PageHeader
+          eyebrow="My roadmap"
+          title="Build your plan"
+          description="Answer a few questions and we will generate a week-by-week scholarship roadmap built around your goals, timeline and target countries."
+        />
 
-        {error && <p className="text-alert text-sm mb-4">{error}</p>}
+        {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
-        <div className="space-y-8">
-          <div>
-            <label className="block text-sm font-medium text-ink mb-3">
-              Which countries are you targeting? <span className="text-slate font-normal">(select all that apply)</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
+        <div className="card card-pad space-y-8">
+          <fieldset>
+            <legend className="label">
+              Which countries are you targeting? <span className="font-normal text-slate">(select all that apply)</span>
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
               {COUNTRIES.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => toggleCountry(c)}
-                  className={`text-sm px-3 py-1.5 border rounded-md transition-colors ${
-                    form.targetCountries.includes(c)
-                      ? "bg-forest text-white border-forest"
-                      : "border-rule text-ink-soft hover:border-forest hover:text-forest"
-                  }`}
-                >
-                  {c}
-                </button>
+                <Chip key={c} active={form.targetCountries.includes(c)} onClick={() => toggleCountry(c)}>{c}</Chip>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          <div>
-            <label className="block text-sm font-medium text-ink mb-3">
-              What do you want to study? <span className="text-slate font-normal">(select all that apply)</span>
-            </label>
-            <div className="flex flex-wrap gap-2">
+          <fieldset>
+            <legend className="label">
+              What do you want to study? <span className="font-normal text-slate">(select all that apply)</span>
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
               {STUDY_FIELDS.map((f) => (
-                <button
-                  key={f}
-                  type="button"
-                  onClick={() => toggleField(f)}
-                  className={`text-sm px-3 py-1.5 border rounded-md transition-colors ${
-                    form.targetFields.includes(f)
-                      ? "bg-forest text-white border-forest"
-                      : "border-rule text-ink-soft hover:border-forest hover:text-forest"
-                  }`}
-                >
-                  {f}
-                </button>
+                <Chip key={f} active={form.targetFields.includes(f)} onClick={() => toggleField(f)}>{f}</Chip>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          <div className="grid sm:grid-cols-2 gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Target degree level</label>
+              <label htmlFor="rm-level" className="label">Target degree level</label>
               <select
+                id="rm-level"
                 value={form.targetDegreeLevel}
                 onChange={(e) => setForm((f) => ({ ...f, targetDegreeLevel: e.target.value }))}
                 className="input"
               >
-                <option value="">Select…</option>
+                <option value="">Select a level</option>
                 {DEGREE_LEVELS.map((d) => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Target start date</label>
+              <label htmlFor="rm-start" className="label">Target start date</label>
               <select
+                id="rm-start"
                 value={form.targetStartDate}
                 onChange={(e) => setForm((f) => ({ ...f, targetStartDate: e.target.value }))}
                 className="input"
               >
-                <option value="">Select…</option>
+                <option value="">Select a month</option>
                 {MONTH_YEARS.map((m) => <option key={m} value={m}>{m}</option>)}
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-ink mb-1.5">Annual budget (USD)</label>
+              <label htmlFor="rm-budget" className="label">Annual budget (USD)</label>
               <input
+                id="rm-budget"
                 type="number"
+                inputMode="numeric"
                 value={form.annualBudgetUSD}
                 onChange={(e) => setForm((f) => ({ ...f, annualBudgetUSD: e.target.value }))}
                 placeholder="e.g. 15000"
@@ -275,18 +261,22 @@ export default function RoadmapPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-medium text-ink mb-3">Language test scores <span className="text-slate font-normal">(leave blank if not taken)</span></label>
-            <div className="grid grid-cols-3 gap-4">
+          <fieldset>
+            <legend className="label">
+              Language test scores <span className="font-normal text-slate">(leave blank if not taken)</span>
+            </legend>
+            <div className="mt-2 grid grid-cols-3 gap-4">
               {[
                 { key: "ielts", label: "IELTS", placeholder: "e.g. 7.0" },
                 { key: "toefl", label: "TOEFL iBT", placeholder: "e.g. 100" },
                 { key: "gre", label: "GRE", placeholder: "e.g. 320" },
               ].map(({ key, label, placeholder }) => (
                 <div key={key}>
-                  <label className="block text-xs text-slate font-mono mb-1">{label}</label>
+                  <label htmlFor={`rm-${key}`} className="help !mt-0 mb-1 block">{label}</label>
                   <input
+                    id={`rm-${key}`}
                     type="number"
+                    inputMode="decimal"
                     value={form[key as keyof typeof form] as string}
                     onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
                     placeholder={placeholder}
@@ -295,15 +285,19 @@ export default function RoadmapPage() {
                 </div>
               ))}
             </div>
-          </div>
+          </fieldset>
 
-          <button
-            onClick={saveAndGenerate}
-            disabled={generating}
-            className="btn-primary w-full"
-          >
-            {generating ? "Building your roadmap…" : "Generate my roadmap"}
-          </button>
+          <div>
+            <button type="button" onClick={saveAndGenerate} disabled={generating} aria-busy={generating} className="btn-primary btn-block">
+              {generating ? "Building your roadmap" : "Generate my roadmap"}
+            </button>
+            {generating && (
+              <div className="mt-4">
+                <ProgressBar label="Building your roadmap" />
+                <p className="mt-2 text-center text-sm text-slate">Planning your weeks. Please keep this page open.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -311,96 +305,87 @@ export default function RoadmapPage() {
 
   if (!roadmap) return null;
 
+  const totalTasks = roadmap.weeks.reduce((sum, w) => sum + w.tasks.length, 0);
+  const doneTasks = completedTasks.size;
+  const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
+
   return (
-    <div className="max-w-3xl mx-auto px-6 py-14">
-      <div className="flex items-start justify-between mb-2">
-        <p className="font-mono text-xs tracking-widest uppercase text-slate">My Roadmap</p>
-        <button
-          onClick={() => setShowForm(true)}
-          className="text-xs text-forest font-mono hover:underline"
-        >
-          Update goals →
-        </button>
-      </div>
-      <h1 className="font-display text-4xl text-ink mb-4">{roadmap.title}</h1>
-      <p className="text-ink-soft leading-relaxed mb-6">{roadmap.overview}</p>
+    <div className="page-narrow">
+      <PageHeader
+        eyebrow="My roadmap"
+        title={roadmap.title}
+        description={roadmap.overview}
+        actions={<button type="button" onClick={() => setShowForm(true)} className="btn-secondary">Update goals</button>}
+      />
 
-      {/* Progress bar */}
-      {(() => {
-        const totalTasks = roadmap.weeks.reduce((sum, w) => sum + w.tasks.length, 0);
-        const doneTasks = completedTasks.size;
-        const pct = totalTasks > 0 ? Math.round((doneTasks / totalTasks) * 100) : 0;
-        return (
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-1.5">
-              <p className="text-xs font-mono text-slate">{doneTasks} of {totalTasks} tasks done</p>
-              <p className="text-xs font-mono text-forest">{pct}%</p>
-            </div>
-            <div className="h-1.5 bg-rule rounded-full overflow-hidden">
-              <div className="h-full bg-forest rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
-            </div>
-          </div>
-        );
-      })()}
+      <section className="card card-pad mb-10" aria-label="Roadmap progress">
+        <div className="mb-2 flex items-center justify-between">
+          <p className="text-sm text-ink-soft">{doneTasks} of {totalTasks} tasks done</p>
+          <p className="text-sm font-semibold text-forest">{pct}%</p>
+        </div>
+        <div className="h-2 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={pct} aria-valuemin={0} aria-valuemax={100} aria-label="Roadmap progress">
+          <div className="h-full rounded-full bg-forest transition-all duration-500" style={{ width: `${pct}%` }} />
+        </div>
+      </section>
 
-      <div className="space-y-0">
+      <ol>
         {roadmap.weeks.map((week, i) => {
           const weekDone = week.tasks.every((_, j) => completedTasks.has(`${week.week}-${j}`));
           return (
-            <div key={week.week} className="flex gap-5">
+            <li key={week.week} className="flex gap-4 sm:gap-5">
               {/* Timeline spine */}
               <div className="flex flex-col items-center">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-mono text-xs shrink-0 z-10 transition-colors ${weekDone ? "bg-forest text-white" : "bg-white border-2 border-forest text-forest"}`}>
-                  {weekDone ? "✓" : week.week}
+                <div
+                  className={`z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors ${
+                    weekDone ? "bg-forest text-white" : "bg-white text-forest ring-2 ring-inset ring-forest"
+                  }`}
+                >
+                  {weekDone ? <Check size={16} aria-hidden="true" /> : week.week}
+                  {weekDone && <span className="sr-only">Week {week.week} complete</span>}
                 </div>
-                {i < roadmap.weeks.length - 1 && (
-                  <div className="w-0.5 flex-1 bg-rule my-1" />
-                )}
+                {i < roadmap.weeks.length - 1 && <div className="my-1 w-0.5 flex-1 bg-rule-strong" />}
               </div>
 
               {/* Content */}
-              <div className="pb-8 flex-1">
-                <p className={`font-display text-lg ${weekDone ? "text-slate line-through" : "text-ink"}`}>{week.label}</p>
-                {week.milestone && (
-                  <p className="text-xs font-mono text-brass mt-0.5 mb-2">
-                    Milestone: {week.milestone}
-                  </p>
-                )}
-                <ul className="mt-2 space-y-2">
+              <div className="min-w-0 flex-1 pb-8">
+                <h2 className={`font-display text-lg ${weekDone ? "text-slate line-through" : "text-ink"}`}>{week.label}</h2>
+                {week.milestone && <p className="mb-2 mt-0.5 text-sm font-medium text-warn">Milestone: {week.milestone}</p>}
+                <ul className="mt-2 space-y-1">
                   {week.tasks.map((task, j) => {
                     const taskKey = `${week.week}-${j}`;
                     const isDone = completedTasks.has(taskKey);
                     const isToggling = togglingTask === taskKey;
                     return (
-                      <li key={j} className="flex items-start gap-2.5">
+                      <li key={j}>
                         <button
                           type="button"
+                          role="checkbox"
+                          aria-checked={isDone}
                           onClick={() => toggleTask(taskKey)}
                           disabled={isToggling}
-                          className={`mt-0.5 w-4 h-4 shrink-0 rounded border transition-colors flex items-center justify-center ${
-                            isDone
-                              ? "bg-forest border-forest text-white"
-                              : "border-rule hover:border-forest"
-                          }`}
-                          aria-label={isDone ? "Mark incomplete" : "Mark complete"}
+                          className="flex min-h-touch w-full items-start gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:bg-surface-2 disabled:opacity-60"
                         >
-                          {isDone && <span className="text-white text-xs leading-none">✓</span>}
+                          <span
+                            className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors ${
+                              isDone ? "border-forest bg-forest text-white" : "border-control bg-white"
+                            }`}
+                          >
+                            {isDone && <Check size={14} aria-hidden="true" />}
+                          </span>
+                          <span className={`text-sm leading-snug ${isDone ? "text-slate line-through" : "text-ink-soft"}`}>{task}</span>
                         </button>
-                        <span className={`text-sm leading-snug ${isDone ? "text-slate line-through" : "text-ink-soft"}`}>
-                          {task}
-                        </span>
                       </li>
                     );
                   })}
                 </ul>
               </div>
-            </div>
+            </li>
           );
         })}
-      </div>
+      </ol>
 
-      <p className="text-xs text-slate font-mono mt-8">
-        Generated {new Date(roadmap.generatedAt).toLocaleDateString()} · Based on your profile and CV
+      <p className="mt-4 text-sm text-slate">
+        Generated {new Date(roadmap.generatedAt).toLocaleDateString()} from your profile and CV.
       </p>
     </div>
   );

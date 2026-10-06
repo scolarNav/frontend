@@ -3,10 +3,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { ExternalLink, Search, Star } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { HumanCoach, CoachingBooking, Opportunity } from "@/lib/types";
 import PhotoUpload from "@/components/PhotoUpload";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { Alert, EmptyState, ErrorState } from "@/components/ui/States";
+import { Skeleton, SkeletonHeader, SkeletonList } from "@/components/ui/Skeleton";
+import { opportunityPath } from "@/lib/paths";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -40,20 +45,24 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 const STATUS_BADGE: Record<string, string> = {
-  pending: "bg-amber-100 text-amber-800 border border-amber-200",
-  approved: "bg-green-100 text-green-800 border border-green-200",
-  rejected: "bg-red-100 text-red-800 border border-red-200",
+  pending: "badge-warn",
+  approved: "badge-ok",
+  rejected: "badge-danger",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  pending: "Pending review",
+  approved: "Approved",
+  rejected: "Not approved",
 };
 
 // ─── Star rating display ─────────────────────────────────────────────────────
 
 function StarRating({ rating }: { rating: number }) {
   return (
-    <span className="flex gap-0.5" aria-label={`${rating} out of 5 stars`}>
+    <span className="flex gap-0.5" role="img" aria-label={`${rating} out of 5 stars`}>
       {[1, 2, 3, 4, 5].map((s) => (
-        <span key={s} className={`text-base ${s <= rating ? "text-brass" : "text-rule"}`}>
-          ★
-        </span>
+        <Star key={s} size={16} aria-hidden="true" className={s <= rating ? "fill-brass text-warn" : "text-control"} />
       ))}
     </span>
   );
@@ -63,9 +72,26 @@ function StarRating({ rating }: { rating: number }) {
 
 function StatCard({ label, value }: { label: string; value: string | number }) {
   return (
-    <div className="case-card px-6 py-5 bg-white">
-      <p className="font-display text-4xl text-ink">{value}</p>
-      <p className="text-xs text-slate font-mono mt-1.5 uppercase tracking-widest">{label}</p>
+    <div className="card card-pad">
+      <p className="font-display text-3xl text-ink sm:text-4xl">{value}</p>
+      <p className="mt-1 text-sm text-slate">{label}</p>
+    </div>
+  );
+}
+
+function PortalSkeleton() {
+  return (
+    <div className="page" role="status" aria-label="Loading your coach portal">
+      <SkeletonHeader withAction />
+      <div className="mb-8 grid gap-4 sm:grid-cols-3">
+        {[0, 1, 2].map((i) => (
+          <div key={i} aria-hidden="true" className="card card-pad space-y-3">
+            <Skeleton className="h-9 w-16" />
+            <Skeleton className="h-3 w-28" />
+          </div>
+        ))}
+      </div>
+      <SkeletonList rows={2} />
     </div>
   );
 }
@@ -150,38 +176,26 @@ export default function CoachDashboardPage() {
   }
 
   // ── Loading / error states ──
-  if (authLoading || loading) {
-    return (
-      <p className="max-w-4xl mx-auto px-6 py-20 text-slate text-sm font-mono">
-        Loading your coach portal…
-      </p>
-    );
-  }
+  if (authLoading || loading) return <PortalSkeleton />;
 
   if (!user) return null;
 
   if (noProfile) {
     return (
-      <div className="max-w-xl mx-auto px-6 py-24 text-center">
-        <p className="font-mono text-xs tracking-widest uppercase text-slate mb-3">Coach Portal</p>
-        <h1 className="font-display text-3xl text-ink mb-3">No coach profile found</h1>
-        <p className="text-ink-soft leading-relaxed mb-8">
-          You don't have a coach profile yet. Apply to become a coach to access this portal.
-        </p>
-        <Link href="/coaches/apply" className="btn-primary">
-          Apply to be a coach
-        </Link>
+      <div className="page-narrow">
+        <EmptyState
+          title="No coach profile found"
+          description="You do not have a coach profile yet. Apply to become a coach to use this portal."
+          action={<Link href="/coaches/apply" className="btn-primary">Apply to be a coach</Link>}
+        />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="max-w-4xl mx-auto px-6 py-20">
-        <div className="p-5 rounded-xl border border-alert bg-alert/5 text-alert text-sm">{error}</div>
-        <button onClick={fetchData} className="btn-primary mt-4">
-          Retry
-        </button>
+      <div className="page-narrow">
+        <ErrorState title="Could not load your portal" message={error} onRetry={fetchData} />
       </div>
     );
   }
@@ -192,166 +206,128 @@ export default function CoachDashboardPage() {
   const tabBookings = bookings.filter((b) => b.status === activeTab);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-4 mb-8">
-        <div className="flex items-center gap-4 flex-1 min-w-0">
-          {coach.photoUrl ? (
-            <img
-              src={coach.photoUrl}
-              alt={coach.name}
-              className="w-14 h-14 rounded-full object-cover shrink-0"
-            />
-          ) : (
-            <div className="w-14 h-14 rounded-full bg-rule flex items-center justify-center shrink-0 font-display text-xl text-slate">
-              {coach.name[0]}
-            </div>
-          )}
-          <div className="min-w-0">
-            <p className="font-mono text-xs tracking-widest uppercase text-slate mb-0.5">
-              Coach Portal
-            </p>
-            <h1 className="font-display text-2xl sm:text-3xl text-ink leading-tight truncate">
-              {coach.name}
-            </h1>
-            <div className="flex items-center gap-2 mt-1.5 flex-wrap">
-              <span
-                className={`inline-block text-xs font-mono px-2 py-0.5 rounded ${STATUS_BADGE[coach.status] ?? ""}`}
-              >
-                {coach.status.toUpperCase()}
+    <div className="page">
+      <PageHeader
+        eyebrow="Coach portal"
+        title={
+          <span className="flex items-center gap-4">
+            {coach.photoUrl ? (
+              <img src={coach.photoUrl} alt="" width={56} height={56} className="h-14 w-14 shrink-0 rounded-full object-cover" />
+            ) : (
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-surface-2 font-display text-xl text-slate">
+                {coach.name[0]}
               </span>
-              {coach.averageRating && (
-                <span className="text-xs text-slate font-mono">
-                  ★ {coach.averageRating.toFixed(1)} avg
-                </span>
-              )}
-            </div>
-          </div>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <Link
-            href={`/coaches/${coach._id}`}
-            className="text-sm font-mono text-forest border border-forest px-4 py-2 rounded hover:bg-forest/5 transition-colors min-h-touch flex items-center"
-          >
-            Public profile →
+            )}
+            <span className="min-w-0 truncate">{coach.name}</span>
+          </span>
+        }
+        description={
+          <span className="flex flex-wrap items-center gap-3 text-base">
+            <span className={`badge ${STATUS_BADGE[coach.status] ?? ""}`}>{STATUS_LABEL[coach.status] ?? coach.status}</span>
+            {coach.averageRating && <span className="text-sm text-slate">Average rating {coach.averageRating.toFixed(1)} of 5</span>}
+          </span>
+        }
+        actions={
+          <Link href={`/coaches/${coach._id}`} className="btn-secondary">
+            Public profile
+            <ExternalLink size={16} aria-hidden="true" />
           </Link>
-        </div>
-      </div>
-
-      {/* ── Stats row ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-rule border border-rule rounded-lg overflow-hidden mb-8">
-        <StatCard label="Pending requests" value={stats.pendingBookings} />
-        <StatCard label="Sessions completed" value={stats.completedSessions} />
-        <StatCard label="Total earned" value={`$${stats.totalEarnings.toLocaleString()}`} />
-      </div>
-
-      {/* ── Status notices ── */}
-      {coach.status === "pending" && (
-        <div className="mb-8 p-4 sm:p-5 rounded-xl border border-amber-200 bg-amber-50">
-          <p className="text-sm font-medium text-amber-800 mb-1">Application under review</p>
-          <p className="text-sm text-amber-700">
-            The team will review your credentials and reach out within 3 business days. You'll be
-            notified by email once your profile is approved.
-          </p>
-        </div>
-      )}
-
-      {coach.status === "rejected" && coach.rejectionNote && (
-        <div className="mb-8 p-4 sm:p-5 rounded-xl border border-alert bg-alert/5">
-          <p className="text-sm font-medium text-alert mb-1">Application not approved</p>
-          <p className="text-sm text-alert/80">{coach.rejectionNote}</p>
-        </div>
-      )}
-
-      {coach.status === "rejected" && !coach.rejectionNote && (
-        <div className="mb-8 p-4 sm:p-5 rounded-xl border border-alert bg-alert/5">
-          <p className="text-sm font-medium text-alert mb-1">Application not approved</p>
-          <p className="text-sm text-alert/80">
-            Your coach application was not approved at this time. Please contact support for more
-            information.
-          </p>
-        </div>
-      )}
-
-      {/* ── Global action error ── */}
-      {actionError && (
-        <div className="mb-6 p-4 rounded-xl border border-alert bg-alert/5 text-sm text-alert">
-          {actionError}
-          <button
-            onClick={() => setActionError(null)}
-            className="ml-3 underline text-xs opacity-70"
-          >
-            Dismiss
-          </button>
-        </div>
-      )}
-
-      {/* ── Bookings section ── */}
-      <div className="mb-10">
-        <h2 className="font-display text-xl text-ink mb-4">Bookings</h2>
-
-        {/* Tab bar */}
-        <div className="flex gap-1 border-b border-rule mb-6 overflow-x-auto">
-          {TABS.map(({ key, label }) => {
-            const count = bookings.filter((b) => b.status === key).length;
-            const isActive = activeTab === key;
-            return (
-              <button
-                key={key}
-                onClick={() => setActiveTab(key)}
-                className={`px-4 py-2.5 text-sm font-mono whitespace-nowrap transition-colors border-b-2 -mb-px ${
-                  isActive
-                    ? "border-forest text-forest"
-                    : "border-transparent text-slate hover:text-ink"
-                }`}
-              >
-                {label}
-                {count > 0 && (
-                  <span
-                    className={`ml-2 text-xs px-1.5 py-0.5 rounded-full ${
-                      isActive ? "bg-forest/10 text-forest" : "bg-rule text-slate"
-                    }`}
-                  >
-                    {count}
-                  </span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Booking cards */}
-        {tabBookings.length === 0 ? (
-          <div className="case-card p-8 text-center">
-            <p className="text-ink-soft text-sm">No {activeTab} bookings.</p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {tabBookings.map((booking) => (
-              <BookingCard
-                key={booking._id}
-                booking={booking}
-                scheduleValue={scheduleInputs[booking._id] ?? ""}
-                noteValue={noteInputs[booking._id] ?? ""}
-                onScheduleChange={(v) =>
-                  setScheduleInputs((p) => ({ ...p, [booking._id]: v }))
-                }
-                onNoteChange={(v) =>
-                  setNoteInputs((p) => ({ ...p, [booking._id]: v }))
-                }
-                onPatch={(body) => patchBooking(booking._id, body)}
-                isLoading={actionLoading === booking._id}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* ── Profile section ── */}
-      <CoachProfileSection
-        coach={coach}
-        onUpdated={(updated) => setData((prev) => prev ? { ...prev, coach: updated } : prev)}
+        }
       />
+
+      <div className="space-y-8">
+        {/* Stats */}
+        <section aria-label="Your numbers" className="grid gap-4 sm:grid-cols-3">
+          <StatCard label="Pending requests" value={stats.pendingBookings} />
+          <StatCard label="Sessions completed" value={stats.completedSessions} />
+          <StatCard label="Total earned" value={`$${stats.totalEarnings.toLocaleString()}`} />
+        </section>
+
+        {/* Status notices */}
+        {coach.status === "pending" && (
+          <Alert variant="warn">
+            <p className="font-semibold">Application under review</p>
+            <p className="mt-0.5">The team will review your credentials and reach out within 3 business days. You will be notified by email once your profile is approved.</p>
+          </Alert>
+        )}
+
+        {coach.status === "rejected" && (
+          <Alert variant="danger">
+            <p className="font-semibold">Application not approved</p>
+            <p className="mt-0.5">
+              {coach.rejectionNote || "Your coach application was not approved at this time. Please contact support for more information."}
+            </p>
+          </Alert>
+        )}
+
+        {actionError && (
+          <Alert variant="danger">
+            <div className="flex items-start justify-between gap-3">
+              <span>{actionError}</span>
+              <button type="button" onClick={() => setActionError(null)} className="shrink-0 font-semibold underline">
+                Dismiss
+              </button>
+            </div>
+          </Alert>
+        )}
+
+        {/* Bookings */}
+        <section aria-labelledby="bookings-heading">
+          <h2 id="bookings-heading" className="h2 mb-4">Bookings</h2>
+
+          <div role="tablist" aria-label="Booking status" className="mb-6 flex gap-1 overflow-x-auto border-b border-rule">
+            {TABS.map(({ key, label }) => {
+              const count = bookings.filter((b) => b.status === key).length;
+              const isActive = activeTab === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(key)}
+                  className={`-mb-px min-h-touch whitespace-nowrap border-b-2 px-4 text-sm font-semibold transition-colors ${
+                    isActive ? "border-forest text-forest" : "border-transparent text-slate hover:text-ink"
+                  }`}
+                >
+                  {label}
+                  {count > 0 && (
+                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs ${isActive ? "bg-forest-soft text-forest" : "bg-surface-2 text-slate"}`}>
+                      {count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {tabBookings.length === 0 ? (
+            <EmptyState title={`No ${activeTab} bookings`} description="Bookings appear here as students book sessions with you." />
+          ) : (
+            <ul className="space-y-4" role="tabpanel">
+              {tabBookings.map((booking) => (
+                <li key={booking._id}>
+                  <BookingCard
+                    booking={booking}
+                    scheduleValue={scheduleInputs[booking._id] ?? ""}
+                    noteValue={noteInputs[booking._id] ?? ""}
+                    onScheduleChange={(v) => setScheduleInputs((p) => ({ ...p, [booking._id]: v }))}
+                    onNoteChange={(v) => setNoteInputs((p) => ({ ...p, [booking._id]: v }))}
+                    onPatch={(body) => patchBooking(booking._id, body)}
+                    isLoading={actionLoading === booking._id}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+
+        {/* Profile */}
+        <CoachProfileSection
+          coach={coach}
+          onUpdated={(updated) => setData((prev) => (prev ? { ...prev, coach: updated } : prev))}
+        />
+      </div>
     </div>
   );
 }
@@ -381,15 +357,12 @@ function BookingCard({
   const student = booking.userId?.fullName ?? "Unknown student";
 
   return (
-    <div className="case-card p-5 sm:p-6">
-      {/* ── Card header ── */}
-      <div className="flex flex-col sm:flex-row sm:items-start gap-3 mb-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <p className="font-medium text-ink">{student}</p>
-            <span className="font-mono text-xs text-slate capitalize px-2 py-0.5 rounded-full bg-rule">
-              {booking.sessionType}
-            </span>
+    <article className="card card-pad">
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-start">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1 flex flex-wrap items-center gap-2">
+            <p className="font-semibold text-ink">{student}</p>
+            <span className="badge capitalize">{booking.sessionType}</span>
           </div>
           {opp && (
             <p className="text-sm text-ink-soft">
@@ -398,160 +371,124 @@ function BookingCard({
             </p>
           )}
         </div>
-        <div className="text-right shrink-0">
-          <p className="font-display text-lg text-ink">${booking.coachPayoutUSD}</p>
-          <p className="text-xs text-slate font-mono mt-0.5">your payout</p>
+        <div className="shrink-0 sm:text-right">
+          <p className="font-display text-xl text-ink">${booking.coachPayoutUSD}</p>
+          <p className="text-sm text-slate">your payout</p>
         </div>
       </div>
 
-      {/* ── Meta grid ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm mb-4">
+      <dl className="mb-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
         <div>
-          <p className="text-xs font-mono text-slate uppercase mb-0.5">Booked</p>
-          <p className="text-ink">{new Date(booking.createdAt).toLocaleDateString()}</p>
+          <dt className="text-slate">Booked</dt>
+          <dd className="mt-0.5 font-medium text-ink">{new Date(booking.createdAt).toLocaleDateString()}</dd>
         </div>
         {booking.scheduledAt && (
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-0.5">Scheduled</p>
-            <p className="text-ink">
-              {new Date(booking.scheduledAt).toLocaleString(undefined, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })}
-            </p>
+            <dt className="text-slate">Scheduled</dt>
+            <dd className="mt-0.5 font-medium text-ink">
+              {new Date(booking.scheduledAt).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+            </dd>
           </div>
         )}
         {booking.completedAt && (
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-0.5">Completed</p>
-            <p className="text-ink">{new Date(booking.completedAt).toLocaleDateString()}</p>
+            <dt className="text-slate">Completed</dt>
+            <dd className="mt-0.5 font-medium text-ink">{new Date(booking.completedAt).toLocaleDateString()}</dd>
           </div>
         )}
-      </div>
+      </dl>
 
-      {/* ── Student message ── */}
       {booking.userMessage && (
-        <div className="mb-4 p-3 rounded-lg bg-paper border border-rule">
-          <p className="text-xs font-mono text-slate uppercase mb-1">Student's message</p>
-          <p className="text-sm text-ink-soft italic">"{booking.userMessage}"</p>
+        <div className="mb-4 rounded-lg bg-surface p-3">
+          <p className="mb-1 text-sm font-semibold text-ink">Student&apos;s message</p>
+          <p className="text-sm italic text-ink-soft">&ldquo;{booking.userMessage}&rdquo;</p>
         </div>
       )}
 
-      {/* ── REQUESTED: Accept / Decline ── */}
+      {/* REQUESTED: accept or decline */}
       {booking.status === "requested" && (
-        <div className="flex gap-3 flex-wrap pt-2 border-t border-rule">
-          <button
-            onClick={() => onPatch({ status: "accepted" })}
-            disabled={isLoading}
-            className="btn-primary flex-1 sm:flex-none min-h-touch"
-          >
-            {isLoading ? "Processing…" : "Accept booking"}
+        <div className="flex flex-wrap gap-3 border-t border-rule pt-4">
+          <button type="button" onClick={() => onPatch({ status: "accepted" })} disabled={isLoading} aria-busy={isLoading} className="btn-primary">
+            {isLoading ? "Processing" : "Accept booking"}
           </button>
-          <button
-            onClick={() => onPatch({ status: "cancelled" })}
-            disabled={isLoading}
-            className="flex-1 sm:flex-none min-h-touch px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-alert hover:text-alert transition-colors"
-          >
+          <button type="button" onClick={() => onPatch({ status: "cancelled" })} disabled={isLoading} className="btn-secondary">
             Decline
           </button>
         </div>
       )}
 
-      {/* ── ACCEPTED: Schedule + Mark complete + Note + Cancel ── */}
+      {/* ACCEPTED: schedule, note, complete, cancel */}
       {booking.status === "accepted" && (
-        <div className="pt-3 border-t border-rule space-y-4">
-          {/* Schedule */}
+        <div className="space-y-5 border-t border-rule pt-4">
           <div>
-            <label className="block text-xs font-mono text-slate uppercase mb-1.5">
-              Schedule session
-            </label>
-            <div className="flex gap-2 flex-wrap">
+            <label htmlFor={`sched-${booking._id}`} className="label">Schedule session</label>
+            <div className="flex flex-wrap gap-2">
               <input
+                id={`sched-${booking._id}`}
                 type="datetime-local"
                 value={scheduleValue}
                 onChange={(e) => onScheduleChange(e.target.value)}
-                className="input flex-1 min-w-0 text-sm"
+                className="input min-w-0 flex-1"
               />
               <button
-                onClick={() =>
-                  scheduleValue
-                    ? onPatch({ scheduledAt: new Date(scheduleValue).toISOString() })
-                    : undefined
-                }
+                type="button"
+                onClick={() => (scheduleValue ? onPatch({ scheduledAt: new Date(scheduleValue).toISOString() }) : undefined)}
                 disabled={isLoading || !scheduleValue}
-                className="btn-primary shrink-0 min-h-touch text-sm"
+                aria-busy={isLoading}
+                className="btn-primary shrink-0"
               >
-                {isLoading ? "Saving…" : "Set time"}
+                {isLoading ? "Saving" : "Set time"}
               </button>
             </div>
           </div>
 
-          {/* Note to student */}
           <div>
-            <label className="block text-xs font-mono text-slate uppercase mb-1.5">
-              Note to student
-            </label>
+            <label htmlFor={`note-${booking._id}`} className="label">Note to student</label>
             <textarea
+              id={`note-${booking._id}`}
               rows={2}
               value={noteValue}
               onChange={(e) => onNoteChange(e.target.value)}
-              placeholder="Add a note visible to the student — e.g. a Zoom link or preparation tips…"
-              className="input resize-none text-sm w-full"
+              placeholder="Add a note the student can see, such as a video call link or preparation tips."
+              className="textarea !min-h-0"
             />
-            <button
-              onClick={() => onPatch({ coachNote: noteValue })}
-              disabled={isLoading || !noteValue.trim()}
-              className="mt-2 px-4 py-2 text-sm font-medium border border-rule text-ink rounded hover:border-forest hover:text-forest transition-colors min-h-touch"
-            >
-              {isLoading ? "Saving…" : "Save note"}
+            <button type="button" onClick={() => onPatch({ coachNote: noteValue })} disabled={isLoading || !noteValue.trim()} aria-busy={isLoading} className="btn-secondary mt-2">
+              {isLoading ? "Saving" : "Save note"}
             </button>
           </div>
 
-          {/* Mark complete + Cancel */}
-          <div className="flex gap-3 flex-wrap">
-            <button
-              onClick={() => onPatch({ status: "completed" })}
-              disabled={isLoading}
-              className="flex-1 sm:flex-none min-h-touch px-4 py-2 text-sm font-medium bg-forest/10 text-forest border border-forest/20 rounded hover:bg-forest/15 transition-colors"
-            >
-              {isLoading ? "Updating…" : "Mark as completed"}
+          <div className="flex flex-wrap gap-3">
+            <button type="button" onClick={() => onPatch({ status: "completed" })} disabled={isLoading} aria-busy={isLoading} className="btn-primary">
+              {isLoading ? "Updating" : "Mark as completed"}
             </button>
-            <button
-              onClick={() => onPatch({ status: "cancelled" })}
-              disabled={isLoading}
-              className="flex-1 sm:flex-none min-h-touch px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-alert hover:text-alert transition-colors"
-            >
+            <button type="button" onClick={() => onPatch({ status: "cancelled" })} disabled={isLoading} className="btn-secondary">
               Cancel booking
             </button>
           </div>
         </div>
       )}
 
-      {/* ── COMPLETED: Rating + coach note ── */}
+      {/* COMPLETED: rating and note */}
       {booking.status === "completed" && (
-        <div className="pt-3 border-t border-rule space-y-3">
+        <div className="space-y-3 border-t border-rule pt-4">
           {booking.rating ? (
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <StarRating rating={booking.rating} />
-              <span className="text-xs font-mono text-slate">{booking.rating}/5</span>
-              {booking.ratingComment && (
-                <span className="text-xs text-ink-soft italic ml-1">"{booking.ratingComment}"</span>
-              )}
+              <span className="text-sm text-slate">{booking.rating} out of 5</span>
+              {booking.ratingComment && <span className="text-sm italic text-ink-soft">&ldquo;{booking.ratingComment}&rdquo;</span>}
             </div>
           ) : (
-            <p className="text-xs text-slate font-mono">Not yet rated by student.</p>
+            <p className="text-sm text-slate">Not yet rated by the student.</p>
           )}
           {booking.coachNote && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Your note</p>
+              <p className="text-sm font-semibold text-ink">Your note</p>
               <p className="text-sm text-ink-soft">{booking.coachNote}</p>
             </div>
           )}
         </div>
       )}
-
-      {/* ── CANCELLED: nothing extra needed ── */}
-    </div>
+    </article>
   );
 }
 
@@ -570,7 +507,7 @@ function CoachProfileSection({
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
-  // Edit form state — initialised from current coach data
+  // Edit form state, initialised from current coach data
   const [name, setName] = useState(coach.name);
   const [bio, setBio] = useState(coach.bio);
   const [photoUrl, setPhotoUrl] = useState(coach.photoUrl ?? "");
@@ -641,244 +578,176 @@ function CoachProfileSection({
   // ── View mode ──
   if (!editing) {
     return (
-      <div className="case-card p-5 sm:p-6">
-        <div className="flex items-center justify-between mb-5">
-          <h2 className="font-display text-xl text-ink">Your public profile</h2>
-          <button
-            onClick={openEdit}
-            className="text-xs font-mono text-slate hover:text-ink border border-rule px-3 py-1.5 rounded transition-colors"
-          >
-            Edit profile →
+      <section className="card card-pad" aria-labelledby="profile-heading">
+        <div className="mb-5 flex items-center justify-between gap-4">
+          <h2 id="profile-heading" className="h3">Your public profile</h2>
+          <button type="button" onClick={openEdit} className="btn-secondary btn-sm">
+            Edit profile
           </button>
         </div>
 
         <div className="mb-5">
-          <p className="text-xs font-mono text-slate uppercase mb-1.5">Bio</p>
-          <p className="text-sm text-ink-soft leading-relaxed">{coach.bio}</p>
+          <p className="mb-1.5 text-sm font-semibold text-ink">Bio</p>
+          <p className="max-w-prose text-sm leading-relaxed text-ink-soft">{coach.bio}</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-5">
+        <dl className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-3">
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">Credential</p>
-            <p className="text-sm text-ink capitalize">
-              {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
-            </p>
+            <dt className="text-sm text-slate">Credential</dt>
+            <dd className="mt-0.5 text-sm font-medium text-ink">{coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}</dd>
           </div>
           {coach.credentialYear && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Year</p>
-              <p className="text-sm text-ink">{coach.credentialYear}</p>
+              <dt className="text-sm text-slate">Year</dt>
+              <dd className="mt-0.5 text-sm font-medium text-ink">{coach.credentialYear}</dd>
             </div>
           )}
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">Session fee</p>
-            <p className="text-sm text-ink">${coach.sessionFeeUSD} USD</p>
+            <dt className="text-sm text-slate">Session fee</dt>
+            <dd className="mt-0.5 text-sm font-medium text-ink">${coach.sessionFeeUSD} USD</dd>
           </div>
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">Platform fee</p>
-            <p className="text-sm text-ink">{coach.platformFeePercent}%</p>
+            <dt className="text-sm text-slate">Platform fee</dt>
+            <dd className="mt-0.5 text-sm font-medium text-ink">{coach.platformFeePercent}%</dd>
           </div>
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">Total sessions</p>
-            <p className="text-sm text-ink">{coach.totalSessions}</p>
+            <dt className="text-sm text-slate">Total sessions</dt>
+            <dd className="mt-0.5 text-sm font-medium text-ink">{coach.totalSessions}</dd>
           </div>
           {coach.averageRating && (
             <div>
-              <p className="text-xs font-mono text-slate uppercase mb-1">Avg rating</p>
-              <div className="flex items-center gap-1.5">
+              <dt className="text-sm text-slate">Average rating</dt>
+              <dd className="mt-0.5 flex items-center gap-2">
                 <StarRating rating={Math.round(coach.averageRating)} />
-                <span className="text-xs text-slate font-mono">{coach.averageRating.toFixed(1)}</span>
-              </div>
+                <span className="text-sm text-slate">{coach.averageRating.toFixed(1)}</span>
+              </dd>
             </div>
           )}
-        </div>
+        </dl>
 
         {coach.scholarships.length > 0 && (
           <div className="mb-5">
-            <p className="text-xs font-mono text-slate uppercase mb-2">Scholarships you coach for</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="mb-2 text-sm font-semibold text-ink">Scholarships you coach for</p>
+            <ul className="flex flex-wrap gap-2">
               {coach.scholarships.map((s) => (
-                <Link
-                  key={s.opportunityId}
-                  href={`/opportunities/${s.opportunityId}`}
-                  className="text-xs font-mono px-2.5 py-1 rounded-full border border-rule text-ink-soft hover:border-forest hover:text-forest transition-colors"
-                >
-                  {s.opportunityTitle}
-                </Link>
+                <li key={s.opportunityId}>
+                  <Link
+                    href={opportunityPath({ _id: String(s.opportunityId), title: s.opportunityTitle })}
+                    className="badge min-h-touch px-4 text-sm font-medium transition-colors hover:text-forest"
+                  >
+                    {s.opportunityTitle}
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         )}
 
         {coach.linkedIn && (
           <div>
-            <p className="text-xs font-mono text-slate uppercase mb-1">LinkedIn</p>
-            <a
-              href={coach.linkedIn}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-forest hover:underline break-all"
-            >
+            <p className="text-sm font-semibold text-ink">LinkedIn</p>
+            <a href={coach.linkedIn} target="_blank" rel="noopener noreferrer" className="break-all text-sm text-forest hover:underline">
               {coach.linkedIn}
             </a>
           </div>
         )}
-      </div>
+      </section>
     );
   }
 
   // ── Edit mode ──
   return (
-    <div className="case-card p-5 sm:p-6">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="font-display text-xl text-ink">Edit profile</h2>
-        <button
-          onClick={() => setEditing(false)}
-          className="text-xs font-mono text-slate hover:text-ink"
-        >
+    <section className="card card-pad" aria-labelledby="edit-heading">
+      <div className="mb-5 flex items-center justify-between">
+        <h2 id="edit-heading" className="h3">Edit profile</h2>
+        <button type="button" onClick={() => setEditing(false)} className="btn-ghost btn-sm">
           Cancel
         </button>
       </div>
 
       <form onSubmit={handleSave} className="space-y-5">
-        {/* Name */}
         <div>
-          <label className="block text-xs font-mono text-slate uppercase mb-1.5">Display name</label>
-          <input
-            required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="input"
-            placeholder="Your name as shown to students"
-          />
+          <label htmlFor="ce-name" className="label">Display name</label>
+          <input id="ce-name" required value={name} onChange={(e) => setName(e.target.value)} className="input" placeholder="Your name as shown to students" />
         </div>
 
-        {/* Photo */}
-        <div>
-          <label className="block text-xs font-mono text-slate uppercase mb-2">Profile photo</label>
-          <PhotoUpload
-            currentUrl={photoUrl || undefined}
-            onChange={(url) => setPhotoUrl(url)}
-            size={80}
-          />
-        </div>
+        <fieldset>
+          <legend className="label">Profile photo</legend>
+          <div className="mt-2">
+            <PhotoUpload currentUrl={photoUrl || undefined} onChange={(url) => setPhotoUrl(url)} size={80} />
+          </div>
+        </fieldset>
 
-        {/* Bio */}
         <div>
-          <label className="block text-xs font-mono text-slate uppercase mb-1.5">
-            Bio <span className="normal-case font-sans font-normal text-slate">(min 50 characters)</span>
+          <label htmlFor="ce-bio" className="label">
+            Bio <span className="font-normal text-slate">(at least 50 characters)</span>
           </label>
-          <textarea
-            required
-            minLength={50}
-            maxLength={1000}
-            rows={4}
-            value={bio}
-            onChange={(e) => setBio(e.target.value)}
-            className="input resize-none"
-          />
-          <p className="text-xs text-slate mt-1 text-right">{bio.length}/1000</p>
+          <textarea id="ce-bio" required minLength={50} maxLength={1000} rows={4} value={bio} onChange={(e) => setBio(e.target.value)} className="textarea" />
+          <p className="help text-right">{bio.length}/1000</p>
         </div>
 
-        {/* Session fee */}
         <div>
-          <label className="block text-xs font-mono text-slate uppercase mb-1.5">Session fee (USD)</label>
+          <label htmlFor="ce-fee" className="label">Session fee (USD)</label>
           <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate text-sm">$</span>
-            <input
-              type="number"
-              required
-              min={0}
-              max={10000}
-              value={sessionFee}
-              onChange={(e) => setSessionFee(e.target.value)}
-              className="input pl-7"
-              placeholder="150"
-            />
+            <span className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate" aria-hidden="true">$</span>
+            <input id="ce-fee" type="number" inputMode="decimal" required min={0} max={10000} value={sessionFee} onChange={(e) => setSessionFee(e.target.value)} className="input pl-8" placeholder="150" />
           </div>
-          <p className="text-xs text-slate mt-1">
-            Platform fee ({coach.platformFeePercent}%) is added on top — your quoted rate is always what you receive.
-          </p>
+          <p className="help">The platform fee ({coach.platformFeePercent}%) is added on top. Your quoted rate is always what you receive.</p>
         </div>
 
-        {/* LinkedIn */}
         <div>
-          <label className="block text-xs font-mono text-slate uppercase mb-1.5">LinkedIn URL</label>
-          <input
-            value={linkedIn}
-            onChange={(e) => setLinkedIn(e.target.value)}
-            className="input"
-            placeholder="https://linkedin.com/in/…"
-          />
+          <label htmlFor="ce-li" className="label">LinkedIn URL</label>
+          <input id="ce-li" type="url" inputMode="url" value={linkedIn} onChange={(e) => setLinkedIn(e.target.value)} className="input" placeholder="https://linkedin.com/in/" />
         </div>
 
-        {/* Scholarships */}
-        <div>
-          <label className="block text-xs font-mono text-slate uppercase mb-1.5">
-            Scholarships you coach for{" "}
-            <span className="normal-case font-sans font-normal text-slate">({selectedIds.length} selected)</span>
-          </label>
-          <input
-            value={oppSearch}
-            onChange={(e) => setOppSearch(e.target.value)}
-            className="input mb-2"
-            placeholder="Search scholarships…"
-          />
-          <div className="max-h-48 overflow-y-auto border border-rule rounded-xl divide-y divide-rule">
+        <fieldset>
+          <legend className="label">
+            Scholarships you coach for <span className="font-normal text-slate">({selectedIds.length} selected)</span>
+          </legend>
+          <label htmlFor="ce-search" className="sr-only">Search scholarships</label>
+          <div className="relative mt-2 mb-2">
+            <Search size={16} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate" aria-hidden="true" />
+            <input id="ce-search" value={oppSearch} onChange={(e) => setOppSearch(e.target.value)} className="input pl-10" placeholder="Search scholarships" />
+          </div>
+          <div className="max-h-60 divide-y divide-rule overflow-y-auto rounded-xl bg-surface">
             {oppsLoading && (
-              <p className="px-4 py-3 text-sm text-slate font-mono">Loading…</p>
+              <div className="space-y-3 p-4" role="status" aria-label="Loading scholarships">
+                {[0, 1, 2, 3].map((i) => <Skeleton key={i} className="h-5 w-full" />)}
+              </div>
             )}
-            {!oppsLoading && filteredOpps.length === 0 && (
-              <p className="px-4 py-3 text-sm text-slate">No scholarships found.</p>
-            )}
-            {!oppsLoading && filteredOpps.map((o) => {
-              const checked = selectedIds.includes(o._id);
-              return (
-                <label
-                  key={o._id}
-                  className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors ${
-                    checked ? "bg-forest/5" : "hover:bg-canvas"
-                  }`}
-                >
-                  <input
-                    type="checkbox"
-                    checked={checked}
-                    onChange={() =>
-                      setSelectedIds((prev) =>
-                        checked ? prev.filter((id) => id !== o._id) : [...prev, o._id]
-                      )
-                    }
-                    className="accent-forest w-4 h-4 shrink-0"
-                  />
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-ink truncate">{o.title}</p>
-                    <p className="text-xs text-slate truncate">{o.provider} · {o.country}</p>
-                  </div>
-                </label>
-              );
-            })}
+            {!oppsLoading && filteredOpps.length === 0 && <p className="px-4 py-3 text-sm text-slate">No scholarships found.</p>}
+            {!oppsLoading &&
+              filteredOpps.map((o) => {
+                const checked = selectedIds.includes(o._id);
+                return (
+                  <label key={o._id} className={`flex min-h-touch cursor-pointer items-center gap-3 px-4 py-3 transition-colors ${checked ? "bg-forest-soft" : "hover:bg-surface-2"}`}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => setSelectedIds((prev) => (checked ? prev.filter((id) => id !== o._id) : [...prev, o._id]))}
+                      className="h-5 w-5 shrink-0 accent-forest"
+                    />
+                    <span className="min-w-0">
+                      <span className="block truncate text-sm font-medium text-ink">{o.title}</span>
+                      <span className="block truncate text-sm text-slate">{o.provider} · {o.country}</span>
+                    </span>
+                  </label>
+                );
+              })}
           </div>
-        </div>
+        </fieldset>
 
-        {saveError && (
-          <p className="text-alert text-sm p-3 bg-alert/5 rounded-lg border border-alert/20">
-            {saveError}
-          </p>
-        )}
+        {saveError && <Alert variant="danger">{saveError}</Alert>}
 
-        <div className="flex gap-3 pt-2">
-          <button type="submit" disabled={saving} className="btn-primary">
-            {saving ? "Saving…" : "Save changes"}
+        <div className="flex flex-wrap gap-3 pt-2">
+          <button type="submit" disabled={saving} aria-busy={saving} className="btn-primary">
+            {saving ? "Saving" : "Save changes"}
           </button>
-          <button
-            type="button"
-            onClick={() => setEditing(false)}
-            className="px-4 py-2 text-sm font-medium border border-rule text-ink-soft rounded hover:border-ink transition-colors"
-          >
+          <button type="button" onClick={() => setEditing(false)} className="btn-secondary">
             Cancel
           </button>
         </div>
       </form>
-    </div>
+    </section>
   );
 }

@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ArrowRight, ChevronDown, RefreshCw } from "lucide-react";
 import { ReadinessScore } from "@/lib/types";
 
-const IMPACT_COLORS = {
-  high: "border border-rule text-ink",
-  medium: "border border-rule text-slate",
-  low: "border border-rule text-slate opacity-60",
+const IMPACT_BADGE = {
+  high: "badge-brand",
+  medium: "",
+  low: "",
 };
 
 function ScoreRing({ score }: { score: number }) {
@@ -15,8 +16,9 @@ function ScoreRing({ score }: { score: number }) {
   const circ = 2 * Math.PI * r;
   const fill = circ * (1 - score / 100);
 
-  const strokeColor =
-    score >= 75 ? "#b8501f" : score >= 50 ? "#f0c845" : "#b91c1c";
+  const tone = score >= 75 ? "ok" : score >= 50 ? "warn" : "danger";
+  const strokeClass = tone === "ok" ? "stroke-ok" : tone === "warn" ? "stroke-warn" : "stroke-danger";
+  const textClass = tone === "ok" ? "text-ok" : tone === "warn" ? "text-warn" : "text-danger";
 
   useEffect(() => {
     const t = setTimeout(() => setAnimated(true), 120);
@@ -24,32 +26,25 @@ function ScoreRing({ score }: { score: number }) {
   }, []);
 
   return (
-    <div className="relative shrink-0" style={{ width: 152, height: 152 }}>
-      <svg viewBox="0 0 128 128" className="w-full h-full" style={{ transform: "rotate(-90deg)" }}>
-        {/* Track */}
-        <circle cx="64" cy="64" r={r} fill="none" stroke="#c5d5e8" strokeWidth="10" />
-        {/* Fill */}
+    <div className="relative h-36 w-36 shrink-0" role="img" aria-label={`Readiness score ${score} out of 100`}>
+      <svg viewBox="0 0 128 128" className="h-full w-full -rotate-90" aria-hidden="true">
+        <circle cx="64" cy="64" r={r} fill="none" className="stroke-surface-2" strokeWidth="10" />
         <circle
           cx="64"
           cy="64"
           r={r}
           fill="none"
-          stroke={strokeColor}
+          className={strokeClass}
           strokeWidth="10"
           strokeLinecap="round"
           strokeDasharray={circ}
           strokeDashoffset={animated ? fill : circ}
-          style={{ transition: "stroke-dashoffset 1.1s cubic-bezier(0.4,0,0.2,1)" }}
+          style={{ transition: "stroke-dashoffset 900ms ease-out" }}
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span
-          className="font-display leading-none"
-          style={{ fontSize: 36, color: strokeColor }}
-        >
-          {score}
-        </span>
-        <span className="font-mono text-xs text-slate mt-0.5">/100</span>
+        <span className={`font-display text-4xl leading-none ${textClass}`}>{score}</span>
+        <span className="mt-0.5 text-xs text-slate">out of 100</span>
       </div>
     </div>
   );
@@ -70,40 +65,38 @@ function DimensionRow({
 }) {
   const [open, setOpen] = useState(false);
   const pct = (score / max) * 100;
-  const barColor =
-    pct >= 75 ? "bg-forest" : pct >= 50 ? "bg-brass" : "bg-alert";
+  const barColor = pct >= 75 ? "bg-ok" : pct >= 50 ? "bg-warn" : "bg-danger";
 
   return (
-    <div className="py-3 border-b border-rule last:border-0">
+    <li className="border-t border-rule first:border-t-0">
       <button
+        type="button"
         onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center gap-3 text-left"
+        aria-expanded={open}
+        className="flex min-h-touch w-full items-center gap-3 py-3 text-left"
       >
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center justify-between mb-1.5">
+        <div className="min-w-0 flex-1">
+          <div className="mb-1.5 flex items-center justify-between">
             <span className="text-sm font-medium text-ink">{label}</span>
-            <span className="font-mono text-xs text-slate ml-3 shrink-0">
+            <span className="ml-3 shrink-0 text-sm text-slate">
               {score}/{max}
             </span>
           </div>
-          <div className="h-1.5 bg-surface rounded-full overflow-hidden border border-rule">
-            <div
-              className={`h-full rounded-full ${barColor} transition-all duration-700`}
-              style={{ width: `${pct}%` }}
-            />
+          <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+            <div className={`h-full rounded-full ${barColor}`} style={{ width: `${pct}%` }} />
           </div>
         </div>
-        <span className="text-slate text-xs shrink-0 ml-1">{open ? "▲" : "▼"}</span>
+        <ChevronDown size={18} aria-hidden="true" className={`shrink-0 text-slate transition-transform duration-150 ${open ? "rotate-180" : ""}`} />
       </button>
 
       {open && (
-        <div className="mt-3 pl-0 space-y-2">
-          <p className="text-sm text-ink-soft leading-relaxed">{feedback}</p>
+        <div className="space-y-2 pb-4">
+          <p className="text-sm leading-relaxed text-ink-soft">{feedback}</p>
           {actions.length > 0 && (
-            <ul className="space-y-1">
+            <ul className="space-y-1.5">
               {actions.map((a, i) => (
-                <li key={i} className="flex gap-2 text-xs text-forest">
-                  <span className="shrink-0">→</span>
+                <li key={i} className="flex gap-2 text-sm text-forest">
+                  <ArrowRight size={16} className="mt-0.5 shrink-0" aria-hidden="true" />
                   <span>{a}</span>
                 </li>
               ))}
@@ -111,7 +104,7 @@ function DimensionRow({
           )}
         </div>
       )}
-    </div>
+    </li>
   );
 }
 
@@ -128,69 +121,59 @@ export default function ReadinessScoreCard({
     readiness.overall >= 80
       ? "Strong"
       : readiness.overall >= 60
-      ? "On Track"
+      ? "On track"
       : readiness.overall >= 40
-      ? "Building Up"
-      : "Just Starting";
+      ? "Building up"
+      : "Just starting";
 
   return (
-    <div className="case-card overflow-hidden">
-      {/* Header */}
-      <div className="px-6 pt-6 pb-5 border-b border-rule flex items-center justify-between">
+    <div className="card overflow-hidden">
+      <div className="flex items-start justify-between gap-4 px-5 pb-5 pt-5 sm:px-6 sm:pt-6">
         <div>
-          <p className="font-mono text-xs tracking-widest uppercase text-slate">
-            Application Readiness
-          </p>
-          <h2 className="font-display text-2xl text-ink mt-0.5">{label}</h2>
-          <p className="text-xs text-slate mt-1">How prepared you are to apply — not a prediction of outcome.</p>
+          <p className="eyebrow">Application readiness</p>
+          <h2 className="mt-1 h2">{label}</h2>
+          <p className="mt-1 text-sm text-slate">How prepared you are to apply. It is not a prediction of the outcome.</p>
         </div>
         <button
+          type="button"
           onClick={onRefresh}
           disabled={refreshing}
-          className="text-xs font-mono text-forest hover:underline disabled:opacity-40 transition-opacity"
+          aria-busy={refreshing}
+          className="btn-secondary btn-sm shrink-0"
         >
-          {refreshing ? "Recalculating…" : "↻ Refresh"}
+          {!refreshing && <RefreshCw size={14} aria-hidden="true" />}
+          {refreshing ? "Recalculating" : "Refresh"}
         </button>
       </div>
 
-      {/* Score + top actions */}
-      <div className="px-6 py-6 flex flex-col sm:flex-row gap-6 items-start">
+      <div className="flex flex-col items-start gap-6 border-t border-rule px-5 py-6 sm:flex-row sm:px-6">
         <ScoreRing score={readiness.overall} />
 
-        <div className="flex-1 min-w-0">
-          <p className="font-mono text-xs text-slate uppercase tracking-widest mb-3">
-            Top actions right now
-          </p>
-          <div className="space-y-2.5">
+        <div className="min-w-0 flex-1">
+          <h3 className="mb-3 text-sm font-semibold text-ink">Top actions right now</h3>
+          <ul className="space-y-3">
             {readiness.topActions.map((item, i) => (
-              <div key={i} className="flex items-start gap-2.5">
-                <span
-                  className={`mt-0.5 shrink-0 font-mono text-xs px-1.5 py-0.5 rounded ${IMPACT_COLORS[item.impact]}`}
-                >
-                  {item.impact}
-                </span>
-                <p className="text-sm text-ink-soft leading-snug">{item.action}</p>
-              </div>
+              <li key={i} className="flex items-start gap-3">
+                <span className={`badge mt-0.5 shrink-0 capitalize ${IMPACT_BADGE[item.impact]}`}>{item.impact}</span>
+                <p className="text-sm leading-snug text-ink-soft">{item.action}</p>
+              </li>
             ))}
-          </div>
+          </ul>
         </div>
       </div>
 
-      {/* Dimension breakdown */}
-      <div className="px-6 pb-4 border-t border-rule pt-2">
-        <p className="font-mono text-xs text-slate uppercase tracking-widest py-3">
-          Score breakdown
-        </p>
-        {readiness.dimensions.map((d) => (
-          <DimensionRow key={d.id} {...d} />
-        ))}
+      <div className="border-t border-rule px-5 pb-2 pt-4 sm:px-6">
+        <h3 className="text-sm font-semibold text-ink">Score breakdown</h3>
+        <ul className="mt-1">
+          {readiness.dimensions.map((d) => (
+            <DimensionRow key={d.id} {...d} />
+          ))}
+        </ul>
       </div>
 
-      <div className="px-6 pb-5">
-        <p className="text-xs text-slate font-mono">
-          Last updated {new Date(readiness.generatedAt).toLocaleDateString()} · Committees make the final call — this score measures your preparation, not your odds.
-        </p>
-      </div>
+      <p className="px-5 pb-5 pt-2 text-sm text-slate sm:px-6">
+        Last updated {new Date(readiness.generatedAt).toLocaleDateString()}. Committees make the final call, so this score measures your preparation, not your odds.
+      </p>
     </div>
   );
 }

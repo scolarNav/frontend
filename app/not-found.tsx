@@ -8,40 +8,19 @@ export const metadata: Metadata = {
 
 export default function NotFound() {
   return (
-    <div className="min-h-[72vh] flex items-center justify-center px-6 py-20">
-      <div className="max-w-lg w-full text-center">
-
-        <div className="inline-block mb-8">
-          <span className="stamp text-forest border-forest">Error 404 — Page Not Found</span>
-        </div>
-
-        <h1 className="font-display italic text-[8rem] sm:text-[10rem] leading-none font-semibold text-navy">
-          404
-        </h1>
-
-        <div className="w-10 h-px bg-rule mx-auto my-6" />
-
-        <p className="text-ink-soft text-base mb-2">
-          This page doesn't exist — or it never did.
-        </p>
-        <p className="text-slate text-sm max-w-xs mx-auto mb-10">
-          The case file you're looking for has been moved, deleted, or closed.
-          Let's get you back on track.
-        </p>
-
-        <div className="flex gap-3 justify-center flex-wrap">
-          <Link href="/" className="btn-primary">
-            Back to Home
-          </Link>
-          <Link href="/dashboard" className="btn-secondary">
-            Go to Dashboard
-          </Link>
-        </div>
-
-        <p className="font-mono text-xs text-slate mt-12 tracking-widest uppercase">
-          ScolarNav · Your journey continues elsewhere
-        </p>
-
+    <div className="mx-auto flex min-h-96 max-w-lg flex-col items-center justify-center px-4 py-20 text-center">
+      <p className="eyebrow">Error 404</p>
+      <h1 className="mt-3 font-display text-4xl text-ink sm:text-5xl">We could not find that page</h1>
+      <p className="mt-4 text-ink-soft">
+        It may have moved, been removed, or the link may be wrong. Try one of these instead.
+      </p>
+      <div className="mt-8 flex flex-wrap justify-center gap-3">
+        <Link href="/" className="btn-primary">
+          Browse opportunities
+        </Link>
+        <Link href="/countries" className="btn-secondary">
+          Country guides
+        </Link>
       </div>
     </div>
   );

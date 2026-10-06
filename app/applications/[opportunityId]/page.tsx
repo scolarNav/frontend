@@ -6,6 +6,15 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Application, EssayDraft, Opportunity, ReferenceLetter } from "@/lib/types";
 import UpgradePrompt from "@/components/UpgradePrompt";
+import { Alert, ErrorState } from "@/components/ui/States";
+import Link from "next/link";
+import { ArrowRight, Copy, ExternalLink, Plus, X } from "lucide-react";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SkeletonPage } from "@/components/ui/Skeleton";
+import { Spinner, ProgressBar } from "@/components/ui/Spinner";
+import { ReviewBlock } from "@/components/ui/ReviewBlock";
+import { FilePicker } from "@/components/ui/FilePicker";
+import { opportunityPath } from "@/lib/paths";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
@@ -319,11 +328,19 @@ export default function ApplicationCoachingPage() {
     }
   }
 
-  if (authLoading || loading) {
-    return <p className="max-w-4xl mx-auto px-6 py-20 text-slate font-mono text-sm">Loading case file…</p>;
-  }
+  if (authLoading || loading) return <SkeletonPage variant="detail" />;
 
-  if (!opportunity) return <p className="max-w-4xl mx-auto px-6 py-20 text-alert">{error}</p>;
+  if (!opportunity) {
+    return (
+      <div className="page-narrow">
+        <ErrorState
+          title="Could not load this case file"
+          message={error ?? "The opportunity could not be found."}
+          action={<Link href="/dashboard" className="btn-secondary">Back to dashboard</Link>}
+        />
+      </div>
+    );
+  }
 
   const needsCv = error?.toLowerCase().includes("upload your cv");
   const needsUpgradeCoaching = error?.startsWith("UPGRADE_REQUIRED:coaching");
@@ -349,850 +366,700 @@ export default function ApplicationCoachingPage() {
 
   const isStale = isCvStale || isOpportunityStale;
   const staleMessage = isOpportunityStale
-    ? "The scholarship's requirements or details were updated after this coaching was generated — some guidance may be outdated."
-    : "Your CV was updated after this coaching was generated — the analysis may no longer reflect your current profile.";
+    ? "The scholarship's requirements or details were updated after this coaching was generated, so some guidance may be outdated."
+    : "Your CV was updated after this coaching was generated, so the analysis may no longer reflect your current profile.";
+
+  const filledTargets = targets.filter((t) => t.program || t.school);
+
+  // Sections shown in the side navigation
+  const sections = [
+    ...(!needsCv && !needsUpgradeCoaching ? [{ id: "targets", label: "Target programs" }] : []),
+    ...(coaching && !generating ? [{ id: "strategy", label: "Your strategy" }] : []),
+    ...(coaching && !generating && showEssaySection ? [{ id: "essays", label: "Essay review" }] : []),
+    ...(coaching && !generating && showDocumentSection && requiredDocs.length > 0 ? [{ id: "documents", label: "Required documents" }] : []),
+    ...(coaching && !generating && opportunity.referenceLetterConfig ? [{ id: "letters", label: "Reference letters" }] : []),
+  ];
 
   return (
-    <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 sm:py-14">
-      <p className="font-mono text-xs tracking-widest uppercase text-brass">Case File</p>
-      <h1 className="font-display text-2xl sm:text-4xl text-ink mt-2 leading-tight">{opportunity.title}</h1>
-      <p className="text-ink-soft mt-1">{opportunity.provider}</p>
+    <div className="page">
+      <PageHeader
+        back={{ href: "/dashboard", label: "Dashboard" }}
+        eyebrow="Application workspace"
+        title={opportunity.title}
+        description={opportunity.provider}
+        actions={
+          <>
+            <Link href={opportunityPath(opportunity)} className="btn-secondary">View opportunity</Link>
+            {opportunity.requiresInterview !== false && (
+              <Link href={`/interview?opportunity=${opportunity._id}`} className="btn-ghost">Practice interview</Link>
+            )}
+          </>
+        }
+      />
 
       {enriching && (
-        <div className="mt-4 flex items-center gap-2 text-sm font-mono text-slate">
-          <span className="inline-block w-2 h-2 rounded-full bg-brass animate-pulse" />
-          Analysing this scholarship's application structure — the essay and document sections will appear shortly.
+        <div className="mb-6" role="status">
+          <ProgressBar label="Analysing this scholarship" />
+          <p className="mt-2 text-sm text-slate">Analysing this scholarship&apos;s application structure. The essay and document sections will appear shortly.</p>
         </div>
       )}
 
-      {needsCv && (
-        <div className="mt-6 case-card p-5">
-          <p className="text-ink-soft">You'll need a CV on file before we can build your coaching.</p>
-          <a href="/cv" className="inline-block mt-3 text-forest underline text-sm">
-            Upload your CV →
-          </a>
-        </div>
-      )}
+      <div className="grid gap-8 lg:grid-cols-workspace lg:gap-10">
+        {sections.length > 1 && (
+          <nav aria-label="On this page" className="hidden lg:block">
+            <ul className="sticky top-8 space-y-1">
+              {sections.map((s) => (
+                <li key={s.id}>
+                  <a href={`#${s.id}`} className="flex min-h-touch items-center rounded-md px-3 text-sm font-medium text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink">
+                    {s.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        )}
 
-      {/* Target programs — always shown once CV check passes */}
-      {!needsCv && !needsUpgradeCoaching && (
-        <div className="mt-8 case-card p-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h2 className="font-display text-lg sm:text-xl text-ink">Target programs</h2>
-              <p className="text-ink-soft text-sm mt-1 leading-relaxed">
-                Add every program and university you're applying to — scholarships like this one
-                often require or encourage multiple applications. Claude will tailor the coaching
-                to cover each track.
-              </p>
-            </div>
-            {targets.length < 4 && (
-              <button
-                type="button"
-                onClick={addTarget}
-                className="shrink-0 text-xs font-mono text-forest border border-forest px-3 py-1.5 hover:bg-forest hover:text-paper transition-colors mt-0.5"
-              >
-                + Add
-              </button>
-            )}
-          </div>
+        <div className={`min-w-0 space-y-10 ${sections.length > 1 ? "" : "lg:col-span-2"}`}>
+          {needsCv && (
+            <Alert variant="warn">
+              <p>You need a CV on file before we can build your coaching.</p>
+              <Link href="/cv" className="mt-1 inline-block font-semibold underline">Upload your CV</Link>
+            </Alert>
+          )}
 
-          <form onSubmit={handleSaveTarget} className="mt-4 space-y-3">
-            {targets.map((t, i) => (
-              <div key={i} className="flex gap-2 items-start">
-                <span className="font-mono text-xs text-brass pt-2.5 w-4 shrink-0">{i + 1}.</span>
-                <div className="flex-1 grid sm:grid-cols-2 gap-2">
-                  <input
-                    value={t.program}
-                    onChange={(e) => updateTarget(i, "program", e.target.value)}
-                    placeholder="Program / Course"
-                    className="w-full border border-rule px-3 py-2 bg-transparent focus:border-forest outline-none text-sm"
-                  />
-                  <input
-                    value={t.school}
-                    onChange={(e) => updateTarget(i, "school", e.target.value)}
-                    placeholder="University / Institution"
-                    className="w-full border border-rule px-3 py-2 bg-transparent focus:border-forest outline-none text-sm"
-                  />
+          {/* Target programs */}
+          {!needsCv && !needsUpgradeCoaching && (
+            <section id="targets" className="card card-pad scroll-mt-8" aria-labelledby="targets-heading">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 id="targets-heading" className="h3">Target programs</h2>
+                  <p className="mt-1 max-w-prose text-sm leading-relaxed text-ink-soft">
+                    Add every program and university you are applying to. Scholarships like this one often require or encourage several applications, and the coaching is tailored to each track.
+                  </p>
                 </div>
-                {targets.length > 1 && (
-                  <button
-                    type="button"
-                    onClick={() => removeTarget(i)}
-                    className="shrink-0 text-slate hover:text-alert transition-colors pt-2 text-lg leading-none"
-                    aria-label="Remove"
-                  >
-                    ×
+                {targets.length < 4 && (
+                  <button type="button" onClick={addTarget} className="btn-secondary btn-sm shrink-0">
+                    <Plus size={16} aria-hidden="true" />
+                    Add
                   </button>
                 )}
               </div>
-            ))}
 
-            <div className="flex items-center gap-4 pt-1">
-              <button
-                type="submit"
-                disabled={savingTarget}
-                className="text-sm text-forest border border-forest px-4 py-2 hover:bg-forest hover:text-paper transition-colors disabled:opacity-60"
-              >
-                {savingTarget ? "Saving…" : "Save"}
-              </button>
-              {targetSaved && (
-                <span className="text-xs font-mono text-forest">Saved — regenerate coaching to apply.</span>
-              )}
-              <span className="text-xs text-slate font-mono ml-auto">{targets.length}/4</span>
-            </div>
-          </form>
-        </div>
-      )}
-
-      {!coaching && !needsCv && !needsUpgradeCoaching && !generating && (
-        <div className="mt-4 case-card p-6">
-          <h2 className="font-display text-xl sm:text-2xl text-ink">Build your strategy</h2>
-          <p className="text-ink-soft mt-2 leading-relaxed">
-            We'll weigh your CV against this opportunity's actual requirements — objectives, alignment,
-            essay angle, honest gaps, a requirement-by-requirement breakdown, and a working timeline.
-            {targets.some((t) => t.program || t.school) && (
-              <span className="text-forest"> Your {targets.filter((t) => t.program || t.school).length} target program{targets.filter((t) => t.program || t.school).length > 1 ? "s" : ""} will be factored in.</span>
-            )}
-          </p>
-          <button
-            onClick={() => handleStreamCoaching(false)}
-            disabled={generating}
-            className="mt-4 bg-forest text-paper px-5 py-2.5 text-sm hover:bg-forest-light transition-colors disabled:opacity-60"
-          >
-            Generate my coaching
-          </button>
-        </div>
-      )}
-
-      {needsUpgradeCoaching && <UpgradePrompt feature="coaching" />}
-
-      {/* Live streaming typewriter view */}
-      {generating && (
-        <div className="mt-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="inline-block w-2 h-2 rounded-full bg-forest animate-pulse" />
-            <p className="text-sm font-mono text-slate">Building your coaching analysis…</p>
-          </div>
-          <div
-            ref={streamBoxRef}
-            className="case-card p-5 h-72 overflow-y-auto"
-          >
-            <pre className="font-mono text-xs text-ink-soft whitespace-pre-wrap leading-relaxed break-all">
-              {streamingText}
-              <span className="inline-block w-1.5 h-3.5 bg-forest align-middle ml-0.5 animate-pulse" />
-            </pre>
-          </div>
-        </div>
-      )}
-
-      {coaching && !generating && (
-        <div className="mt-10 space-y-8">
-          {isStale && (
-            <div className="case-card p-4">
-              <p className="text-sm text-ink">{staleMessage}</p>
-              <button
-                onClick={() => handleStreamCoaching(true)}
-                disabled={generating}
-                className="mt-2 text-sm text-slate underline disabled:opacity-60"
-              >
-                Regenerate with updated CV
-              </button>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <p className="text-xs text-slate font-mono">
-                Generated {new Date(coaching.generatedAt).toLocaleString()}
-              </p>
-              {(application?.targetApplications?.length ?? 0) > 0 && (
-                <p className="text-xs text-slate font-mono mt-0.5">
-                  Targets: {application!.targetApplications.map((t) => [t.program, t.school].filter(Boolean).join(" @ ")).join(", ")}
-                </p>
-              )}
-            </div>
-            <button
-              onClick={() => handleStreamCoaching(true)}
-              disabled={generating}
-              className="text-xs text-forest underline disabled:opacity-60"
-            >
-              Regenerate
-            </button>
-          </div>
-
-          {coaching.competitivePosition && (() => {
-            const pos = coaching.competitivePosition;
-            const tierConfig: Record<string, { label: string }> = {
-              strong: { label: "Strong fit" },
-              competitive: { label: "Competitive" },
-              borderline: { label: "Borderline" },
-              longshot: { label: "Long shot" },
-            };
-            const cfg = tierConfig[pos.tier] ?? tierConfig.borderline;
-            return (
-              <section>
-                <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Where you stand</h2>
-                <div className="mt-4 case-card p-4">
-                  <span className="font-mono text-xs uppercase tracking-widest font-semibold text-ink">
-                    {cfg.label}
-                  </span>
-                  {pos.standoutFactors.length > 0 && (
-                    <div className="mt-3">
-                      <p className="text-xs font-mono uppercase text-slate mb-1.5">Your edge</p>
-                      <ul className="space-y-1">
-                        {pos.standoutFactors.map((f, i) => (
-                          <li key={i} className="text-sm text-ink-soft flex gap-2">
-                            <span className="text-slate shrink-0">→</span>
-                            {f}
-                          </li>
-                        ))}
-                      </ul>
+              <form onSubmit={handleSaveTarget} className="mt-5 space-y-3">
+                {targets.map((t, i) => (
+                  <div key={i} className="flex items-start gap-2">
+                    <span className="w-5 shrink-0 pt-3 text-sm font-semibold text-slate">{i + 1}.</span>
+                    <div className="grid flex-1 gap-2 sm:grid-cols-2">
+                      <div>
+                        <label htmlFor={`tp-${i}`} className="sr-only">Program or course {i + 1}</label>
+                        <input id={`tp-${i}`} value={t.program} onChange={(e) => updateTarget(i, "program", e.target.value)} placeholder="Program or course" className="input" />
+                      </div>
+                      <div>
+                        <label htmlFor={`ts-${i}`} className="sr-only">University or institution {i + 1}</label>
+                        <input id={`ts-${i}`} value={t.school} onChange={(e) => updateTarget(i, "school", e.target.value)} placeholder="University or institution" className="input" />
+                      </div>
                     </div>
-                  )}
-                  <div className="mt-3">
-                    <p className="text-xs font-mono uppercase text-slate mb-1.5">What strong applicants typically have</p>
-                    <p className="text-sm text-ink-soft leading-relaxed">{pos.gapFromWinner}</p>
-                  </div>
-                </div>
-              </section>
-            );
-          })()}
-
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">What they're actually seeking</h2>
-            <p className="text-ink-soft mt-3 leading-relaxed">{coaching.scholarshipObjectives}</p>
-          </section>
-
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Your background alignment</h2>
-            <p className="text-ink-soft mt-3 leading-relaxed whitespace-pre-line">{coaching.backgroundAlignment}</p>
-          </section>
-
-          {coaching.essayStrategy && (
-            <section>
-              <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Essay strategy</h2>
-              <p className="text-ink-soft mt-3 leading-relaxed whitespace-pre-line">{coaching.essayStrategy}</p>
-            </section>
-          )}
-
-          {coaching.documentStrategy && (
-            <section>
-              <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Document strategy</h2>
-              <p className="text-ink-soft mt-3 leading-relaxed whitespace-pre-line">{coaching.documentStrategy}</p>
-            </section>
-          )}
-
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Weaknesses, and how to handle them</h2>
-            <div className="mt-3 space-y-3">
-              {coaching.weaknesses.map((w, i) => (
-                <div key={i} className="case-card p-4">
-                  <p className="text-ink font-medium text-sm">{w.gap}</p>
-                  <p className="text-ink-soft text-sm mt-1.5">
-                    <span className="text-forest font-medium">Mitigation: </span>
-                    {w.mitigation}
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Requirement by requirement</h2>
-            <div className="mt-3 space-y-3">
-              {coaching.requirementBreakdown.map((r, i) => (
-                <div key={i} className="case-card p-4">
-                  <p className="text-ink font-medium text-sm">{r.requirementLabel}</p>
-                  <p className="text-ink-soft text-sm mt-1.5">{r.guidance}</p>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Timeline</h2>
-            <div className="mt-3 space-y-2">
-              {coaching.timeline.map((t, i) => (
-                <div key={i} className="flex flex-col sm:flex-row sm:gap-4 border-b border-rule pb-2 last:border-0">
-                  <span className="font-mono text-xs text-brass break-words sm:whitespace-nowrap sm:pt-0.5">
-                    {t.targetDate || `Step ${i + 1}`}
-                  </span>
-                  <div className="min-w-0 mt-0.5 sm:mt-0">
-                    <p className="text-ink text-sm font-medium">{t.milestone}</p>
-                    <p className="text-slate text-sm">{t.deliverable}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Application walkthrough</h2>
-            <p className="text-ink-soft mt-3 leading-relaxed whitespace-pre-line">{coaching.applicationGuide}</p>
-          </section>
-
-          {showEssaySection && (
-            <section>
-              <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Essay review</h2>
-
-              {needsUpgradeEssays ? (
-                <UpgradePrompt feature="essays" />
-              ) : (() => {
-                const prompts = opportunity.essayPrompts ?? [];
-
-                if (prompts.length > 0) {
-                  const draftsByPrompt = (application?.essayDrafts ?? []).reduce<Record<string, EssayDraft[]>>((acc, d) => {
-                    const k = d.promptId ?? "__general__";
-                    if (!acc[k]) acc[k] = [];
-                    acc[k]!.push(d);
-                    return acc;
-                  }, {});
-
-                  return (
-                    <div className="mt-4 space-y-6">
-                      <p className="text-ink-soft text-sm">
-                        Each question has its own input below. Paste your draft for each prompt and submit for tailored feedback against this scholarship's criteria and your CV.
-                      </p>
-                      {prompts.map((prompt) => {
-                        const key = prompt.promptId;
-                        const content = draftsByPromptId[key] ?? "";
-                        const charCount = content.length;
-                        const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-                        const overChar = prompt.maxCharacters ? charCount > prompt.maxCharacters : false;
-                        const overWord = prompt.maxWords ? wordCount > prompt.maxWords : false;
-                        const isOver = overChar || overWord;
-                        const submitting = submittingPromptId === key;
-                        const promptDrafts = [...(draftsByPrompt[key] ?? [])].reverse();
-
-                        return (
-                          <div key={key} className="case-card p-5 space-y-4">
-                            <div>
-                              <p className="text-xs font-mono uppercase tracking-widest text-brass">{prompt.label}</p>
-                              <p className="text-sm text-ink mt-2 leading-relaxed">{prompt.question}</p>
-                              {prompt.guidance && (
-                                <p className="text-xs text-slate mt-1.5 italic">{prompt.guidance}</p>
-                              )}
-                              {(prompt.maxCharacters || prompt.maxWords) && (
-                                <div className="flex flex-wrap gap-4 mt-2">
-                                  {prompt.maxCharacters && (
-                                    <span className={`text-xs font-mono ${overChar ? "text-alert" : "text-slate"}`}>
-                                      {charCount.toLocaleString()} / {prompt.maxCharacters.toLocaleString()} chars
-                                      {overChar ? ` — ${(charCount - prompt.maxCharacters).toLocaleString()} over` : ""}
-                                    </span>
-                                  )}
-                                  {prompt.maxWords && (
-                                    <span className={`text-xs font-mono ${overWord ? "text-alert" : "text-slate"}`}>
-                                      {wordCount} / {prompt.maxWords} words
-                                      {overWord ? ` — ${wordCount - prompt.maxWords} over` : ""}
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="space-y-2">
-                              <textarea
-                                rows={10}
-                                value={content}
-                                onChange={(e) => setDraftsByPromptId((prev) => ({ ...prev, [key]: e.target.value }))}
-                                placeholder={`Paste your draft for "${prompt.label}" here…`}
-                                className={`w-full border px-4 py-3 bg-transparent outline-none text-sm leading-relaxed ${isOver ? "border-alert focus:border-alert" : "border-rule focus:border-forest"}`}
-                              />
-                              {isOver && (
-                                <p className="text-xs text-alert font-mono">Over the limit — trim before submitting. We'll still flag this in the review.</p>
-                              )}
-                              <button
-                                type="button"
-                                disabled={submitting || !content.trim()}
-                                onClick={() => handleSubmitEssay(key, content)}
-                                className="bg-forest text-paper px-5 py-2.5 text-sm hover:bg-forest-light transition-colors disabled:opacity-60"
-                              >
-                                {submitting ? "Reviewing…" : "Submit for review"}
-                              </button>
-                            </div>
-
-                            {promptDrafts.length > 0 && (
-                              <div className="border-t border-rule pt-4 space-y-5">
-                                <p className="text-xs font-mono text-slate uppercase tracking-widest">Previous drafts</p>
-                                {promptDrafts.map((draft) => (
-                                  <div key={draft._id} className="space-y-3">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <p className="text-sm text-ink font-medium">{draft.title}</p>
-                                      <span className="text-xs font-mono text-slate shrink-0">v{draft.version}</span>
-                                    </div>
-                                    {draft.feedback && (
-                                      <div className="space-y-3">
-                                        <div>
-                                          <p className="text-xs font-mono uppercase text-brass">Overall</p>
-                                          <p className="text-ink-soft text-sm mt-1">{draft.feedback.overallAssessment}</p>
-                                        </div>
-                                        {draft.feedback.strengths.length > 0 && (
-                                          <div>
-                                            <p className="text-xs font-mono uppercase text-forest">Working well</p>
-                                            <ul className="list-disc list-inside text-sm text-ink-soft mt-1 space-y-1">
-                                              {draft.feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                            </ul>
-                                          </div>
-                                        )}
-                                        {draft.feedback.issues.length > 0 && (
-                                          <div>
-                                            <p className="text-xs font-mono uppercase text-alert">To fix</p>
-                                            <div className="mt-1 space-y-2">
-                                              {draft.feedback.issues.map((issue, i) => (
-                                                <div key={i} className="border-l-2 border-alert pl-3">
-                                                  <p className="text-xs text-slate">{issue.location}</p>
-                                                  <p className="text-sm text-ink-soft">{issue.problem}</p>
-                                                  <p className="text-sm text-forest mt-0.5">→ {issue.suggestion}</p>
-                                                </div>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                        <div>
-                                          <p className="text-xs font-mono uppercase text-brass">Authenticity</p>
-                                          <p className="text-ink-soft text-sm mt-1">{draft.feedback.authenticityNotes}</p>
-                                        </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  );
-                }
-
-                // Generic form — no defined prompts
-                const content = draftsByPromptId["__general__"] ?? "";
-                const charCount = content.length;
-                const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
-                const submitting = submittingPromptId === "__general__";
-                const genericDrafts = [...(application?.essayDrafts ?? []).filter((d) => !d.promptId)].reverse();
-
-                return (
-                  <div className="mt-4 space-y-4">
-                    <p className="text-ink-soft">
-                      Paste a draft and get specific, actionable feedback against this opportunity's requirements and your CV.
-                    </p>
-                    <div className="space-y-2">
-                      <textarea
-                        rows={12}
-                        value={content}
-                        onChange={(e) => setDraftsByPromptId((prev) => ({ ...prev, "__general__": e.target.value }))}
-                        placeholder="Paste your draft here…"
-                        className="w-full border border-rule px-4 py-3 bg-transparent focus:border-forest outline-none text-sm leading-relaxed"
-                      />
-                      {content.length > 0 && (
-                        <p className="text-xs font-mono text-slate text-right">
-                          {charCount.toLocaleString()} characters · {wordCount} words
-                        </p>
-                      )}
+                    {targets.length > 1 && (
                       <button
                         type="button"
-                        disabled={submitting || !content.trim()}
-                        onClick={() => handleSubmitEssay(undefined, content)}
-                        className="bg-forest text-paper px-5 py-2.5 text-sm hover:bg-forest-light transition-colors disabled:opacity-60"
+                        onClick={() => removeTarget(i)}
+                        aria-label={`Remove target ${i + 1}`}
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md text-slate transition-colors hover:bg-danger-soft hover:text-danger"
                       >
-                        {submitting ? "Reviewing your draft…" : "Submit for review"}
+                        <X size={18} aria-hidden="true" />
                       </button>
-                    </div>
+                    )}
+                  </div>
+                ))}
 
-                    {genericDrafts.length > 0 && (
-                      <div className="mt-6 space-y-6">
-                        {genericDrafts.map((draft) => (
-                          <div key={draft._id} className="case-card p-5">
-                            <div className="flex flex-wrap items-start justify-between gap-2">
-                              <p className="font-display text-base sm:text-lg text-ink min-w-0 break-words">{draft.title}</p>
-                              <span className="text-xs font-mono text-slate shrink-0">v{draft.version}</span>
-                            </div>
-                            {draft.feedback && (
-                              <div className="mt-4 space-y-4">
+                <div className="flex flex-wrap items-center gap-4 pt-1">
+                  <button type="submit" disabled={savingTarget} aria-busy={savingTarget} className="btn-primary">
+                    {savingTarget ? "Saving" : "Save targets"}
+                  </button>
+                  {targetSaved && <span className="text-sm font-medium text-ok" role="status">Saved. Regenerate coaching to apply.</span>}
+                  <span className="ml-auto text-sm text-slate">{targets.length} of 4</span>
+                </div>
+              </form>
+            </section>
+          )}
+
+          {/* Build strategy */}
+          {!coaching && !needsCv && !needsUpgradeCoaching && !generating && (
+            <section className="card card-pad" aria-labelledby="build-heading">
+              <h2 id="build-heading" className="h3">Build your strategy</h2>
+              <p className="mt-2 max-w-prose leading-relaxed text-ink-soft">
+                We weigh your CV against this opportunity&apos;s actual requirements and give you its objectives, how your background aligns, the essay angle, honest gaps, a requirement-by-requirement breakdown and a working timeline.
+                {filledTargets.length > 0 && (
+                  <span className="font-medium text-forest"> Your {filledTargets.length} target program{filledTargets.length > 1 ? "s" : ""} will be factored in.</span>
+                )}
+              </p>
+              <button type="button" onClick={() => handleStreamCoaching(false)} disabled={generating} className="btn-primary mt-4">
+                Generate my coaching
+              </button>
+            </section>
+          )}
+
+          {needsUpgradeCoaching && <UpgradePrompt feature="coaching" />}
+
+          {/* Live generation */}
+          {generating && (
+            <section aria-label="Generating your coaching" className="card card-pad">
+              <div className="mb-3 flex items-center gap-3">
+                <Spinner size="sm" label="Generating" />
+                <p className="text-sm font-medium text-ink">Building your coaching analysis</p>
+              </div>
+              <ProgressBar label="Building your coaching analysis" />
+              <div ref={streamBoxRef} className="mt-4 h-72 overflow-y-auto rounded-lg bg-surface p-4" aria-live="off">
+                <p className="whitespace-pre-wrap break-words text-sm leading-relaxed text-ink-soft">
+                  {streamingText}
+                  <span className="ml-0.5 inline-block h-4 w-1.5 animate-soft-pulse bg-forest align-text-bottom" />
+                </p>
+              </div>
+            </section>
+          )}
+
+          {coaching && !generating && (
+            <>
+              {isStale && (
+                <Alert variant="warn">
+                  <p>{staleMessage}</p>
+                  <button type="button" onClick={() => handleStreamCoaching(true)} disabled={generating} className="mt-2 font-semibold underline disabled:opacity-60">
+                    Regenerate with updated details
+                  </button>
+                </Alert>
+              )}
+
+              <section id="strategy" className="scroll-mt-8 space-y-8" aria-labelledby="strategy-heading">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h2 id="strategy-heading" className="h2">Your strategy</h2>
+                    <p className="mt-1 text-sm text-slate">Generated {new Date(coaching.generatedAt).toLocaleString()}</p>
+                    {(application?.targetApplications?.length ?? 0) > 0 && (
+                      <p className="text-sm text-slate">
+                        Targets: {application!.targetApplications.map((t) => [t.program, t.school].filter(Boolean).join(" at ")).join(", ")}
+                      </p>
+                    )}
+                  </div>
+                  <button type="button" onClick={() => handleStreamCoaching(true)} disabled={generating} className="btn-secondary btn-sm">
+                    Regenerate
+                  </button>
+                </div>
+
+                {coaching.competitivePosition && (() => {
+                  const pos = coaching.competitivePosition;
+                  const tierConfig: Record<string, { label: string; badge: string }> = {
+                    strong: { label: "Strong fit", badge: "badge-ok" },
+                    competitive: { label: "Competitive", badge: "badge-info" },
+                    borderline: { label: "Borderline", badge: "badge-warn" },
+                    longshot: { label: "Long shot", badge: "badge-danger" },
+                  };
+                  const cfg = tierConfig[pos.tier] ?? tierConfig.borderline;
+                  return (
+                    <div className="card card-pad">
+                      <div className="flex items-center gap-3">
+                        <h3 className="h3">Where you stand</h3>
+                        <span className={`badge ${cfg.badge}`}>{cfg.label}</span>
+                      </div>
+                      {pos.standoutFactors.length > 0 && (
+                        <div className="mt-4">
+                          <h4 className="text-sm font-semibold text-ink">Your edge</h4>
+                          <ul className="mt-1.5 space-y-1.5">
+                            {pos.standoutFactors.map((f, i) => (
+                              <li key={i} className="flex gap-2 text-sm text-ink-soft">
+                                <ArrowRight size={16} className="mt-0.5 shrink-0 text-slate" aria-hidden="true" />
+                                {f}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="mt-4">
+                        <h4 className="text-sm font-semibold text-ink">What strong applicants typically have</h4>
+                        <p className="mt-1 text-sm leading-relaxed text-ink-soft">{pos.gapFromWinner}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <div>
+                  <h3 className="h3">What they are actually seeking</h3>
+                  <p className="mt-3 max-w-prose leading-relaxed text-ink-soft">{coaching.scholarshipObjectives}</p>
+                </div>
+
+                <div>
+                  <h3 className="h3">Your background alignment</h3>
+                  <p className="mt-3 max-w-prose whitespace-pre-line leading-relaxed text-ink-soft">{coaching.backgroundAlignment}</p>
+                </div>
+
+                {coaching.essayStrategy && (
+                  <div>
+                    <h3 className="h3">Essay strategy</h3>
+                    <p className="mt-3 max-w-prose whitespace-pre-line leading-relaxed text-ink-soft">{coaching.essayStrategy}</p>
+                  </div>
+                )}
+
+                {coaching.documentStrategy && (
+                  <div>
+                    <h3 className="h3">Document strategy</h3>
+                    <p className="mt-3 max-w-prose whitespace-pre-line leading-relaxed text-ink-soft">{coaching.documentStrategy}</p>
+                  </div>
+                )}
+
+                <div>
+                  <h3 className="h3">Weaknesses, and how to handle them</h3>
+                  <ul className="mt-3 space-y-3">
+                    {coaching.weaknesses.map((w, i) => (
+                      <li key={i} className="card p-4">
+                        <p className="text-sm font-semibold text-ink">{w.gap}</p>
+                        <p className="mt-1.5 text-sm text-ink-soft">
+                          <span className="font-semibold text-forest">Mitigation: </span>
+                          {w.mitigation}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="h3">Requirement by requirement</h3>
+                  <ul className="mt-3 space-y-3">
+                    {coaching.requirementBreakdown.map((r, i) => (
+                      <li key={i} className="card p-4">
+                        <p className="text-sm font-semibold text-ink">{r.requirementLabel}</p>
+                        <p className="mt-1.5 text-sm text-ink-soft">{r.guidance}</p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="h3">Timeline</h3>
+                  <ol className="mt-3 divide-y divide-rule">
+                    {coaching.timeline.map((t, i) => (
+                      <li key={i} className="flex flex-col gap-1 py-3 sm:flex-row sm:gap-5">
+                        <span className="shrink-0 text-sm font-semibold text-forest sm:w-36">{t.targetDate || `Step ${i + 1}`}</span>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-ink">{t.milestone}</p>
+                          <p className="text-sm text-slate">{t.deliverable}</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
+
+                <div>
+                  <h3 className="h3">Application walkthrough</h3>
+                  <p className="mt-3 max-w-prose whitespace-pre-line leading-relaxed text-ink-soft">{coaching.applicationGuide}</p>
+                </div>
+              </section>
+
+              {/* Essays */}
+              {showEssaySection && (
+                <section id="essays" className="scroll-mt-8" aria-labelledby="essays-heading">
+                  <h2 id="essays-heading" className="h2">Essay review</h2>
+
+                  {needsUpgradeEssays ? (
+                    <UpgradePrompt feature="essays" />
+                  ) : (() => {
+                    const prompts = opportunity.essayPrompts ?? [];
+
+                    if (prompts.length > 0) {
+                      const draftsByPrompt = (application?.essayDrafts ?? []).reduce<Record<string, EssayDraft[]>>((acc, d) => {
+                        const k = d.promptId ?? "__general__";
+                        if (!acc[k]) acc[k] = [];
+                        acc[k]!.push(d);
+                        return acc;
+                      }, {});
+
+                      return (
+                        <div className="mt-4 space-y-6">
+                          <p className="max-w-prose text-sm text-ink-soft">
+                            Each question has its own box. Paste your draft for each prompt and submit it for feedback against this scholarship&apos;s criteria and your CV.
+                          </p>
+                          {prompts.map((prompt) => {
+                            const key = prompt.promptId;
+                            const content = draftsByPromptId[key] ?? "";
+                            const charCount = content.length;
+                            const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+                            const overChar = prompt.maxCharacters ? charCount > prompt.maxCharacters : false;
+                            const overWord = prompt.maxWords ? wordCount > prompt.maxWords : false;
+                            const isOver = overChar || overWord;
+                            const submitting = submittingPromptId === key;
+                            const promptDrafts = [...(draftsByPrompt[key] ?? [])].reverse();
+
+                            return (
+                              <article key={key} className="card card-pad space-y-4">
                                 <div>
-                                  <p className="text-xs font-mono uppercase text-brass">Overall</p>
-                                  <p className="text-ink-soft text-sm mt-1">{draft.feedback.overallAssessment}</p>
+                                  <h3 className="text-sm font-semibold text-forest">{prompt.label}</h3>
+                                  <p className="mt-2 text-sm leading-relaxed text-ink">{prompt.question}</p>
+                                  {prompt.guidance && <p className="mt-1.5 text-sm italic text-slate">{prompt.guidance}</p>}
                                 </div>
-                                {draft.feedback.strengths.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-mono uppercase text-forest">Working well</p>
-                                    <ul className="list-disc list-inside text-sm text-ink-soft mt-1 space-y-1">
-                                      {draft.feedback.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                    </ul>
-                                  </div>
-                                )}
-                                {draft.feedback.issues.length > 0 && (
-                                  <div>
-                                    <p className="text-xs font-mono uppercase text-alert">To fix</p>
-                                    <div className="mt-1 space-y-2">
-                                      {draft.feedback.issues.map((issue, i) => (
-                                        <div key={i} className="border-l-2 border-alert pl-3">
-                                          <p className="text-xs text-slate">{issue.location}</p>
-                                          <p className="text-sm text-ink-soft">{issue.problem}</p>
-                                          <p className="text-sm text-forest mt-0.5">→ {issue.suggestion}</p>
-                                        </div>
-                                      ))}
+
+                                <div>
+                                  <label htmlFor={`essay-${key}`} className="label">Your draft</label>
+                                  <textarea
+                                    id={`essay-${key}`}
+                                    rows={10}
+                                    value={content}
+                                    disabled={submitting}
+                                    onChange={(e) => setDraftsByPromptId((prev) => ({ ...prev, [key]: e.target.value }))}
+                                    placeholder={`Paste your draft for "${prompt.label}" here`}
+                                    aria-describedby={`essay-count-${key}`}
+                                    className={`textarea leading-relaxed ${isOver ? "!border-danger" : ""}`}
+                                  />
+                                  {(prompt.maxCharacters || prompt.maxWords) && (
+                                    <div id={`essay-count-${key}`} className="mt-1.5 flex flex-wrap gap-4 text-sm">
+                                      {prompt.maxCharacters && (
+                                        <span className={overChar ? "font-semibold text-danger" : "text-slate"}>
+                                          {charCount.toLocaleString()} of {prompt.maxCharacters.toLocaleString()} characters
+                                          {overChar ? `, ${(charCount - prompt.maxCharacters).toLocaleString()} over` : ""}
+                                        </span>
+                                      )}
+                                      {prompt.maxWords && (
+                                        <span className={overWord ? "font-semibold text-danger" : "text-slate"}>
+                                          {wordCount} of {prompt.maxWords} words
+                                          {overWord ? `, ${wordCount - prompt.maxWords} over` : ""}
+                                        </span>
+                                      )}
                                     </div>
+                                  )}
+                                  {isOver && <p className="field-error">Over the limit. Trim before you submit. We will still flag it in the review.</p>}
+                                </div>
+
+                                <div>
+                                  <button type="button" disabled={submitting || !content.trim()} aria-busy={submitting} onClick={() => handleSubmitEssay(key, content)} className="btn-primary">
+                                    {submitting ? "Reviewing" : "Submit for review"}
+                                  </button>
+                                  {submitting && <div className="mt-3"><ProgressBar label="Reviewing your draft" /></div>}
+                                </div>
+
+                                {promptDrafts.length > 0 && (
+                                  <div className="space-y-6 border-t border-rule pt-4">
+                                    <h4 className="text-sm font-semibold text-ink">Previous drafts</h4>
+                                    {promptDrafts.map((draft) => (
+                                      <div key={draft._id} className="space-y-3">
+                                        <div className="flex items-center justify-between gap-2">
+                                          <p className="text-sm font-semibold text-ink">{draft.title}</p>
+                                          <span className="badge">Version {draft.version}</span>
+                                        </div>
+                                        {draft.feedback && (
+                                          <ReviewBlock
+                                            assessment={draft.feedback.overallAssessment}
+                                            strengths={draft.feedback.strengths}
+                                            issues={draft.feedback.issues}
+                                            notes={[{ label: "Authenticity", text: draft.feedback.authenticityNotes }]}
+                                          />
+                                        )}
+                                      </div>
+                                    ))}
                                   </div>
                                 )}
-                                <div>
-                                  <p className="text-xs font-mono uppercase text-brass">Authenticity</p>
-                                  <p className="text-ink-soft text-sm mt-1">{draft.feedback.authenticityNotes}</p>
+                              </article>
+                            );
+                          })}
+                        </div>
+                      );
+                    }
+
+                    // Generic form: no defined prompts
+                    const content = draftsByPromptId["__general__"] ?? "";
+                    const charCount = content.length;
+                    const wordCount = content.trim().split(/\s+/).filter(Boolean).length;
+                    const submitting = submittingPromptId === "__general__";
+                    const genericDrafts = [...(application?.essayDrafts ?? []).filter((d) => !d.promptId)].reverse();
+
+                    return (
+                      <div className="mt-4 space-y-4">
+                        <p className="max-w-prose text-ink-soft">
+                          Paste a draft and get specific, actionable feedback against this opportunity&apos;s requirements and your CV.
+                        </p>
+                        <div className="card card-pad">
+                          <label htmlFor="essay-general" className="label">Your draft</label>
+                          <textarea
+                            id="essay-general"
+                            rows={12}
+                            value={content}
+                            disabled={submitting}
+                            onChange={(e) => setDraftsByPromptId((prev) => ({ ...prev, "__general__": e.target.value }))}
+                            placeholder="Paste your draft here"
+                            className="textarea leading-relaxed"
+                          />
+                          {content.length > 0 && <p className="help text-right">{charCount.toLocaleString()} characters · {wordCount} words</p>}
+                          <button type="button" disabled={submitting || !content.trim()} aria-busy={submitting} onClick={() => handleSubmitEssay(undefined, content)} className="btn-primary mt-3">
+                            {submitting ? "Reviewing your draft" : "Submit for review"}
+                          </button>
+                          {submitting && <div className="mt-3"><ProgressBar label="Reviewing your draft" /></div>}
+                        </div>
+
+                        {genericDrafts.length > 0 && (
+                          <div className="space-y-5">
+                            {genericDrafts.map((draft) => (
+                              <article key={draft._id} className="card card-pad">
+                                <div className="flex flex-wrap items-start justify-between gap-2">
+                                  <h3 className="min-w-0 break-words font-display text-lg text-ink">{draft.title}</h3>
+                                  <span className="badge">Version {draft.version}</span>
                                 </div>
+                                {draft.feedback && (
+                                  <div className="mt-4">
+                                    <ReviewBlock
+                                      assessment={draft.feedback.overallAssessment}
+                                      strengths={draft.feedback.strengths}
+                                      issues={draft.feedback.issues}
+                                      notes={[{ label: "Authenticity", text: draft.feedback.authenticityNotes }]}
+                                    />
+                                  </div>
+                                )}
+                              </article>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </section>
+              )}
+
+              {/* Documents */}
+              {showDocumentSection && requiredDocs.length > 0 && (
+                <section id="documents" className="scroll-mt-8" aria-labelledby="documents-heading">
+                  <h2 id="documents-heading" className="h2">Required documents</h2>
+
+                  {needsUpgradeDocs ? (
+                    <UpgradePrompt feature="application_documents" />
+                  ) : (
+                    <ul className="mt-4 space-y-5">
+                      {requiredDocs.map((doc) => {
+                        const uploadedDoc = (application?.applicationDocuments ?? []).find((d) => d.docId === doc.docId);
+                        const stagedFile = docFilesByDocId[doc.docId] ?? null;
+                        const isUploading = uploadingDocId === doc.docId;
+                        const isSuggesting = suggestingDocId === uploadedDoc?._id;
+
+                        return (
+                          <li key={doc.docId} className="card card-pad space-y-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="font-semibold text-ink">{doc.label}</h3>
+                                  {!doc.isRequired && <span className="badge">Optional</span>}
+                                  {uploadedDoc && <span className="badge badge-ok">Uploaded {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}</span>}
+                                </div>
+                                <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{doc.description}</p>
+                                {doc.instructions && <p className="mt-1.5 text-sm italic text-slate">{doc.instructions}</p>}
+                              </div>
+                              {doc.templateUrl && (
+                                <a href={doc.templateUrl} target="_blank" rel="noopener noreferrer" className="btn-secondary btn-sm shrink-0">
+                                  Template
+                                  <ExternalLink size={14} aria-hidden="true" />
+                                </a>
+                              )}
+                            </div>
+
+                            {uploadedDoc?.review && (
+                              <div className="space-y-4 border-t border-rule pt-4">
+                                <ReviewBlock
+                                  assessmentLabel="Assessment"
+                                  assessment={uploadedDoc.review.overallAssessment}
+                                  strengths={uploadedDoc.review.strengths}
+                                  issues={uploadedDoc.review.issues}
+                                  issuesLabel="To improve"
+                                />
+                                {!uploadedDoc.suggestion && (
+                                  <div>
+                                    <button type="button" disabled={isSuggesting} aria-busy={isSuggesting} onClick={() => handleSuggestDocument(uploadedDoc._id)} className="btn-secondary">
+                                      {isSuggesting ? "Generating suggestions" : "Get improved draft"}
+                                    </button>
+                                    {isSuggesting && <div className="mt-3"><ProgressBar label="Generating suggestions" /></div>}
+                                  </div>
+                                )}
                               </div>
                             )}
-                          </div>
-                        ))}
+
+                            {uploadedDoc?.suggestion && (
+                              <div className="space-y-3 border-t border-rule pt-4">
+                                <div className="flex items-center justify-between gap-2">
+                                  <h4 className="text-sm font-semibold text-ok">Suggested content</h4>
+                                  <button type="button" onClick={() => navigator.clipboard.writeText(uploadedDoc.suggestion!.content)} className="btn-secondary btn-sm">
+                                    <Copy size={14} aria-hidden="true" />
+                                    Copy
+                                  </button>
+                                </div>
+                                <p className="text-sm italic leading-relaxed text-slate">{uploadedDoc.suggestion.styleNotes}</p>
+                                <div className="rounded-lg bg-surface p-4">
+                                  <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{uploadedDoc.suggestion.content}</p>
+                                </div>
+                                <button type="button" disabled={isSuggesting} aria-busy={isSuggesting} onClick={() => handleSuggestDocument(uploadedDoc._id)} className="btn-ghost btn-sm">
+                                  {isSuggesting ? "Regenerating" : "Regenerate suggestions"}
+                                </button>
+                              </div>
+                            )}
+
+                            <div className="space-y-3 border-t border-rule pt-4">
+                              <FilePicker
+                                id={`doc-${doc.docId}`}
+                                accept="application/pdf"
+                                file={stagedFile}
+                                disabled={isUploading}
+                                onChange={(f) => setDocFilesByDocId((prev) => ({ ...prev, [doc.docId]: f }))}
+                              />
+                              <div className="flex flex-wrap items-center gap-3">
+                                <button type="button" disabled={isUploading || !stagedFile} aria-busy={isUploading} onClick={() => handleUploadDocument(doc.docId)} className="btn-primary btn-sm">
+                                  {isUploading ? "Uploading" : uploadedDoc ? "Replace and re-review" : "Upload and review"}
+                                </button>
+                                <span className="text-sm text-slate">PDF only, up to 8 MB</span>
+                              </div>
+                              {isUploading && <ProgressBar label="Uploading and reviewing" />}
+                            </div>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
+                </section>
+              )}
+
+              {/* Reference letters */}
+              {opportunity.referenceLetterConfig && (
+                <section id="letters" className="scroll-mt-8" aria-labelledby="letters-heading">
+                  <h2 id="letters-heading" className="h2">Reference letters</h2>
+
+                  <div className="card card-pad mt-4 space-y-4">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                      <p className="text-sm font-semibold text-ink">
+                        {opportunity.referenceLetterConfig.count} letter{opportunity.referenceLetterConfig.count !== 1 ? "s" : ""} required
+                      </p>
+                      {(() => {
+                        const uploaded = (application?.referenceLetters ?? []).length;
+                        const required = opportunity.referenceLetterConfig!.count;
+                        return <span className={`badge ${uploaded >= required ? "badge-ok" : ""}`}>{uploaded} of {required} submitted</span>;
+                      })()}
+                    </div>
+                    <p className="max-w-prose text-sm leading-relaxed text-ink-soft">
+                      Upload each letter as a PDF once your referee has completed and signed it. We review it against the form questions and suggest improvements you can pass back to them.
+                    </p>
+                    {opportunity.referenceLetterConfig.instructions && (
+                      <p className="text-sm italic text-slate">{opportunity.referenceLetterConfig.instructions}</p>
+                    )}
+                    {opportunity.referenceLetterConfig.questions.length > 0 && (
+                      <div>
+                        <h3 className="mb-2 text-sm font-semibold text-ink">Questions your referee must answer</h3>
+                        <ol className="space-y-2">
+                          {opportunity.referenceLetterConfig.questions.map((q, i) => (
+                            <li key={i} className="flex gap-2 text-sm text-ink-soft">
+                              <span className="shrink-0 font-semibold text-forest">{i + 1}.</span>
+                              <span>
+                                {q.text}
+                                {q.optional && <span className="ml-1 text-slate"> (optional)</span>}
+                              </span>
+                            </li>
+                          ))}
+                        </ol>
                       </div>
                     )}
                   </div>
-                );
-              })()}
-            </section>
-          )}
 
-          {showDocumentSection && requiredDocs.length > 0 && (
-            <section>
-              <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Required documents</h2>
-
-              {needsUpgradeDocs ? (
-                <UpgradePrompt feature="application_documents" />
-              ) : (
-                <div className="mt-4 space-y-5">
-                  {requiredDocs.map((doc) => {
-                    const uploadedDoc = (application?.applicationDocuments ?? []).find((d) => d.docId === doc.docId);
-                    const stagedFile = docFilesByDocId[doc.docId] ?? null;
-                    const isUploading = uploadingDocId === doc.docId;
-
-                    return (
-                      <div key={doc.docId} className="case-card p-5 space-y-4">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <p className="font-medium text-ink">{doc.label}</p>
-                              {!doc.isRequired && (
-                                <span className="text-xs text-slate font-mono border border-rule px-1.5 py-0.5">optional</span>
-                              )}
-                              {uploadedDoc && (
-                                <span className="text-xs text-forest font-mono">uploaded {new Date(uploadedDoc.uploadedAt).toLocaleDateString()}</span>
-                              )}
-                            </div>
-                            <p className="text-sm text-ink-soft mt-1.5 leading-relaxed">{doc.description}</p>
-                            {doc.instructions && (
-                              <p className="text-xs text-slate mt-1.5 italic">{doc.instructions}</p>
-                            )}
-                          </div>
-                          {doc.templateUrl && (
-                            <a
-                              href={doc.templateUrl}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="shrink-0 text-xs font-mono text-forest border border-forest px-2 py-1 hover:bg-forest hover:text-paper transition-colors"
-                            >
-                              Template
-                            </a>
-                          )}
+                  {needsUpgradeRefLetters ? (
+                    <UpgradePrompt feature="reference_letters" />
+                  ) : (
+                    <form onSubmit={handleUploadLetter} className="card card-pad mt-5 space-y-4">
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                          <label htmlFor="rl-type" className="label">Letter type</label>
+                          <select id="rl-type" value={letterType} onChange={(e) => setLetterType(e.target.value as ReferenceLetter["letterType"])} className="input">
+                            <option value="work">Work experience reference</option>
+                            <option value="academic">Academic reference</option>
+                            <option value="other">Other</option>
+                          </select>
                         </div>
-
-                        {uploadedDoc?.review && (
-                          <div className="border-t border-rule pt-4 space-y-3">
-                            <div>
-                              <p className="text-xs font-mono uppercase text-brass">Assessment</p>
-                              <p className="text-ink-soft text-sm mt-1">{uploadedDoc.review.overallAssessment}</p>
-                            </div>
-                            {uploadedDoc.review.strengths.length > 0 && (
-                              <div>
-                                <p className="text-xs font-mono uppercase text-forest">Working well</p>
-                                <ul className="list-disc list-inside text-sm text-ink-soft mt-1 space-y-1">
-                                  {uploadedDoc.review.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                                </ul>
-                              </div>
-                            )}
-                            {uploadedDoc.review.issues.length > 0 && (
-                              <div>
-                                <p className="text-xs font-mono uppercase text-alert">To improve</p>
-                                <div className="mt-1 space-y-2">
-                                  {uploadedDoc.review.issues.map((issue, i) => (
-                                    <div key={i} className="border-l-2 border-alert pl-3">
-                                      <p className="text-xs text-slate">{issue.location}</p>
-                                      <p className="text-sm text-ink-soft">{issue.problem}</p>
-                                      <p className="text-sm text-forest mt-0.5">→ {issue.suggestion}</p>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {!uploadedDoc.suggestion && (
-                              <button
-                                type="button"
-                                disabled={suggestingDocId === uploadedDoc._id}
-                                onClick={() => handleSuggestDocument(uploadedDoc._id)}
-                                className="text-sm text-forest border border-forest px-4 py-2 hover:bg-forest hover:text-paper transition-colors disabled:opacity-60"
-                              >
-                                {suggestingDocId === uploadedDoc._id ? "Generating suggestions…" : "Get improved draft"}
-                              </button>
-                            )}
-                          </div>
-                        )}
-
-                        {uploadedDoc?.suggestion && (
-                          <div className="border-t border-rule pt-4 space-y-3">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-xs font-mono uppercase text-forest">Suggested content</p>
-                              <button
-                                type="button"
-                                onClick={() => navigator.clipboard.writeText(uploadedDoc.suggestion!.content)}
-                                className="text-xs font-mono text-slate border border-rule px-2 py-1 hover:border-forest hover:text-forest transition-colors"
-                              >
-                                Copy
-                              </button>
-                            </div>
-                            <p className="text-xs text-slate italic leading-relaxed">{uploadedDoc.suggestion.styleNotes}</p>
-                            <div className="border border-rule p-4 bg-paper">
-                              <p className="text-sm text-ink leading-relaxed whitespace-pre-line">{uploadedDoc.suggestion.content}</p>
-                            </div>
-                            <button
-                              type="button"
-                              disabled={suggestingDocId === uploadedDoc._id}
-                              onClick={() => handleSuggestDocument(uploadedDoc._id)}
-                              className="text-xs text-slate underline disabled:opacity-60"
-                            >
-                              {suggestingDocId === uploadedDoc._id ? "Regenerating…" : "Regenerate suggestions"}
-                            </button>
-                          </div>
-                        )}
-
-                        <div className="border-t border-rule pt-4 space-y-2">
-                          <div className="flex flex-col sm:flex-row gap-2 items-start">
-                            <input
-                              type="file"
-                              accept="application/pdf"
-                              onChange={(e) =>
-                                setDocFilesByDocId((prev) => ({
-                                  ...prev,
-                                  [doc.docId]: e.target.files?.[0] ?? null,
-                                }))
-                              }
-                              className="block text-sm text-slate file:mr-3 file:py-1.5 file:px-3 file:border file:border-forest file:text-forest file:bg-transparent file:text-xs file:font-mono hover:file:bg-forest hover:file:text-paper file:transition-colors cursor-pointer"
-                            />
-                            <button
-                              type="button"
-                              disabled={isUploading || !stagedFile}
-                              onClick={() => handleUploadDocument(doc.docId)}
-                              className="text-sm text-forest border border-forest px-4 py-1.5 hover:bg-forest hover:text-paper transition-colors disabled:opacity-60 whitespace-nowrap"
-                            >
-                              {isUploading ? "Uploading…" : uploadedDoc ? "Replace & re-review" : "Upload & review"}
-                            </button>
-                          </div>
-                          <p className="text-xs text-slate">PDF only · max 8 MB</p>
+                        <div>
+                          <label htmlFor="rl-org" className="label">Referee&apos;s organisation <span className="font-normal text-slate">(optional)</span></label>
+                          <input id="rl-org" value={refereeOrg} onChange={(e) => setRefereeOrg(e.target.value)} placeholder="e.g. Ministry of Finance" className="input" />
                         </div>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          )}
+                      <div>
+                        <p className="label">Reference letter PDF</p>
+                        <FilePicker id="rl-file" accept="application/pdf" file={letterFile} disabled={uploadingLetter} onChange={setLetterFile} />
+                        <p className="help">PDF only, up to 8 MB</p>
+                      </div>
+                      <div>
+                        <button type="submit" disabled={uploadingLetter || !letterFile} aria-busy={uploadingLetter} className="btn-primary">
+                          {uploadingLetter ? "Uploading and reviewing" : "Upload and review"}
+                        </button>
+                        {uploadingLetter && <div className="mt-3"><ProgressBar label="Uploading and reviewing" /></div>}
+                      </div>
+                    </form>
+                  )}
 
-          {opportunity.referenceLetterConfig && (
-            <section>
-              <h2 className="font-display text-xl sm:text-2xl text-ink border-b border-rule pb-2">Reference letters</h2>
+                  {(application?.referenceLetters ?? []).length > 0 && (
+                    <ul className="mt-8 space-y-6">
+                      {[...(application!.referenceLetters)].reverse().map((letter) => (
+                        <li key={letter._id} className="card card-pad">
+                          <div className="flex flex-wrap items-start justify-between gap-2">
+                            <div>
+                              <p className="text-sm font-semibold text-slate">
+                                {letter.letterType === "work" ? "Work reference" : letter.letterType === "academic" ? "Academic reference" : "Reference letter"}
+                              </p>
+                              <p className="mt-0.5 break-all font-display text-base text-ink">{letter.originalFileName}</p>
+                              {letter.refereeOrganization && <p className="mt-0.5 text-sm text-slate">{letter.refereeOrganization}</p>}
+                            </div>
+                            <p className="shrink-0 text-sm text-slate">{new Date(letter.uploadedAt).toLocaleDateString()}</p>
+                          </div>
 
-              <div className="mt-4 case-card p-4 space-y-4">
-                <div className="flex items-center justify-between gap-4 flex-wrap">
-                  <p className="text-xs font-mono text-slate uppercase tracking-widest">
-                    {opportunity.referenceLetterConfig.count} letter{opportunity.referenceLetterConfig.count !== 1 ? "s" : ""} required
-                  </p>
-                  {(() => {
-                    const uploaded = (application?.referenceLetters ?? []).length;
-                    const required = opportunity.referenceLetterConfig!.count;
-                    const allDone = uploaded >= required;
-                    return (
-                      <span className={`text-xs font-mono px-2 py-0.5 border ${allDone ? "border-forest text-forest" : "border-rule text-slate"}`}>
-                        {uploaded} / {required} submitted
-                      </span>
-                    );
-                  })()}
-                </div>
-                <p className="text-sm text-ink-soft leading-relaxed">
-                  Upload each letter as a PDF once your referee has completed and signed it. We'll review it against the form questions and suggest improvements you can pass back to them.
-                </p>
-                {opportunity.referenceLetterConfig.instructions && (
-                  <p className="text-xs text-slate italic">{opportunity.referenceLetterConfig.instructions}</p>
-                )}
-                {opportunity.referenceLetterConfig.questions.length > 0 && (
-                  <div>
-                    <p className="text-xs font-mono text-slate uppercase tracking-widest mb-2">Questions your referee must answer</p>
-                    <ol className="space-y-2">
-                      {opportunity.referenceLetterConfig.questions.map((q, i) => (
-                        <li key={i} className="flex gap-2 text-sm text-ink-soft">
-                          <span className="font-mono text-brass shrink-0">{i + 1}.</span>
-                          <span>
-                            {q.text}
-                            {q.optional && <em className="text-slate ml-1 not-italic"> (optional)</em>}
-                          </span>
+                          {letter.review && (
+                            <div className="mt-4 space-y-4">
+                              <ReviewBlock
+                                assessmentLabel="Assessment"
+                                assessment={letter.review.overallAssessment}
+                                strengths={letter.review.strengths}
+                                issues={letter.review.issues}
+                                issuesLabel="To improve"
+                                notes={letter.review.complianceNotes ? [{ label: "Compliance", text: letter.review.complianceNotes }] : []}
+                              />
+                              {!letter.suggestedRewrite && (
+                                <div>
+                                  <button type="button" disabled={rewritingLetterId === letter._id} aria-busy={rewritingLetterId === letter._id} onClick={() => handleRewriteLetter(letter._id)} className="btn-secondary">
+                                    {rewritingLetterId === letter._id ? "Generating referee briefing" : "Generate referee briefing"}
+                                  </button>
+                                  {rewritingLetterId === letter._id && <div className="mt-3"><ProgressBar label="Generating referee briefing" /></div>}
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {letter.suggestedRewrite && (
+                            <div className="mt-4 space-y-3 border-t border-rule pt-4">
+                              <div className="flex items-center justify-between gap-2">
+                                <h4 className="text-sm font-semibold text-ok">Referee briefing</h4>
+                                <button type="button" onClick={() => navigator.clipboard.writeText(letter.suggestedRewrite!.content)} className="btn-secondary btn-sm">
+                                  <Copy size={14} aria-hidden="true" />
+                                  Copy
+                                </button>
+                              </div>
+                              <p className="text-sm italic leading-relaxed text-slate">{letter.suggestedRewrite.styleNotes}</p>
+                              <Alert variant="info">
+                                This is a briefing for your referee: guidance on what to write, not text to copy. Share it with them and ask them to write the letter in their own words.
+                              </Alert>
+                              <div className="rounded-lg bg-surface p-4">
+                                <p className="whitespace-pre-line text-sm leading-relaxed text-ink">{letter.suggestedRewrite.content}</p>
+                              </div>
+                              <button type="button" disabled={rewritingLetterId === letter._id} aria-busy={rewritingLetterId === letter._id} onClick={() => handleRewriteLetter(letter._id)} className="btn-ghost btn-sm">
+                                {rewritingLetterId === letter._id ? "Regenerating" : "Regenerate briefing"}
+                              </button>
+                            </div>
+                          )}
                         </li>
                       ))}
-                    </ol>
-                  </div>
-                )}
-              </div>
-
-              {needsUpgradeRefLetters ? (
-                <UpgradePrompt feature="reference_letters" />
-              ) : (
-                <form onSubmit={handleUploadLetter} className="mt-5 space-y-3">
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-mono text-slate mb-1.5 uppercase tracking-widest">Letter type</label>
-                      <select
-                        value={letterType}
-                        onChange={(e) => setLetterType(e.target.value as ReferenceLetter["letterType"])}
-                        className="w-full border border-rule px-3 py-2.5 bg-transparent focus:border-forest outline-none text-sm"
-                      >
-                        <option value="work">Work experience reference</option>
-                        <option value="academic">Academic reference</option>
-                        <option value="other">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-mono text-slate mb-1.5 uppercase tracking-widest">Referee's organisation (optional)</label>
-                      <input
-                        value={refereeOrg}
-                        onChange={(e) => setRefereeOrg(e.target.value)}
-                        placeholder="e.g. Ministry of Finance"
-                        className="w-full border border-rule px-3 py-2 bg-transparent focus:border-forest outline-none text-sm"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-mono text-slate mb-1.5 uppercase tracking-widest">Reference letter PDF</label>
-                    <input
-                      type="file"
-                      accept="application/pdf"
-                      onChange={(e) => setLetterFile(e.target.files?.[0] ?? null)}
-                      className="block w-full text-sm text-slate file:mr-4 file:py-2 file:px-4 file:border file:border-forest file:text-forest file:bg-transparent file:text-xs file:font-mono hover:file:bg-forest hover:file:text-paper file:transition-colors cursor-pointer"
-                    />
-                    <p className="text-xs text-slate mt-1">PDF only · max 8 MB</p>
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={uploadingLetter || !letterFile}
-                    className="bg-forest text-paper px-5 py-2.5 text-sm hover:bg-forest-light transition-colors disabled:opacity-60"
-                  >
-                    {uploadingLetter ? "Uploading & reviewing…" : "Upload & review"}
-                  </button>
-                </form>
+                    </ul>
+                  )}
+                </section>
               )}
+            </>
+          )}
 
-              {(application?.referenceLetters ?? []).length > 0 && (
-                <div className="mt-8 space-y-6">
-                  {[...(application!.referenceLetters)].reverse().map((letter) => (
-                    <div key={letter._id} className="case-card p-5">
-                      <div className="flex flex-wrap items-start justify-between gap-2">
-                        <div>
-                          <p className="font-mono text-xs text-slate uppercase tracking-widest">
-                            {letter.letterType === "work" ? "Work reference" : letter.letterType === "academic" ? "Academic reference" : "Reference letter"}
-                          </p>
-                          <p className="font-display text-base text-ink mt-0.5 break-all">{letter.originalFileName}</p>
-                          {letter.refereeOrganization && (
-                            <p className="text-xs text-slate mt-0.5">{letter.refereeOrganization}</p>
-                          )}
-                        </div>
-                        <p className="text-xs font-mono text-slate shrink-0">{new Date(letter.uploadedAt).toLocaleDateString()}</p>
-                      </div>
-
-                      {letter.review && (
-                        <div className="mt-4 space-y-4">
-                          <div>
-                            <p className="text-xs font-mono uppercase text-brass">Assessment</p>
-                            <p className="text-ink-soft text-sm mt-1">{letter.review.overallAssessment}</p>
-                          </div>
-                          {letter.review.strengths.length > 0 && (
-                            <div>
-                              <p className="text-xs font-mono uppercase text-forest">Working well</p>
-                              <ul className="list-disc list-inside text-sm text-ink-soft mt-1 space-y-1">
-                                {letter.review.strengths.map((s, i) => <li key={i}>{s}</li>)}
-                              </ul>
-                            </div>
-                          )}
-                          {letter.review.issues.length > 0 && (
-                            <div>
-                              <p className="text-xs font-mono uppercase text-alert">To improve</p>
-                              <div className="mt-1 space-y-2">
-                                {letter.review.issues.map((issue, i) => (
-                                  <div key={i} className="border-l-2 border-alert pl-3">
-                                    <p className="text-xs text-slate">{issue.location}</p>
-                                    <p className="text-sm text-ink-soft">{issue.problem}</p>
-                                    <p className="text-sm text-forest mt-0.5">→ {issue.suggestion}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                          {letter.review.complianceNotes && (
-                            <div>
-                              <p className="text-xs font-mono uppercase text-slate">Compliance</p>
-                              <p className="text-ink-soft text-sm mt-1">{letter.review.complianceNotes}</p>
-                            </div>
-                          )}
-
-                          {!letter.suggestedRewrite && (
-                            <button
-                              type="button"
-                              disabled={rewritingLetterId === letter._id}
-                              onClick={() => handleRewriteLetter(letter._id)}
-                              className="text-sm text-forest border border-forest px-4 py-2 hover:bg-forest hover:text-paper transition-colors disabled:opacity-60"
-                            >
-                              {rewritingLetterId === letter._id ? "Generating referee briefing…" : "Generate referee briefing"}
-                            </button>
-                          )}
-                        </div>
-                      )}
-
-                      {letter.suggestedRewrite && (
-                        <div className="mt-4 border-t border-rule pt-4 space-y-3">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-mono uppercase text-forest">Referee briefing</p>
-                            <button
-                              type="button"
-                              onClick={() => navigator.clipboard.writeText(letter.suggestedRewrite!.content)}
-                              className="text-xs font-mono text-slate border border-rule px-2 py-1 hover:border-forest hover:text-forest transition-colors"
-                            >
-                              Copy
-                            </button>
-                          </div>
-                          <p className="text-xs text-slate italic leading-relaxed">{letter.suggestedRewrite.styleNotes}</p>
-                          <p className="text-xs text-slate bg-indigo border border-rule px-3 py-2">
-                            This is a briefing for your referee — guidance on what to write, not text to copy. Share it with them and ask them to write the letter in their own words.
-                          </p>
-                          <div className="border border-rule p-4 bg-paper">
-                            <p className="text-sm text-ink leading-relaxed whitespace-pre-line">{letter.suggestedRewrite.content}</p>
-                          </div>
-                          <button
-                            type="button"
-                            disabled={rewritingLetterId === letter._id}
-                            onClick={() => handleRewriteLetter(letter._id)}
-                            className="text-xs text-slate underline disabled:opacity-60"
-                          >
-                            {rewritingLetterId === letter._id ? "Regenerating…" : "Regenerate briefing"}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </section>
+          {error && !needsCv && !needsUpgradeCoaching && !needsUpgradeEssays && !needsUpgradeRefLetters && (
+            <Alert variant="danger">{error}</Alert>
           )}
         </div>
-      )}
-
-      {error && !needsCv && !needsUpgradeCoaching && !needsUpgradeEssays && !needsUpgradeRefLetters && (
-        <p className="text-alert text-sm mt-6">{error}</p>
-      )}
+      </div>
     </div>
   );
 }

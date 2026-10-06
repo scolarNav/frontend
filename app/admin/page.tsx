@@ -285,7 +285,7 @@ function CoachCard({
             </div>
           </div>
           {coach.linkedIn && (
-            <p className="text-xs font-mono text-slate">LinkedIn: <a href={coach.linkedIn} target="_blank" rel="noreferrer" className="underline">{coach.linkedIn}</a></p>
+            <p className="text-sm text-slate">LinkedIn: <a href={coach.linkedIn} target="_blank" rel="noreferrer" className="underline">{coach.linkedIn}</a></p>
           )}
 
           {/* Platform fee editor */}
@@ -994,7 +994,7 @@ export default function AdminPage() {
 
         {/* ── Content ── */}
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="page">
 
       {/* ── Overview ── */}
       {tab === "stats" && stats && (
@@ -1097,7 +1097,7 @@ export default function AdminPage() {
                             style={{ height: `${Math.max(4, (w.count / maxSignups) * 96)}px`, background: "#6d8ec5" }}
                             title={`${w._id}: ${w.count} sign-ups`}
                           />
-                          <span className="text-xs font-mono text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
+                          <span className="text-sm text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
                         </div>
                       ))}
                     </div>
@@ -1119,7 +1119,7 @@ export default function AdminPage() {
                             style={{ height: `${Math.max(4, (w.totalUSD / maxRevenue) * 96)}px`, background: "#b8501f" }}
                             title={`${w._id}: $${w.totalUSD.toFixed(2)}`}
                           />
-                          <span className="text-xs font-mono text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
+                          <span className="text-sm text-slate truncate w-full text-center" style={{ fontSize: "9px" }}>{w._id.slice(-2)}</span>
                         </div>
                       ))}
                     </div>
@@ -1133,7 +1133,7 @@ export default function AdminPage() {
                     <div className="space-y-2">
                       {analytics.bookingsByWeek.map((w) => (
                         <div key={w._id} className="flex items-center gap-3">
-                          <span className="text-xs font-mono text-slate w-20 shrink-0">{w._id}</span>
+                          <span className="text-sm text-slate w-20 shrink-0">{w._id}</span>
                           <div className="flex-1 bg-surface rounded-full h-2 overflow-hidden">
                             <div
                               className="h-full rounded-full"
@@ -1141,7 +1141,7 @@ export default function AdminPage() {
                             />
                           </div>
                           <span className="text-xs font-mono text-ink-soft w-8 text-right">{w.count}</span>
-                          <span className="text-xs font-mono text-slate">{w.completed} done</span>
+                          <span className="text-sm text-slate">{w.completed} done</span>
                         </div>
                       ))}
                     </div>
@@ -1162,12 +1162,12 @@ export default function AdminPage() {
             <>
               {/* Status breakdown */}
               <div>
-                <h2 className="font-display text-xl text-ink mb-4">Scholarship Status Breakdown</h2>
+                <h2 className="h3 mb-4">Scholarship Status Breakdown</h2>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
                     { label: "Open now", value: dbHealth.open, color: "#15803d", hint: "Deadline in future, applications open" },
                     { label: "Opening soon", value: dbHealth.openingSoon, color: "#2563eb", hint: "Application window not yet open" },
-                    { label: "Dates TBA", value: dbHealth.tba, color: "#b45309", hint: "No deadline stored — need date update" },
+                    { label: "Dates TBA", value: dbHealth.tba, color: "#b45309", hint: "No deadline stored, need date update" },
                     { label: "Closed (active)", value: dbHealth.closed, color: "#dc2626", hint: "Past deadline, still isActive=true" },
                     { label: "Inactive", value: dbHealth.inactive, color: "#94a3b8", hint: "isActive=false (90+ days past deadline)" },
                     { label: "Total active", value: dbHealth.active, color: "#1e293b", hint: "open + opening + TBA + closed" },
@@ -1182,7 +1182,7 @@ export default function AdminPage() {
                 {dbHealth.duplicateTitleGroups > 0 && (
                   <div className="mt-3 border border-brass/40 bg-brass/5 px-4 py-3">
                     <p className="text-sm text-brass font-mono">
-                      ⚠ {dbHealth.duplicateTitleGroups} duplicate title groups detected — use "Deduplicate" below to clean up.
+                      ⚠ {dbHealth.duplicateTitleGroups} duplicate title groups detected, use "Deduplicate" below to clean up.
                     </p>
                   </div>
                 )}
@@ -1223,9 +1223,9 @@ export default function AdminPage() {
 
           {/* Quick actions */}
           <div>
-            <h2 className="font-display text-xl text-ink mb-2">Quick Actions</h2>
+            <h2 className="h3 mb-2">Quick Actions</h2>
             <p className="text-sm text-slate mb-4">
-              Run these to clean up the database. <strong>Fix stale dates</strong> is the most important — it moves
+              Run these to clean up the database. <strong>Fix stale dates</strong> is the most important, it moves
               all past-dated scholarships from "closed" to "TBA" so they appear in searches again.
             </p>
             <div className="grid sm:grid-cols-2 gap-3">
@@ -1261,7 +1261,7 @@ export default function AdminPage() {
                 <p className="font-medium text-sm text-ink">Deduplicate by title</p>
                 <p className="text-xs text-slate mt-1 mb-3">
                   Finds title groups with more than one record and deactivates all but the newest.
-                  Safe to run — deactivated records are not deleted.
+                  Safe to run, deactivated records are not deleted.
                 </p>
                 <button
                   onClick={handleDeduplicate}
@@ -1326,7 +1326,7 @@ export default function AdminPage() {
               </form>
               <div className="flex items-center gap-3 shrink-0">
                 <p className="text-sm text-slate font-mono">{oppTotal} total</p>
-                <button onClick={openNewOpp} className="bg-forest text-paper px-4 py-2 text-sm hover:bg-forest-light transition-colors">+ New</button>
+                <button onClick={openNewOpp} className="btn-primary btn-sm">+ New</button>
               </div>
             </div>
 
@@ -1366,7 +1366,7 @@ export default function AdminPage() {
 
           {showOppForm && (
             <form onSubmit={handleSaveOpp} className="case-card p-6 mb-6 space-y-4">
-              <h2 className="font-display text-xl text-ink">{editingOpp ? "Edit opportunity" : "New opportunity"}</h2>
+              <h2 className="h3">{editingOpp ? "Edit opportunity" : "New opportunity"}</h2>
               <div className="grid sm:grid-cols-2 gap-4 p-4 bg-surface border border-rule">
                 <div>
                   <label className="text-xs font-mono uppercase text-slate block mb-1">Applications Open</label>
@@ -1449,7 +1449,7 @@ export default function AdminPage() {
               </div>
 
               <div className="flex gap-3">
-                <button type="submit" disabled={saving} className="bg-forest text-paper px-5 py-2.5 text-sm hover:bg-forest-light transition-colors disabled:opacity-60">{saving ? "Saving…" : "Save"}</button>
+                <button type="submit" disabled={saving} className="btn-primary btn-sm">{saving ? "Saving…" : "Save"}</button>
                 <button type="button" onClick={() => setShowOppForm(false)} className="border border-rule text-ink-soft px-5 py-2.5 text-sm">Cancel</button>
               </div>
             </form>
@@ -1589,7 +1589,7 @@ export default function AdminPage() {
                                 <div className="flex items-center gap-3">
                                   <span className="font-mono text-slate">{new Date(p.paidAt).toLocaleDateString()}</span>
                                   <span className="text-ink">{p.description}</span>
-                                  <span className="font-mono text-xs text-slate">{p.gateway}</span>
+                                  <span className="text-sm text-slate">{p.gateway}</span>
                                 </div>
                                 <span className="font-mono text-ink font-medium">
                                   {p.gateway === "stripe" && p.currency === "usd"
@@ -1724,7 +1724,7 @@ export default function AdminPage() {
             </p>
             <button
               onClick={() => loadReferrals(referralsPage)}
-              className="text-xs font-mono text-slate hover:text-ink underline"
+              className="text-sm text-slate hover:text-ink underline"
             >
               ↻ Refresh
             </button>
@@ -1819,8 +1819,8 @@ export default function AdminPage() {
                   <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-medium text-ink text-sm">{c.displayName}</p>
                     {c.country && <span className="text-xs text-slate font-mono">{c.country}</span>}
-                    <span className="text-xs font-mono text-slate">{new Date(c.createdAt).toLocaleDateString()}</span>
-                    {c.isFeatured && <span className="text-xs font-mono text-slate border border-rule px-1.5 py-0.5">Featured</span>}
+                    <span className="text-sm text-slate">{new Date(c.createdAt).toLocaleDateString()}</span>
+                    {c.isFeatured && <span className="text-sm text-slate border border-rule px-1.5 py-0.5">Featured</span>}
                     {!c.isApproved && <span className="text-xs font-mono bg-slate-100 text-slate px-1.5 py-0.5 rounded">Hidden</span>}
                   </div>
                   <p className="text-xs text-forest font-mono mt-0.5">{c.opportunityTitle}{c.opportunityProvider && ` · ${c.opportunityProvider}`}</p>
@@ -1855,7 +1855,7 @@ export default function AdminPage() {
                 {s}
               </button>
             ))}
-            <span className="ml-auto text-xs font-mono text-slate self-center">{submissionsTotal} total</span>
+            <span className="ml-auto text-sm text-slate self-center">{submissionsTotal} total</span>
           </div>
 
           {submissionsLoading && (
@@ -1898,7 +1898,7 @@ export default function AdminPage() {
                 {s}
               </button>
             ))}
-            <span className="ml-auto text-xs font-mono text-slate self-center">{reportsTotal} total</span>
+            <span className="ml-auto text-sm text-slate self-center">{reportsTotal} total</span>
           </div>
 
           {reportsLoading && (
