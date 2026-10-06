@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { CoachingBooking, HumanCoach } from "@/lib/types";
 
 type PopulatedBooking = Omit<CoachingBooking, "coachId" | "opportunityId"> & {
-  coachId: HumanCoach;
+  coachId: HumanCoach | null;
   opportunityId?: { _id: string; title: string; country: string };
 };
 
@@ -86,6 +86,7 @@ export default function BookingsPage() {
       <div className="space-y-5">
         {bookings.map((booking) => {
           const coach = booking.coachId;
+          const coachName = coach?.name ?? "Coach no longer available";
           const opp = booking.opportunityId;
           const ratingEntry = rating[booking._id] ?? { score: 0, comment: "" };
           const alreadyRated = rated.has(booking._id) || !!booking.rating;
@@ -93,24 +94,26 @@ export default function BookingsPage() {
           return (
             <div key={booking._id} className="case-card p-6">
               <div className="flex items-start gap-4">
-                {coach.photoUrl ? (
-                  <img src={coach.photoUrl} alt={coach.name} className="w-11 h-11 rounded-full object-cover shrink-0" />
+                {coach?.photoUrl ? (
+                  <img src={coach.photoUrl} alt={coachName} className="w-11 h-11 rounded-full object-cover shrink-0" />
                 ) : (
                   <div className="w-11 h-11 rounded-full bg-rule flex items-center justify-center shrink-0 font-display text-base text-slate">
-                    {coach.name[0]}
+                    {coachName[0]}
                   </div>
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className="font-medium text-ink">{coach.name}</p>
+                    <p className="font-medium text-ink">{coachName}</p>
                     <span className={`text-xs font-mono px-2 py-0.5 rounded ${STATUS_STYLE[booking.status] ?? ""}`}>
                       {booking.status.toUpperCase()}
                     </span>
                   </div>
-                  <p className="text-xs text-slate font-mono mt-0.5">
-                    {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
-                    {coach.credentialYear ? ` · ${coach.credentialYear}` : ""}
-                  </p>
+                  {coach && (
+                    <p className="text-xs text-slate font-mono mt-0.5">
+                      {coach.credential === "alumni" ? "Scholarship alumnus" : "Panel member"}
+                      {coach.credentialYear ? ` · ${coach.credentialYear}` : ""}
+                    </p>
+                  )}
                   {opp && (
                     <p className="text-xs text-slate font-mono mt-0.5">
                       Scholarship:{" "}
