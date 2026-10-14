@@ -13,6 +13,7 @@ import { levelByValue } from "@/lib/taxonomy";
 import { Modal } from "@/components/ui/Modal";
 import { ProgressBar } from "@/components/ui/Spinner";
 import { Alert } from "@/components/ui/States";
+import UpgradePrompt from "@/components/UpgradePrompt";
 
 function detectScamFlags(opp: Opportunity): string[] {
   const flags: string[] = [];
@@ -88,11 +89,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
     setGenerating(true);
     setError(null);
     try {
-      const data = await api.post<{ opportunity: Opportunity }>(
-        `/opportunities/${opportunity._id}/breakdown`,
-        undefined,
-        { auth: false }
-      );
+      const data = await api.post<{ opportunity: Opportunity }>(`/opportunities/${opportunity._id}/breakdown`);
       setOpportunity(data.opportunity);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't generate the breakdown right now.");
@@ -369,12 +366,16 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                 <p className="text-slate text-sm mb-3">
                   Get an AI-authored summary of what a strong applicant for this opportunity looks like.
                 </p>
-                <button
-                  onClick={handleGenerateBreakdown}
-                  className="btn-secondary"
-                >
-                  Generate breakdown
-                </button>
+                {error?.startsWith("UPGRADE_REQUIRED:breakdown") ? (
+                  <UpgradePrompt feature="breakdown" />
+                ) : (
+                  <button
+                    onClick={handleGenerateBreakdown}
+                    className="btn-secondary"
+                  >
+                    Generate breakdown
+                  </button>
+                )}
               </div>
             )}
           </section>
@@ -520,7 +521,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
       </div>
 
       {reportDone && <Alert variant="ok" className="mt-4">Thanks for reporting. We will review this shortly.</Alert>}
-      {error && <Alert variant="danger" className="mt-6">{error}</Alert>}
+      {error && !error.startsWith("UPGRADE_REQUIRED:breakdown") && <Alert variant="danger" className="mt-6">{error}</Alert>}
 
       {/* Booking dialog */}
       <Modal open={!!bookingCoach} onClose={() => setBookingCoach(null)} title="Book a session">

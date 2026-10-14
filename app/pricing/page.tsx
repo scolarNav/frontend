@@ -18,8 +18,8 @@ const FREE_FEATURES = [
   "Save opportunities and track status",
   "CV upload and parsing",
   "Dashboard and deadline tracker",
-  "Readiness Score: one calculation",
-  "Mentor: 5 questions to try it",
+  "Eligibility check on every scholarship",
+  "7-day Pro trial, no card needed",
 ];
 
 const PRO_FEATURES = [
@@ -347,11 +347,11 @@ export default function PricingPage() {
             },
             {
               q: "What's the difference between Free and Pro, practically?",
-              a: "Free lets you explore the catalogue, save opportunities, upload your CV, and get a taste of the mentor. Pro is where the preparation happens: your personalised plan, interview practice, coaching per opportunity, and unlimited mentor access.",
+              a: "Free lets you explore the whole catalogue, save opportunities, upload your CV and see an instant eligibility check against each scholarship's requirements. Pro is where the preparation happens: coaching per opportunity, essay and letter review, your roadmap, interview practice, matching and the mentor.",
             },
             {
               q: "What if I can't afford Pro?",
-              a: "Start with Free. It's genuinely useful on its own. Upgrade when you're ready to apply seriously, or when you've identified specific opportunities you want to prepare properly for.",
+              a: "Start with Free to browse everything and see where you stand on each scholarship's requirements. The 7-day Pro trial needs no card, so you can try the coaching before you decide. Upgrade when you are ready to apply seriously.",
             },
           ].map(({ q, a }) => (
             <details key={q} className="card group">

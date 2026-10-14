@@ -461,3 +461,26 @@ export interface CoachingBooking {
   ratingComment?: string;
   createdAt: string;
 }
+
+export interface FitRequirement {
+  label: string;
+  category: string;
+  isHard: boolean;
+  status: "met" | "not_met" | "unknown";
+  evidence: string;
+  action?: string;
+}
+
+export interface FitReport {
+  eligibility: "eligible" | "likely" | "at_risk" | "unknown";
+  score: number;
+  confidence: "high" | "medium" | "low";
+  summary: string;
+  counts: { met: number; notMet: number; unknown: number };
+  requirements: FitRequirement[];
+  gaps: { requirement: string; hard: boolean; whatToDo: string }[];
+  preferences: { label: string; status: "match" | "mismatch" | "unknown"; detail: string }[];
+  timeline: { milestone: string; targetDate: string | null; deliverable: string }[];
+  deadline: string | null;
+  generatedAt: string;
+}

@@ -7,10 +7,11 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import Wordmark from "@/components/Wordmark";
 import { PageLoader } from "@/components/ui/PageLoader";
+import AiUsagePanel from "@/components/admin/AiUsagePanel";
 import {
   BarChart3, TrendingUp, Database, BookOpen, Users, Trophy,
   UserCheck, Share2, Inbox, Flag, Menu, X, LogOut,
-  ChevronRight, ChevronDown,
+  ChevronRight, ChevronDown, Coins,
 } from "lucide-react";
 
 interface PaymentRecord {
@@ -178,7 +179,7 @@ interface AdminBooking {
   createdAt: string;
 }
 
-type Tab = "stats" | "analytics" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals" | "submissions" | "reports";
+type Tab = "stats" | "analytics" | "aiusage" | "database" | "opportunities" | "users" | "celebrations" | "coaches" | "referrals" | "submissions" | "reports";
 
 function trialDaysLeft(periodEnd?: string): number | null {
   if (!periodEnd) return null;
@@ -837,6 +838,7 @@ export default function AdminPage() {
   const TABS: { key: Tab; label: string; badge?: number; icon: React.ReactNode }[] = [
     { key: "stats",         label: "Overview",       icon: <BarChart3 size={16} /> },
     { key: "analytics",     label: "Analytics",      icon: <TrendingUp size={16} /> },
+    { key: "aiusage",       label: "AI usage",       icon: <Coins size={16} /> },
     { key: "database",      label: "Database",       icon: <Database size={16} /> },
     { key: "opportunities", label: "Opportunities",  icon: <BookOpen size={16} /> },
     { key: "users",         label: "Users",          icon: <Users size={16} />, badge: users.length },
@@ -1108,6 +1110,9 @@ export default function AdminPage() {
           })()}
         </div>
       )}
+
+      {/* ── AI usage ── */}
+      {tab === "aiusage" && <AiUsagePanel />}
 
       {/* ── Database Health ── */}
       {tab === "database" && (

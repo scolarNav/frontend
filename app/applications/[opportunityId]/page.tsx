@@ -6,6 +6,8 @@ import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Application, EssayDraft, Opportunity, ReferenceLetter } from "@/lib/types";
 import UpgradePrompt from "@/components/UpgradePrompt";
+import FitReportCard from "@/components/FitReportCard";
+import { hasAiAccess } from "@/lib/plan";
 import { Alert, ErrorState } from "@/components/ui/States";
 import Link from "next/link";
 import { ArrowRight, Copy, ExternalLink, Plus, X } from "lucide-react";
@@ -348,6 +350,8 @@ export default function ApplicationCoachingPage() {
   const needsUpgradeRefLetters = error?.startsWith("UPGRADE_REQUIRED:reference_letters");
   const needsUpgradeDocs = error?.startsWith("UPGRADE_REQUIRED:application_documents");
   const coaching = application?.coaching;
+  // Without Pro (or the trial) the AI coaching is locked, but existing coaching stays readable.
+  const aiLocked = !!user && !hasAiAccess(user) && !coaching;
   const processType = opportunity?.applicationProcess?.type ?? "essay_based";
   const requiredDocs = opportunity?.applicationProcess?.requiredDocuments ?? [];
   // Always show the essay section unless the process is explicitly document-only
@@ -373,7 +377,7 @@ export default function ApplicationCoachingPage() {
 
   // Sections shown in the side navigation
   const sections = [
-    ...(!needsCv && !needsUpgradeCoaching ? [{ id: "targets", label: "Target programs" }] : []),
+    ...(!needsCv && !needsUpgradeCoaching && !aiLocked ? [{ id: "targets", label: "Target programs" }] : []),
     ...(coaching && !generating ? [{ id: "strategy", label: "Your strategy" }] : []),
     ...(coaching && !generating && showEssaySection ? [{ id: "essays", label: "Essay review" }] : []),
     ...(coaching && !generating && showDocumentSection && requiredDocs.length > 0 ? [{ id: "documents", label: "Required documents" }] : []),
@@ -427,8 +431,11 @@ export default function ApplicationCoachingPage() {
             </Alert>
           )}
 
+          {/* Free eligibility check: plain code, no AI */}
+          {!coaching && !generating && <FitReportCard opportunityId={opportunityId} />}
+
           {/* Target programs */}
-          {!needsCv && !needsUpgradeCoaching && (
+          {!needsCv && !needsUpgradeCoaching && !aiLocked && (
             <section id="targets" className="card card-pad scroll-mt-8" aria-labelledby="targets-heading">
               <div className="flex items-start justify-between gap-4">
                 <div>
@@ -484,7 +491,7 @@ export default function ApplicationCoachingPage() {
           )}
 
           {/* Build strategy */}
-          {!coaching && !needsCv && !needsUpgradeCoaching && !generating && (
+          {!coaching && !needsCv && !needsUpgradeCoaching && !generating && !aiLocked && (
             <section className="card card-pad" aria-labelledby="build-heading">
               <h2 id="build-heading" className="h3">Build your strategy</h2>
               <p className="mt-2 max-w-prose leading-relaxed text-ink-soft">
@@ -499,7 +506,7 @@ export default function ApplicationCoachingPage() {
             </section>
           )}
 
-          {needsUpgradeCoaching && <UpgradePrompt feature="coaching" />}
+          {(needsUpgradeCoaching || (aiLocked && !needsCv)) && <UpgradePrompt feature="coaching" />}
 
           {/* Live generation */}
           {generating && (

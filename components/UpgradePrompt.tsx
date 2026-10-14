@@ -4,13 +4,13 @@ import Link from "next/link";
 import { Lock } from "lucide-react";
 
 interface Props {
-  feature: "coaching" | "essays" | "recommendations" | "roadmap" | "interview" | "mentor" | "reference_letters" | "application_documents";
+  feature: "coaching" | "essays" | "recommendations" | "roadmap" | "interview" | "mentor" | "reference_letters" | "application_documents" | "breakdown";
 }
 
 const COPY: Record<Props["feature"], { heading: string; body: string }> = {
   coaching: {
-    heading: "You've used your free coaching generation",
-    body: "Upgrade to Pro to generate coaching for unlimited opportunities, each one tailored to your exact CV and the scholarship's real requirements.",
+    heading: "Coaching is a Pro feature",
+    body: "Upgrade to Pro for coaching on every opportunity, each one tailored to your exact CV and the scholarship's real requirements. The 7-day free trial needs no card.",
   },
   essays: {
     heading: "Essay review is a Pro feature",
@@ -29,12 +29,16 @@ const COPY: Record<Props["feature"], { heading: string; body: string }> = {
     body: "Upgrade to Pro to practice with tailored questions for any scholarship in your list and get detailed feedback on every answer, including what a stronger response looks like.",
   },
   mentor: {
-    heading: "You've reached your free message limit",
-    body: "Upgrade to Pro for unlimited conversations with your mentor, ask follow-up questions, go deep on any scholarship, and come back any time.",
+    heading: "Mentor chat is a Pro feature",
+    body: "Upgrade to Pro to ask your mentor about any scholarship, application or study destination, with answers based on your actual profile. The 7-day free trial needs no card.",
   },
   reference_letters: {
     heading: "Reference letter review is a Pro feature",
     body: "Upgrade to Pro to upload your referee's letters for AI review and get a suggested improved draft you can share with your referee, written to answer every form question.",
+  },
+  breakdown: {
+    heading: "Breakdowns are a Pro feature",
+    body: "Upgrade to Pro to generate this summary of what a strong applicant looks like. Once a breakdown exists, everyone can read it.",
   },
   application_documents: {
     heading: "Document review is a Pro feature",

@@ -10,7 +10,6 @@ import { GraduationCap, Send } from "lucide-react";
 import { SkeletonPage } from "@/components/ui/Skeleton";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
-const FREE_MSG_LIMIT = 5;
 const HISTORY_WINDOW = 10; // messages sent to backend for context
 
 const STARTER_QUESTIONS = [
@@ -34,7 +33,6 @@ export default function MentorPage() {
   const [input, setInput] = useState("");
   const [streaming, setStreaming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [freeCount, setFreeCount] = useState(0);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -49,7 +47,8 @@ export default function MentorPage() {
   const isPro = user?.subscription?.plan === "pro" &&
     (user?.subscription?.status === "active" || user?.subscription?.status === "trialing");
 
-  const hitLimit = !isPro && freeCount >= FREE_MSG_LIMIT;
+  // Mentor chat is Pro only (trial included). Others see the upgrade prompt instead of the composer.
+  const hitLimit = !isPro;
 
   async function sendMessage(text: string) {
     if (!text.trim() || streaming || hitLimit) return;
@@ -80,16 +79,14 @@ export default function MentorPage() {
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const errMsg: string = data?.error || "Request failed.";
-        if (errMsg.includes("UPGRADE_REQUIRED:mentor_limit")) {
-          setFreeCount(FREE_MSG_LIMIT); // force the upgrade prompt
-          setMessages((prev) => prev.slice(0, -1));
+        if (errMsg.includes("UPGRADE_REQUIRED:mentor")) {
+          setMessages((prev) => prev.slice(0, -2));
           setStreaming(false);
+          setError("Mentor chat is a Pro feature. Upgrade or start your free trial to use it.");
           return;
         }
         throw new Error(errMsg);
       }
-
-      if (!isPro) setFreeCount((n) => n + 1);
 
       const reader = res.body?.getReader();
       const decoder = new TextDecoder();
@@ -157,21 +154,11 @@ export default function MentorPage() {
             )}
           </p>
         </div>
-        {!isPro && (
-          <div className="shrink-0 text-right">
-            <p className="badge badge-brand">
-              {Math.max(0, FREE_MSG_LIMIT - freeCount)} of {FREE_MSG_LIMIT} free today
-            </p>
-            <Link href="/pricing" className="mt-1 block text-sm font-semibold text-forest hover:underline">
-              Go Pro
-            </Link>
-          </div>
-        )}
       </header>
 
       {/* Conversation */}
       <div className="flex-1 space-y-5 pb-6" aria-live="polite" aria-label="Conversation">
-        {messages.length === 0 && (
+        {messages.length === 0 && !hitLimit && (
           <section aria-labelledby="starters-heading">
             <h2 id="starters-heading" className="mb-3 text-sm font-semibold text-ink">Try asking</h2>
             <ul className="grid gap-2 sm:grid-cols-2">
