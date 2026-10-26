@@ -56,8 +56,8 @@ export default function CoachApplyPage() {
   useEffect(() => {
     if (!user) return;
     // Load all active scholarships alphabetically so coaches can select upcoming/closed ones too
-    fetch(`${API_BASE}/opportunities?sort=alpha&limit=500`)
-      .then((r) => r.json())
+    // Signed in: the full list is only available to accounts, not anonymous visitors.
+    api.get<{ opportunities?: any[] }>("/opportunities?sort=alpha&limit=500")
       .then((d) => setOpportunities(d.opportunities ?? []))
       .catch(() => {});
   }, [user]);

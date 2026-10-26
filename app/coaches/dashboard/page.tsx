@@ -557,8 +557,7 @@ function CoachProfileSection({
   useEffect(() => {
     if (!editing || allOpps.length > 0) return;
     setOppsLoading(true);
-    fetch(`${API_BASE}/opportunities?sort=alpha&limit=500`)
-      .then((r) => r.json())
+    api.get<{ opportunities?: Opportunity[] }>("/opportunities?sort=alpha&limit=500")
       .then((d) => setAllOpps(d.opportunities ?? []))
       .catch(() => {})
       .finally(() => setOppsLoading(false));

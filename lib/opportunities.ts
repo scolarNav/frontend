@@ -17,7 +17,12 @@ const REVALIDATE = 3600;
  * cached as a "not found" page and dropping out of the index.
  */
 async function getJson<T>(path: string, tags: string[]): Promise<T | null> {
-  const res = await fetch(`${API_URL}${path}`, { next: { revalidate: REVALIDATE, tags } });
+  // Server-only key (no NEXT_PUBLIC_ prefix) that tells the API this is our own website, not a scraper.
+  const internalKey = process.env.INTERNAL_API_KEY;
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: internalKey ? { "x-internal-key": internalKey } : undefined,
+    next: { revalidate: REVALIDATE, tags },
+  });
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`API ${path} responded ${res.status}`);
   return (await res.json()) as T;

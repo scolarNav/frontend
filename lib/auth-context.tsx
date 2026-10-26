@@ -7,8 +7,8 @@ import { User } from "./types";
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<User>;
-  register: (fullName: string, email: string, password: string, country?: string, referralCode?: string) => Promise<User>;
+  login: (email: string, password: string, turnstileToken?: string | null) => Promise<User>;
+  register: (fullName: string, email: string, password: string, country?: string, referralCode?: string, turnstileToken?: string | null) => Promise<User>;
   googleLogin: (credential: string, referralCode?: string) => Promise<{ isNew?: boolean; user: User }>;
   logout: () => void;
   refreshUser: () => Promise<void>;
@@ -39,16 +39,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function login(email: string, password: string): Promise<User> {
-    const data = await api.post<{ token: string; user: User }>("/auth/login", { email, password: password }, { auth: false });
+  async function login(email: string, password: string, turnstileToken?: string | null): Promise<User> {
+    const data = await api.post<{ token: string; user: User }>("/auth/login", { email, password: password, ...(turnstileToken && { turnstileToken }) }, { auth: false });
     setToken(data.token);
     setUser(data.user);
     return data.user;
   }
 
-  async function register(fullName: string, email: string, password: string, country?: string, referralCode?: string): Promise<User> {
+  async function register(fullName: string, email: string, password: string, country?: string, referralCode?: string, turnstileToken?: string | null): Promise<User> {
     const body: Record<string, string | string[]> = { fullName, email, password, ...(country && { country }) };
     if (referralCode) body.referralCode = referralCode;
+    if (turnstileToken) body.turnstileToken = turnstileToken;
     const data = await api.post<{ token: string; user: User }>("/auth/register", body, { auth: false });
     setToken(data.token);
     setUser(data.user);

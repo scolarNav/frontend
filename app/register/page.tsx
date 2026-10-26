@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Gift } from "lucide-react";
 import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
+import TurnstileWidget, { turnstileEnabled } from "@/components/TurnstileWidget";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError, api } from "@/lib/api";
 import { COUNTRIES } from "@/lib/countries";
@@ -25,6 +26,8 @@ function RegisterContent() {
   const [showRefInput, setShowRefInput] = useState(!!refCode);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
   const [referrerName, setReferrerName] = useState<string | null>(null);
 
   useEffect(() => {
@@ -44,10 +47,11 @@ function RegisterContent() {
     setError(null);
     setSubmitting(true);
     try {
-      await register(fullName, email, password, country, manualRef || undefined);
+      await register(fullName, email, password, country, manualRef || undefined, captchaToken);
       router.push(next || "/onboarding");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't create your account. Please try again.");
+      setCaptchaKey((k) => k + 1); // a token only works once, so ask for a fresh one
     } finally {
       setSubmitting(false);
     }
@@ -184,9 +188,11 @@ function RegisterContent() {
             </div>
           )}
 
+          <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaKey} />
+
           {error && <Alert variant="danger">{error}</Alert>}
 
-          <button type="submit" disabled={submitting} aria-busy={submitting} className="btn-primary btn-block">
+          <button type="submit" disabled={submitting || (turnstileEnabled && !captchaToken)} aria-busy={submitting} className="btn-primary btn-block">
             {submitting ? "Creating account" : "Create account"}
           </button>
         </form>

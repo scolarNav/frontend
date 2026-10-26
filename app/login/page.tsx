@@ -7,6 +7,7 @@ import { GoogleLogin, CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/lib/auth-context";
 import { ApiError } from "@/lib/api";
 import { Alert } from "@/components/ui/States";
+import TurnstileWidget, { turnstileEnabled } from "@/components/TurnstileWidget";
 
 function LoginContent() {
   const { login, googleLogin } = useAuth();
@@ -17,16 +18,19 @@ function LoginContent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaKey, setCaptchaKey] = useState(0);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const user = await login(email, password);
+      const user = await login(email, password, captchaToken);
       router.push(next || (user.isCoach ? "/coaches/dashboard" : "/dashboard"));
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Couldn't sign you in. Please try again.");
+      setCaptchaKey((k) => k + 1); // a token only works once, so ask for a fresh one
     } finally {
       setSubmitting(false);
     }
@@ -97,9 +101,11 @@ function LoginContent() {
             />
           </div>
 
+          <TurnstileWidget onToken={setCaptchaToken} resetKey={captchaKey} />
+
           {error && <Alert variant="danger">{error}</Alert>}
 
-          <button type="submit" disabled={submitting} aria-busy={submitting} className="btn-primary btn-block">
+          <button type="submit" disabled={submitting || (turnstileEnabled && !captchaToken)} aria-busy={submitting} className="btn-primary btn-block">
             {submitting ? "Signing in" : "Sign in"}
           </button>
         </form>

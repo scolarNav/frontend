@@ -44,6 +44,9 @@ function SiteFooter() {
   const link = "inline-flex min-h-touch items-center text-sm text-white/80 transition-colors hover:text-white";
   return (
     <footer className="mt-24 bg-navy text-white">
+      {/* Trap for scrapers: display:none hides it from people and screen readers, and robots.txt tells
+          well-behaved crawlers to stay away. Anything that follows it is banned by middleware.ts. */}
+      <a href="/data-export" className="hidden" aria-hidden="true" tabIndex={-1} rel="nofollow">Full data export</a>
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-footer">
         <div>
           <Link href="/" aria-label="ScolarNav home">
