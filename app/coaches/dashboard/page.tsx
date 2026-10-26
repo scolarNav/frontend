@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Alert, EmptyState, ErrorState } from "@/components/ui/States";
 import { Skeleton, SkeletonHeader, SkeletonList } from "@/components/ui/Skeleton";
 import { opportunityPath } from "@/lib/paths";
+import StudentBrief from "@/components/StudentBrief";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -361,6 +362,7 @@ function BookingCard({
 }: BookingCardProps) {
   const opp = booking.opportunityId;
   const student = booking.userId?.fullName ?? "Unknown student";
+  const [showBrief, setShowBrief] = useState(false);
 
   return (
     <article className="card card-pad">
@@ -404,10 +406,35 @@ function BookingCard({
         )}
       </dl>
 
+      {booking.preSession && (
+        <div className="mb-4 rounded-lg bg-surface p-3">
+          <p className="mb-1 text-sm font-semibold text-ink">Goal for this session</p>
+          <p className="text-sm text-ink-soft">{booking.preSession.goal}</p>
+        </div>
+      )}
+
       {booking.userMessage && (
         <div className="mb-4 rounded-lg bg-surface p-3">
           <p className="mb-1 text-sm font-semibold text-ink">Student&apos;s message</p>
           <p className="text-sm italic text-ink-soft">&ldquo;{booking.userMessage}&rdquo;</p>
+        </div>
+      )}
+
+      {["requested", "accepted", "completed"].includes(booking.status) && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => setShowBrief((v) => !v)}
+            aria-expanded={showBrief}
+            className="btn-secondary"
+          >
+            {showBrief ? "Hide student brief" : "Read student brief"}
+          </button>
+          {showBrief && (
+            <div className="mt-3">
+              <StudentBrief bookingId={booking._id} />
+            </div>
+          )}
         </div>
       )}
 

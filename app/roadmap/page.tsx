@@ -12,6 +12,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { SkeletonPage } from "@/components/ui/Skeleton";
 import { ProgressBar } from "@/components/ui/Spinner";
 import { Chip } from "@/components/ui/Chip";
+import SavedScholarshipPlans from "@/components/SavedScholarshipPlans";
 
 const DEGREE_LEVELS = ["Undergraduate", "Master's", "PhD", "Postdoc", "Professional", "Not sure yet"];
 const COUNTRIES = [
@@ -180,7 +181,7 @@ export default function RoadmapPage() {
   if (!isPro) {
     return (
       <div className="page-narrow">
-        <PageHeader eyebrow="Pro" title="My roadmap" description="Your week-by-week plan to get scholarship-ready." />
+        <PageHeader eyebrow="Pro" title="My roadmap" description="A dated plan for each scholarship, counted from today." />
         <UpgradePrompt feature="roadmap" />
       </div>
     );
@@ -192,8 +193,10 @@ export default function RoadmapPage() {
         <PageHeader
           eyebrow="My roadmap"
           title="Build your plan"
-          description="Answer a few questions and we will generate a week-by-week scholarship roadmap built around your goals, timeline and target countries."
+          description="Answer a few questions and we will generate a short plan, counted from today, built around your goals, timeline and target countries."
         />
+
+        <SavedScholarshipPlans />
 
         {error && <Alert variant="danger" className="mb-4">{error}</Alert>}
 
@@ -289,11 +292,11 @@ export default function RoadmapPage() {
 
           <div>
             <button type="button" onClick={saveAndGenerate} disabled={generating} aria-busy={generating} className="btn-primary btn-block">
-              {generating ? "Building your roadmap" : "Generate my roadmap"}
+              {generating ? "Building your plan" : "Build my plan"}
             </button>
             {generating && (
               <div className="mt-4">
-                <ProgressBar label="Building your roadmap" />
+                <ProgressBar label="Building your plan" />
                 <p className="mt-2 text-center text-sm text-slate">Planning your weeks. Please keep this page open.</p>
               </div>
             )}
@@ -317,6 +320,8 @@ export default function RoadmapPage() {
         description={roadmap.overview}
         actions={<button type="button" onClick={() => setShowForm(true)} className="btn-secondary">Update goals</button>}
       />
+
+      <SavedScholarshipPlans />
 
       <section className="card card-pad mb-10" aria-label="Roadmap progress">
         <div className="mb-2 flex items-center justify-between">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, ChevronDown, ClipboardCheck, Target, TrendingUp } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { api, ApiError } from "@/lib/api";
@@ -46,6 +46,19 @@ export default function PricingPage() {
   // This handles users who paid before gateway was stored, or haven't paid yet.
   const isPaystackUser = user?.subscription?.gateway === "paystack" || usePaystack;
   const countryName = COUNTRIES.find((c) => c.code === countryCode)?.name;
+
+  // Naira prices follow the dollar price at today's exchange rate, so they come from the server.
+  const [ngn, setNgn] = useState<{ firstMonth: number; recurring: number } | null>(null);
+  useEffect(() => {
+    if (!usePaystack) return;
+    api
+      .get<{ naira: { firstMonth: number; recurring: number } }>("/billing/prices", { auth: false })
+      .then((d) => setNgn(d.naira))
+      .catch(() => setNgn(null));
+  }, [usePaystack]);
+  const fmtNgn = (n: number | undefined) => (n ? "₦" + n.toLocaleString("en-NG") : "...");
+  const firstNgn = fmtNgn(ngn?.firstMonth);
+  const recurringNgn = fmtNgn(ngn?.recurring);
 
   const cancelAtPeriodEnd = user?.subscription?.cancelAtPeriodEnd;
   const periodEnd = user?.subscription?.currentPeriodEnd
@@ -242,10 +255,11 @@ export default function PricingPage() {
             {usePaystack ? (
               <>
                 <div className="flex items-baseline gap-1.5">
-                  <span className="font-display text-4xl text-ink">₦10,000</span>
+                  <span className="font-display text-4xl text-ink">{firstNgn}</span>
                   <span className="text-sm text-ink-soft">first month</span>
                 </div>
-                <p className="mt-1.5 text-sm text-slate">then ₦5,000 a month, renewed automatically from your saved card</p>
+                <p className="mt-1.5 text-sm text-slate">then {recurringNgn} a month, renewed automatically from your saved card</p>
+                <p className="mt-1.5 text-xs text-slate">Our prices are set in US dollars. The naira amount follows today&apos;s exchange rate and can change slightly from month to month.</p>
               </>
             ) : billing === "monthly" ? (
               <>
@@ -308,14 +322,14 @@ export default function PricingPage() {
                   {loading
                     ? "Redirecting"
                     : usePaystack
-                      ? "Subscribe: ₦10,000 first month"
+                      ? `Subscribe: ${firstNgn} first month`
                       : billing === "monthly"
                         ? "Start free trial, then $7/mo"
                         : "Start free trial, then $55/yr"}
                 </button>
                 <p className="text-center text-sm text-slate">
                   {usePaystack
-                    ? "Renews at ₦5,000 a month. Cancel any time."
+                    ? `Renews at ${recurringNgn} a month. Cancel any time.`
                     : "7 days free. No card required to trial. Cancel any time."}
                 </p>
               </>
@@ -335,7 +349,7 @@ export default function PricingPage() {
             },
             {
               q: "How does billing work in Nigeria?",
-              a: "Your first month is ₦10,000. From month 2 onwards, you're charged ₦5,000/month automatically from the card you paid with, no need to do anything. You can cancel at any time and keep Pro access until your current billing period ends.",
+              a: `Our prices are set in US dollars, and the naira amount follows today's exchange rate. Right now your first month is ${firstNgn}. From month 2 onwards, you're charged ${recurringNgn}/month automatically from the card you paid with, no need to do anything. The monthly naira amount can move a little if the exchange rate changes. You can cancel at any time and keep Pro access until your current billing period ends.`,
             },
             {
               q: "What happens when my subscription renews?",

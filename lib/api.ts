@@ -62,6 +62,8 @@ export const api = {
     }),
   patch: <T,>(path: string, body?: any, options?: RequestOptions) =>
     request<T>(path, { ...options, method: "PATCH", body: body ? JSON.stringify(body) : undefined }),
+  put: <T,>(path: string, body?: any, options?: RequestOptions) =>
+    request<T>(path, { ...options, method: "PUT", body: body ? JSON.stringify(body) : undefined }),
   delete: <T,>(path: string, body?: any, options?: RequestOptions) =>
     request<T>(path, { ...options, method: "DELETE", body: body ? JSON.stringify(body) : undefined }),
 };
@@ -72,4 +74,27 @@ export function setToken(token: string) {
 
 export function clearToken() {
   if (typeof window !== "undefined") localStorage.removeItem("ScolarNav_token");
+}
+
+/** Downloads a file from an authenticated endpoint (a plain link cannot send the login token). */
+export async function downloadFile(path: string, filename: string): Promise<void> {
+  const token = getToken();
+  const res = await fetch(`${API_BASE}${path}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!res.ok) {
+    let message = "Could not download the file. Please try again.";
+    try {
+      message = (await res.json())?.error || message;
+    } catch {
+      /* keep the default message */
+    }
+    throw new ApiError(message, res.status);
+  }
+  const url = URL.createObjectURL(await res.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 }

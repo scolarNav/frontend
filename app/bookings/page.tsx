@@ -11,6 +11,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { SkeletonPage } from "@/components/ui/Skeleton";
 import { Alert, EmptyState } from "@/components/ui/States";
 import { opportunityPath } from "@/lib/paths";
+import PreSessionPanel from "@/components/PreSessionPanel";
 
 type PopulatedBooking = Omit<CoachingBooking, "coachId" | "opportunityId"> & {
   coachId: HumanCoach | null;
@@ -157,6 +158,15 @@ export default function BookingsPage() {
                   <p className="text-sm text-slate">Your message</p>
                   <p className="mt-0.5 text-sm italic text-ink-soft">&ldquo;{booking.userMessage}&rdquo;</p>
                 </div>
+              )}
+
+              {["pending_payment", "requested", "accepted", "completed"].includes(booking.status) && (
+                <PreSessionPanel
+                  bookingId={booking._id}
+                  preSession={booking.preSession}
+                  editable={booking.status !== "completed"}
+                  onSaved={(ps) => setBookings((list) => list.map((b) => (b._id === booking._id ? { ...b, preSession: ps } : b)))}
+                />
               )}
 
               {booking.status === "requested" ? (

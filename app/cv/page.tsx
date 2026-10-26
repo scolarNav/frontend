@@ -20,6 +20,7 @@ export default function CvPage() {
   const [cvData, setCvData] = useState<CVData | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadDone, setUploadDone] = useState(false);
+  const [unchanged, setUnchanged] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingCv, setLoadingCv] = useState(true);
 
@@ -44,13 +45,16 @@ export default function CvPage() {
 
     setUploading(true);
     setError(null);
+    setUploadDone(false);
+    setUnchanged(false);
 
     const formData = new FormData();
     formData.append("cv", file);
 
     try {
-      const data = await api.post<{ cvData: CVData }>("/cv/upload", formData);
+      const data = await api.post<{ cvData: CVData; unchanged?: boolean }>("/cv/upload", formData);
       setCvData(data.cvData);
+      setUnchanged(!!data.unchanged);
       setUploadDone(true);
       await refreshUser();
       setTimeout(() => parsedRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
@@ -117,7 +121,11 @@ export default function CvPage() {
         )}
         {error && <Alert variant="danger" className="mt-4">{error}</Alert>}
         {uploadDone && !uploading && (
-          <Alert variant="ok" className="mt-4">CV parsed and your profile is updated. The data appears below.</Alert>
+          <Alert variant="ok" className="mt-4">
+            {unchanged
+              ? "This is the same CV you already uploaded, so nothing changed and your coaching stays up to date."
+              : "CV parsed and your profile is updated. The data appears below."}
+          </Alert>
         )}
         {cvData && !uploading && (
           <p className="mt-4 text-sm text-slate">

@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import Link from "next/link";
 import { api, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { HumanCoach } from "@/lib/types";
-import { CircleCheck, ExternalLink, Star } from "lucide-react";
+import { ExternalLink, Star } from "lucide-react";
 import { SkeletonPage } from "@/components/ui/Skeleton";
-import { Alert, EmptyState } from "@/components/ui/States";
-import { Modal } from "@/components/ui/Modal";
+import { EmptyState } from "@/components/ui/States";
 
 function StarRating({ rating, count }: { rating: number; count?: number }) {
   return (
@@ -30,20 +29,11 @@ function StarRating({ rating, count }: { rating: number; count?: number }) {
 export default function CoachPublicProfilePage() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const router = useRouter();
 
   const [coach, setCoach] = useState<HumanCoach | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
 
-  // Booking modal state
-  const [bookingOppId, setBookingOppId] = useState("");
-  const [sessionType, setSessionType] = useState<"coaching" | "review">("coaching");
-  const [userMessage, setUserMessage] = useState("");
-  const [booking, setBooking] = useState(false);
-  const [bookingError, setBookingError] = useState<string | null>(null);
-  const [bookingDone, setBookingDone] = useState(false);
-  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -54,31 +44,6 @@ export default function CoachPublicProfilePage() {
       })
       .finally(() => setLoading(false));
   }, [id]);
-
-  async function handleBook(e: React.FormEvent) {
-    e.preventDefault();
-    if (!user) { router.push(`/login?next=/coaches/${id}`); return; }
-    if (!bookingOppId) { setBookingError("Select a scholarship to get coaching for."); return; }
-    setBooking(true);
-    setBookingError(null);
-    try {
-      const { paymentUrl } = await api.post<{ booking: any; paymentUrl: string | null }>("/coaches/bookings", {
-        coachId: id,
-        opportunityId: bookingOppId,
-        sessionType,
-        userMessage: userMessage.trim() || undefined,
-      });
-      if (paymentUrl) {
-        window.location.href = paymentUrl;
-      } else {
-        // dev fallback — no Stripe configured
-        setBookingDone(true);
-      }
-    } catch (err) {
-      setBookingError(err instanceof ApiError ? err.message : "Booking failed. Please try again.");
-      setBooking(false);
-    }
-  }
 
   if (loading) return <SkeletonPage variant="detail" />;
 
@@ -97,7 +62,7 @@ export default function CoachPublicProfilePage() {
   const totalStudents = coach.totalSessions;
   const isOwnProfile = user?.isCoach;
   const firstName = coach.name.split(" ")[0];
-  const openBooking = () => { setShowModal(true); setBookingDone(false); setBookingError(null); };
+  const bookHref = user ? `/coaches/${id}/book` : `/login?next=/coaches/${id}/book`;
 
   return (
     <div className="page-narrow">
@@ -139,9 +104,9 @@ export default function CoachPublicProfilePage() {
           <p className="font-display text-3xl text-ink">${coach.sessionFeeUSD}</p>
           <p className="mb-4 mt-0.5 text-sm text-slate">per session, plus platform fee</p>
           {!isOwnProfile && (
-            <button type="button" onClick={openBooking} className="btn-primary btn-block sm:w-auto">
+            <Link href={bookHref} className="btn-primary btn-block sm:w-auto">
               Book a session
-            </button>
+            </Link>
           )}
           {isOwnProfile && (
             <Link href="/coaches/dashboard" className="btn-secondary btn-block sm:w-auto">
@@ -205,93 +170,12 @@ export default function CoachPublicProfilePage() {
             <p className="font-semibold text-ink">Ready to work with {firstName}?</p>
             <p className="mt-0.5 text-sm text-slate">${coach.sessionFeeUSD} per session · usually responds within 48 hours</p>
           </div>
-          <button type="button" onClick={openBooking} className="btn-primary shrink-0">
+          <Link href={bookHref} className="btn-primary shrink-0">
             Book a session
-          </button>
+          </Link>
         </section>
       )}
 
-      {/* Booking dialog */}
-      <Modal open={showModal} onClose={() => setShowModal(false)} title={bookingDone ? "Booking requested" : `Book with ${firstName}`}>
-        {bookingDone ? (
-          <div className="py-2 text-center">
-            <span className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-ok-soft text-ok">
-              <CircleCheck size={24} aria-hidden="true" />
-            </span>
-            <p className="mb-6 text-sm text-ink-soft">
-              {firstName} will review your request and confirm the session. You will get an email once they respond.
-            </p>
-            <button type="button" onClick={() => setShowModal(false)} className="btn-primary btn-block">
-              Done
-            </button>
-          </div>
-        ) : (
-          <form onSubmit={handleBook} className="space-y-4">
-            <div>
-              <label htmlFor="bk-opp" className="label">Which scholarship is this for?</label>
-              <select id="bk-opp" required value={bookingOppId} onChange={(e) => setBookingOppId(e.target.value)} className="input">
-                <option value="">Select a scholarship</option>
-                {coach.scholarships.map((s) => (
-                  <option key={s.opportunityId} value={s.opportunityId}>{s.opportunityTitle}</option>
-                ))}
-              </select>
-            </div>
-
-            <fieldset>
-              <legend className="label">Session type</legend>
-              <div className="flex flex-col gap-2 sm:flex-row" role="radiogroup">
-                {(["coaching", "review"] as const).map((t) => {
-                  const selected = sessionType === t;
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setSessionType(t)}
-                      className={`min-h-touch flex-1 rounded-xl px-4 py-3 text-left text-sm transition-colors ${
-                        selected ? "bg-forest-soft ring-2 ring-forest" : "bg-white ring-1 ring-inset ring-control hover:bg-surface-2"
-                      }`}
-                    >
-                      <span className="block font-semibold text-ink">{t === "coaching" ? "Strategy coaching" : "Document review"}</span>
-                      <span className="mt-0.5 block text-sm text-slate">
-                        {t === "coaching" ? "Live session on strategy and positioning" : "Written feedback on your drafts"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            <div>
-              <label htmlFor="bk-msg" className="label">
-                Message <span className="font-normal text-slate">(optional)</span>
-              </label>
-              <textarea
-                id="bk-msg"
-                rows={3}
-                value={userMessage}
-                onChange={(e) => setUserMessage(e.target.value)}
-                placeholder="Briefly describe where you are in your application and what you need most help with."
-                className="textarea"
-              />
-            </div>
-
-            <div className="flex items-center justify-between border-t border-rule py-3 text-sm">
-              <span className="text-slate">Total (including platform fee)</span>
-              <span className="font-semibold text-ink">${(coach.sessionFeeUSD * (1 + coach.platformFeePercent / 100)).toFixed(0)} USD</span>
-            </div>
-
-            {bookingError && <Alert variant="danger">{bookingError}</Alert>}
-
-            <button type="submit" disabled={booking} aria-busy={booking} className="btn-primary btn-block">
-              {booking ? "Sending request" : "Send booking request"}
-            </button>
-
-            {!user && <p className="text-center text-sm text-slate">You will be asked to sign in before confirming.</p>}
-          </form>
-        )}
-      </Modal>
     </div>
   );
 }

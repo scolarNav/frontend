@@ -22,11 +22,11 @@ const COPY: Record<Props["feature"], { heading: string; body: string }> = {
   },
   roadmap: {
     heading: "Your Roadmap is a Pro feature",
-    body: "Upgrade to Pro to generate a week-by-week application plan built around your goals, target countries, timeline, and test scores.",
+    body: "Upgrade to Pro to get a dated plan for each saved scholarship, counted from today, with email reminders and calendar sync.",
   },
   interview: {
     heading: "Mock Interview is a Pro feature",
-    body: "Upgrade to Pro to practice with tailored questions for any scholarship in your list and get detailed feedback on every answer, including what a stronger response looks like.",
+    body: "Upgrade to Pro to practise the questions panels ask for any scholarship in your list, and see why they ask each one and a range of strong ways to answer.",
   },
   mentor: {
     heading: "Mentor chat is a Pro feature",

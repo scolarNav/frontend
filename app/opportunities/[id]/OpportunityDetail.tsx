@@ -59,11 +59,6 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
   const [error, setError] = useState<string | null>(null);
 
   const [coaches, setCoaches] = useState<HumanCoach[]>([]);
-  const [bookingCoach, setBookingCoach] = useState<HumanCoach | null>(null);
-  const [bookingType, setBookingType] = useState<"coaching" | "review">("coaching");
-  const [bookingMsg, setBookingMsg] = useState("");
-  const [bookingLoading, setBookingLoading] = useState(false);
-  const [bookingDone, setBookingDone] = useState<string | null>(null);
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reportType, setReportType] = useState("");
@@ -128,32 +123,6 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
       // silent — UI stays in sync on next user load
     } finally {
       setTogglingDoc(null);
-    }
-  }
-
-  async function handleBook() {
-    if (!user) { router.push(`/login?next=/opportunities/${opportunity._id}`); return; }
-    if (!bookingCoach) return;
-    setBookingLoading(true);
-    setError(null);
-    try {
-      const { paymentUrl } = await api.post<{ booking: any; paymentUrl: string | null }>("/coaches/bookings", {
-        coachId: bookingCoach._id,
-        opportunityId: opportunity._id,
-        sessionType: bookingType,
-        userMessage: bookingMsg || undefined,
-      });
-      if (paymentUrl) {
-        window.location.href = paymentUrl;
-      } else {
-        // dev fallback — no Stripe configured
-        setBookingDone(bookingCoach.name);
-        setBookingCoach(null);
-        setBookingMsg("");
-      }
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Booking failed. Try again.");
-      setBookingLoading(false);
     }
   }
 
@@ -390,13 +359,7 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                 Work with someone who has been where you want to go (a scholarship alumnus or former selection panel member).
                 All coaches are verified by the ScolarNav team.
               </p>
-  
-              {bookingDone && (
-                <div className="alert alert-ok mb-5">
-                  Booking request sent to <strong>{bookingDone}</strong>. They will confirm a time and reach out to you.
-                </div>
-              )}
-  
+
               <div className="grid sm:grid-cols-2 gap-4">
                 {coaches.map((coach) => {
                   const userFee = coach.sessionFeeUSD + Math.round(coach.sessionFeeUSD * (coach.platformFeePercent / 100) * 100) / 100;
@@ -438,12 +401,12 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
                           >
                             View profile
                           </Link>
-                          <button
-                            onClick={() => { setBookingCoach(coach); setBookingDone(null); }}
+                          <Link
+                            href={user ? `/coaches/${coach._id}/book?opp=${opportunity._id}` : `/login?next=/coaches/${coach._id}/book?opp=${opportunity._id}`}
                             className="btn-secondary btn-sm"
                           >
                             Book
-                          </button>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -523,70 +486,6 @@ export default function OpportunityDetail({ initial }: { initial: Opportunity })
       {reportDone && <Alert variant="ok" className="mt-4">Thanks for reporting. We will review this shortly.</Alert>}
       {error && !error.startsWith("UPGRADE_REQUIRED:breakdown") && <Alert variant="danger" className="mt-6">{error}</Alert>}
 
-      {/* Booking dialog */}
-      <Modal open={!!bookingCoach} onClose={() => setBookingCoach(null)} title="Book a session">
-        {bookingCoach && (
-          <div className="space-y-5">
-            <p className="-mt-3 text-sm text-slate">with <span className="font-semibold text-ink">{bookingCoach.name}</span></p>
-
-            <fieldset>
-              <legend className="label">Session type</legend>
-              <div className="flex flex-col gap-3 sm:flex-row" role="radiogroup">
-                {[
-                  { value: "coaching", label: "Strategy coaching", sub: "Application strategy, essay direction, interview prep" },
-                  { value: "review", label: "Document review", sub: "Feedback on your draft essays or application documents" },
-                ].map((opt) => {
-                  const selected = bookingType === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      role="radio"
-                      aria-checked={selected}
-                      onClick={() => setBookingType(opt.value as any)}
-                      className={`min-h-touch flex-1 rounded-xl p-3 text-left text-sm transition-colors ${
-                        selected ? "bg-forest-soft ring-2 ring-forest" : "bg-white ring-1 ring-inset ring-control hover:bg-surface-2"
-                      }`}
-                    >
-                      <span className="block font-semibold text-ink">{opt.label}</span>
-                      <span className="mt-0.5 block text-sm leading-snug text-slate">{opt.sub}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </fieldset>
-
-            <div>
-              <label htmlFor="bk-msg" className="label">Message to coach <span className="font-normal text-slate">(optional)</span></label>
-              <textarea
-                id="bk-msg"
-                rows={3}
-                value={bookingMsg}
-                onChange={(e) => setBookingMsg(e.target.value)}
-                className="textarea"
-                placeholder="Tell the coach briefly about where you are in the process."
-              />
-            </div>
-
-            <div className="flex items-center justify-between rounded-lg bg-surface p-3 text-sm">
-              <span className="text-slate">Total</span>
-              <span className="font-semibold text-ink">
-                ${(bookingCoach.sessionFeeUSD + Math.round(bookingCoach.sessionFeeUSD * (bookingCoach.platformFeePercent / 100) * 100) / 100).toFixed(0)}
-              </span>
-            </div>
-
-            <div className="flex gap-3">
-              <button type="button" onClick={() => setBookingCoach(null)} className="btn-secondary flex-1">
-                Cancel
-              </button>
-              <button type="button" onClick={handleBook} disabled={bookingLoading} aria-busy={bookingLoading} className="btn-primary flex-1">
-                {bookingLoading ? "Sending" : "Request session"}
-              </button>
-            </div>
-            <p className="text-center text-sm text-slate">Payment is collected once the coach confirms. You will not be charged now.</p>
-          </div>
-        )}
-      </Modal>
 
       {/* Report dialog */}
       <Modal open={reportOpen} onClose={() => setReportOpen(false)} title="Report wrong data">

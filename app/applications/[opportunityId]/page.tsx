@@ -7,6 +7,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Application, EssayDraft, Opportunity, ReferenceLetter } from "@/lib/types";
 import UpgradePrompt from "@/components/UpgradePrompt";
 import FitReportCard from "@/components/FitReportCard";
+import ScholarshipRoadmap from "@/components/ScholarshipRoadmap";
 import { hasAiAccess } from "@/lib/plan";
 import { Alert, ErrorState } from "@/components/ui/States";
 import Link from "next/link";
@@ -377,6 +378,7 @@ export default function ApplicationCoachingPage() {
 
   // Sections shown in the side navigation
   const sections = [
+    { id: "roadmap", label: "Roadmap" },
     ...(!needsCv && !needsUpgradeCoaching && !aiLocked ? [{ id: "targets", label: "Target programs" }] : []),
     ...(coaching && !generating ? [{ id: "strategy", label: "Your strategy" }] : []),
     ...(coaching && !generating && showEssaySection ? [{ id: "essays", label: "Essay review" }] : []),
@@ -433,6 +435,11 @@ export default function ApplicationCoachingPage() {
 
           {/* Free eligibility check: plain code, no AI */}
           {!coaching && !generating && <FitReportCard opportunityId={opportunityId} />}
+
+          {/* Dated plan from today: no AI, so it loads instantly */}
+          <div id="roadmap" className="scroll-mt-8">
+            <ScholarshipRoadmap opportunityId={opportunityId} />
+          </div>
 
           {/* Target programs */}
           {!needsCv && !needsUpgradeCoaching && !aiLocked && (

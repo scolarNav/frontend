@@ -6,7 +6,8 @@ import { CircleCheck, CircleHelp, CircleX } from "lucide-react";
 import { api, ApiError } from "@/lib/api";
 import { Alert, ErrorState } from "@/components/ui/States";
 import { Skeleton } from "@/components/ui/Skeleton";
-import type { FitReport, FitRequirement } from "@/lib/types";
+import PartnerList from "@/components/PartnerList";
+import type { FitReport, FitRequirement, Partner } from "@/lib/types";
 
 const ELIGIBILITY: Record<FitReport["eligibility"], { label: string; badge: string }> = {
   eligible: { label: "Meets the requirements we can check", badge: "badge-ok" },
@@ -30,6 +31,7 @@ function formatDate(iso: string | null): string {
 export default function FitReportCard({ opportunityId }: { opportunityId: string }) {
   const [report, setReport] = useState<FitReport | null>(null);
   const [hasCv, setHasCv] = useState(true);
+  const [partners, setPartners] = useState<Partner[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
 
@@ -37,11 +39,12 @@ export default function FitReportCard({ opportunityId }: { opportunityId: string
     let live = true;
     setError(null);
     api
-      .get<{ report: FitReport; hasCv: boolean }>(`/applications/${opportunityId}/fit`)
+      .get<{ report: FitReport; hasCv: boolean; partners?: Partner[] }>(`/applications/${opportunityId}/fit`)
       .then((d) => {
         if (!live) return;
         setReport(d.report);
         setHasCv(d.hasCv);
+        setPartners(d.partners ?? []);
       })
       .catch((e) => live && setError(e instanceof ApiError ? e.message : "Could not run the eligibility check."));
     return () => {
@@ -94,6 +97,12 @@ export default function FitReportCard({ opportunityId }: { opportunityId: string
           );
         })}
       </ul>
+
+      {partners.length > 0 && (
+        <div className="mt-6">
+          <PartnerList partners={partners} heading="Need a language test? Prepare with a partner" />
+        </div>
+      )}
 
       <h3 className="h3 mt-6">Fit with your goals</h3>
       <ul className="mt-2 space-y-1.5">

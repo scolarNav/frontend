@@ -333,18 +333,18 @@ export interface Application {
   outcome?: "pending" | "awarded" | "rejected" | "waitlisted";
 }
 
-export interface AnswerFeedback {
-  score: number;
-  strengths: string[];
-  improvements: string[];
-  modelAnswer: string;
+export interface GoodAnswer {
+  angle: string;
+  answer: string;
 }
 
+/** Guidance fields are only present once the student has submitted their answer. */
 export interface InterviewQuestion {
+  key?: string;
   question: string;
-  context: string;
-  answer?: string;
-  feedback?: AnswerFeedback;
+  context?: string;
+  goodAnswers?: GoodAnswer[];
+  avoid?: string[];
   answeredAt?: string;
 }
 
@@ -354,7 +354,6 @@ export interface Interview {
   opportunityTitle: string;
   opportunityProvider: string;
   questions: InterviewQuestion[];
-  overallScore?: number;
   overallFeedback?: string;
   status: "in_progress" | "completed";
   createdAt: string;
@@ -455,6 +454,7 @@ export interface CoachingBooking {
   coachPayoutUSD: number;
   platformFeeUSD: number;
   userMessage?: string;
+  preSession?: PreSession;
   scheduledAt?: string;
   completedAt?: string;
   rating?: number;
@@ -483,4 +483,175 @@ export interface FitReport {
   timeline: { milestone: string; targetDate: string | null; deliverable: string }[];
   deadline: string | null;
   generatedAt: string;
+}
+
+// ── Language-test partners ───────────────────────────────────────────────────
+export interface Partner {
+  _id: string;
+  name: string;
+  slug: string;
+  kind: "prep_centre" | "test_body" | "online_course" | "other";
+  tests: string[];
+  description: string;
+  logoUrl?: string;
+  deliveryModes: ("online" | "in_person")[];
+  priceNote?: string;
+  discountCode?: string;
+  discountNote?: string;
+  featured: boolean;
+  /** True when we may earn a commission, so the UI must say so. */
+  sponsored: boolean;
+  goPath: string;
+}
+
+// ── Per-scholarship roadmap ──────────────────────────────────────────────────
+export interface ScholarshipRoadmapStep {
+  key: string;
+  title: string;
+  detail: string;
+  dueDate: string | null;
+  status: "behind" | "due_soon" | "upcoming";
+  late: boolean;
+  addToGoogleCalendar: string | null;
+}
+
+export interface ScholarshipRoadmap {
+  opportunity: { _id: string; title: string; provider: string };
+  window: {
+    state: "not_open" | "open" | "closed" | "no_deadline";
+    opensOn: string | null;
+    deadline: string | null;
+    daysSinceOpen: number | null;
+    daysLeft: number | null;
+    percentElapsed: number | null;
+  };
+  headline: string;
+  covered: { key: string; title: string; how: "done" | "coaching" }[];
+  steps: ScholarshipRoadmapStep[];
+  languageTests: string[];
+  prefs: { remindersEnabled: boolean; calendarEnabled: boolean };
+  partners: Partner[];
+}
+
+// ── Coaching pre-session questionnaire ───────────────────────────────────────
+export const PRE_SESSION_FOCUS = [
+  { value: "strategy", label: "Overall strategy" },
+  { value: "essay", label: "Essays" },
+  { value: "interview", label: "Interview" },
+  { value: "cv_documents", label: "CV and documents" },
+  { value: "references", label: "Reference letters" },
+  { value: "eligibility", label: "Eligibility" },
+  { value: "timeline", label: "Timeline" },
+] as const;
+
+export type PreSessionFocus = (typeof PRE_SESSION_FOCUS)[number]["value"];
+
+export interface PreSession {
+  goal: string;
+  focusAreas: PreSessionFocus[];
+  successLooksLike?: string;
+  specificQuestions: string[];
+  currentStage: "not_started" | "researching" | "drafting" | "nearly_ready";
+  materialsReady: string[];
+  biggestWorry?: string;
+  shareProfileWithCoach: boolean;
+  submittedAt?: string;
+  updatedAt?: string;
+}
+
+export interface BookingBrief {
+  booking: { _id: string; sessionType: "coaching" | "review"; status: string; scheduledAt?: string; userMessage?: string };
+  preSession: PreSession | null;
+  scholarship: {
+    title: string;
+    provider: string;
+    country: string;
+    degreeLevel: string;
+    deadline?: string;
+    requiresInterview?: boolean;
+    requirements: { label: string; hard: boolean }[];
+    essayPrompts: { label: string; question: string; maxCharacters?: number; maxWords?: number }[];
+    requiredDocuments: string[];
+  };
+  student: {
+    name: string;
+    profileShared: boolean;
+    country?: string;
+    summary?: string;
+    education?: { degree?: string; fieldOfStudy?: string; institution?: string; gpa?: string; endYear?: number }[];
+    experience?: { role?: string; organization?: string; startDate?: string; endDate?: string; isCurrent?: boolean }[];
+    volunteerExperience?: { role?: string; organization?: string }[];
+    skills?: string[];
+    certifications?: string[];
+    languages?: string[];
+    testScores?: Record<string, number>;
+    targets?: { countries: string[]; degreeLevel?: string; fields: string[] };
+  };
+  note?: string;
+  fit?: { eligibility: FitReport["eligibility"]; score: number; summary: string; gaps: FitReport["gaps"] };
+  aiCoaching?: { tier?: string; standoutFactors: string[]; gapFromWinner?: string; weaknesses: string[] } | null;
+  progress?: {
+    applicationStatus?: string;
+    essayDrafts: { title: string; version: number; characters: number; reviewed: boolean }[];
+    referenceLetters: number;
+    documentsUploaded: string[];
+  };
+}
+
+// ── Admin: high-potential students and partners ──────────────────────────────
+export interface CredentialBreakdown {
+  score: number;
+  academics: number;
+  languageAndTests: number;
+  experience: number;
+  leadershipAndService: number;
+  extras: number;
+  completeness: number;
+  highlights: string[];
+  gaps: string[];
+}
+
+export type SupportStatus = "identified" | "contacted" | "supporting" | "placed" | "declined";
+
+export interface HighPotentialRow {
+  userId: string;
+  name: string;
+  email: string;
+  country?: string;
+  plan: string;
+  joinedAt: string;
+  credential: CredentialBreakdown;
+  coachingTier?: string;
+  readiness?: number;
+  rankScore: number;
+  savedCount: number;
+  support: { status: SupportStatus; nextStepAt?: string } | null;
+}
+
+export interface SupportRecord {
+  status: SupportStatus;
+  notes: { text: string; at: string }[];
+  resourcesShared: { label: string; url?: string; sharedAt: string }[];
+  nextStepAt?: string;
+}
+
+export interface AdminPartner {
+  _id: string;
+  name: string;
+  slug: string;
+  kind: Partner["kind"];
+  tests: string[];
+  countries: string[];
+  description: string;
+  logoUrl?: string;
+  websiteUrl: string;
+  affiliateUrl?: string;
+  deliveryModes: ("online" | "in_person")[];
+  priceNote?: string;
+  discountCode?: string;
+  discountNote?: string;
+  commission?: { model: "none" | "cpa" | "revshare" | "flat"; rate?: number; currency?: string; notes?: string };
+  status: "draft" | "active" | "paused";
+  featured: boolean;
+  sortOrder: number;
 }
